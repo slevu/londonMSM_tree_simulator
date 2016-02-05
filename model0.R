@@ -616,3 +616,9 @@ if (F)
 	theta_docked <- exp(o$par)
 	print((o))
 }
+
+##- Output o and tree and inputs
+parms <- c(theta, nh_wtransm, age_wtransm, care_wtransm, risk_wtransm)
+date <- format(Sys.time(),"%Y%m%d_%H%M")
+nameout <- paste( "out_treesim_", date, ".Rdata", sep = "")
+save(parms, o, tree, file = nameout)
