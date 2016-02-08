@@ -16,7 +16,7 @@ age_rates <- c(agerate1 = 1/9/365
                , agerate4 = 1/40.5/365
 )
 
-##- Natural history (from Cori et al.)
+6
 stageprog_rates <- c(    gamma1 = 1/365 # EHI
                          # shrink chronc&aids periods by 9 months, or factor of 1-.75/12  
                          # 1/ ( (1-.75/12) /(0.157 / 365 )  )

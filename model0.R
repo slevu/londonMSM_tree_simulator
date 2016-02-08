@@ -8,12 +8,30 @@ require(deSolve)
 require(Rcpp)
 sourceCpp( 'model0.cpp' )
 
-## parameters 
+####---- "fixed" parameters ----####
+##- Age progression (by quantiles)
+# age quantiles, age rates
+#~ > print(qs)
+#~       25%  50%  75% 100% 
+#~ 18.0 27.0 33.0 40.0 80.5 
+#~ > for ( i in 2:length(qs) )
+#~ + print( qs[i] - qs[i-1] )
+#~ 25% 
+#~   9 
+#~ 50% 
+#~   6 
+#~ 75% 
+#~   7 
+#~ 100% 
+#~ 40.5 
 age_rates <- c(agerate1 = 1/9/365
 	, agerate2 = 1/6/365
 	, agerate3 = 1/7/365
 	, agerate4 = 1/40.5/365
-) 
+)
+
+##- Natural history (from Cori et al. AIDS 2015 ?)
+##- Cori: 3.32, 2.70, 5.50, 5.06
 stageprog_rates <- c(    gamma1 = 1/365 # EHI
 	 # shrink chronc&aids periods by 9 months, or factor of 1-.75/12  
 	 # 1/ ( (1-.75/12) /(0.157 / 365 )  )
@@ -23,6 +41,7 @@ stageprog_rates <- c(    gamma1 = 1/365 # EHI
 	, gamma5 = 1/ ( (1-.75/12) /(.434 / 365 )  ) #aids 
 ) 
 #~ care_rates <- # dynamic
+##- Cori: 0.76, 0.19, 0.05, 0.00
 pstarts <- c(
 	pstartstage1 = 0.58
 	, pstartstage2 = 0.23  #reg4 combine these 
@@ -31,8 +50,9 @@ pstarts <- c(
 	, pstartstage5 = 0.0
 )
 
-theta <- c( age_assort_factor = .5
-  , pRiskLevel1 = .8
+theta <- c( age_assort_factor = .5 # power of age difference
+
+  , pRiskLevel1 = .8 # proportion in low risk group
   , srcMigrationRate = 1/50/365 #1 / 25 / 365 # per lineage rate of migration to source
   , srcGrowthRate = 1 / 3 / 365 # 
   , src0 = 1e3  # initial source size 
@@ -51,7 +71,8 @@ theta <- c( age_assort_factor = .5
 
 theta_default <- theta 
 
-
+####---- "moving" parameters ----####
+##- transmission by stage
 nh_wtransm <- c( 
 	nh1 = 1
 	,nh2 = .1
@@ -59,20 +80,20 @@ nh_wtransm <- c(
 	,nh4 = .1
 	,nh5 = .3
 ) 
-
+##- transmission by age
 age_wtransm <- c( 
 	age1 = 1
 	,age2 = 1
 	, age3 = 1
 	, age4 = 1
 )
-
+##- transmission by treatment status (undiag, diag, treated)
 care_wtransm <- c( 
 	care1 = 1
 	, care2 = .5
 	, care3 = .05
 )
-
+##- transmission by risk group 
 risk_wtransm <- c( 
 	risk1 = 1
 	, risk2 = 10
@@ -90,13 +111,14 @@ times1 <- as.numeric( date1 - date0 )
 times_year <- seq(year0, 2013, length.out = time_res) #to end of 2012
 times_day <- seq( 0, times1, length.out = time_res )
 days2years <- function( d ){
-	year0  + (year1 - year0) * d / (times1 - 0 )
+	year0  + (year1 - year0) * d / (times1 - times0 )
 }
 years2days <- function(y) 
 {
 	(times1 - times0) * (y - year0) / (year1 - year0)
 }
 
+##- vector of 120 states + src
 N_NH_COMPS <- 5
 N_AGE_COMPS <- 4
 N_RISK_COMPS <- 2
@@ -110,17 +132,6 @@ CARE_COMPS <- paste(sep='', 'care', 1:N_CARE_COMPS)
 
 COMPS_list <- list( NH_COMPS, AGE_COMPS, CARE_COMPS, RISK_COMPS )
 
-#~ function(i_complist, i_compPosition, deme)
-#~ {
-#~ ##
-#~ 	if (i_compPosition == length(COMPS_list[[i_complist]])){
-#~ 		j_compPosition <- 1
-#~ 		j_complist <- i_complist + 1
-#~ 	} else{
-#~ 		j_compPosition <- j_compPosition + 1
-#~ 	}
-#~ 	return( list( j_complist, j_compPosition, deme ))
-#~ }
 
 NH_COORDS <- list()
 AGE_COORDS <- list()
@@ -144,6 +155,16 @@ for ( nh in NH_COMPS ){
 }
 DEMES <- c( DEMES, 'src' )
 m <- length(DEMES)
+
+##- Could have done with expand.grid
+#   DEMES <- as.vector(
+#    apply( 
+#      expand.grid(NH_COMPS, 
+#                   AGE_COMPS, 
+#                   CARE_COMPS, 
+#                   RISK_COMPS), 1, paste, collapse = "." 
+#      )
+#    )
 
 # indicators for each deme; not C-indexing
 NH = rep(NA, m)
@@ -172,28 +193,7 @@ for ( x in RISK_COMPS ){
 	k <- k + 1
 }
 
-
-
-# age quantiles, age rates
-#~ > print(qs)
-#~       25%  50%  75% 100% 
-#~ 18.0 27.0 33.0 40.0 80.5 
-#~ > for ( i in 2:length(qs) )
-#~ + print( qs[i] - qs[i-1] )
-#~ 25% 
-#~   9 
-#~ 50% 
-#~   6 
-#~ 75% 
-#~   7 
-#~ 100% 
-#~ 40.5 
-
-
-
-
-
-
+####---- Transmission matrix ----####
 ## helpers
 m <- length(DEMES)
 # pr row transmission goes to col
@@ -211,14 +211,19 @@ colnames(prRecipMat) = rownames(prRecipMat) <- DEMES
 	wrisk <- ifelse( colrisk == 1, theta['pRiskLevel1'], 1 - theta['pRiskLevel1'] )
 #~ 	browser()
 	wrisk * wcare * pstarts[colpss] * theta['age_assort_factor']^abs( rowage - colage )
+	## thought it was  P(a -> a’) ∝ |a - a’|^coef ?
 }
+##- matrix of transmission weights
 for (i in 1:(m-1)) for (j in 1:(m-1)){
 	prRecipMat[i,j] <- .mweight( DEMES[i], DEMES[j] )
 }
+##- normalize
 prRecipMat <- prRecipMat / rowSums( prRecipMat )
+##- source
 prRecipMat[m,] <- 0
 prRecipMat[m,m] <- 1
 
+####---- Migration matrix ----####
 ## mig mat
 # NOTE uses R indices 
 STAGEPROG_RECIP <- rep(-1, m)
@@ -273,7 +278,7 @@ y0[m] <- theta['src0'] # initial source size
 phil_inc <- data.matrix( read.table( 'incidence.tsv') )[,1] 
 phil_inc_times <- seq( 1980, 2010, length.out = length(phil_inc))
 d_phil_inc_times <- phil_inc_times[2] - phil_inc_times[1]
-phil_inc.t <- approxfun( phil_inc_times, phil_inc, rule = 2 )
+phil_inc.t <- approxfun( phil_inc_times, phil_inc, rule = 2 ) ## interpolation
 inc.t <- function(t, theta) {
 	y <- days2years(t)
 	i <- min(length(phil_inc), max(1, 1 + floor( (y - phil_inc_times[1]) / d_phil_inc_times )) )
@@ -308,40 +313,6 @@ tr.t <- function(t){
 #~ plot( ys, 1 / ( 1 + exp(-(ys - 2e3)/5)) )
 
 
-
-
-
-
-## solve model 
-#~ F_matrix( double incidence
-#~   , NumericVector sizes
-#~   , NumericVector theta
-#~   , CharacterVector demes
-#~   , IntegerVector NH // length m indicators for each deme 
-#~   , IntegerVector AGE
-#~   , IntegerVector CARE
-#~   , IntegerVector RISK
-#~   , NumericVector nh_wtransm // associated weight for each category
-#~   , NumericVector age_wtransm
-#~   , NumericVector care_wtransm
-#~   , NumericVector risk_wtransm
-#~   , NumericMatrix prRecipMat // pstartstage & age mixing & prisklevel
-#~ )
-#~ G_matrix( NumericVector sizes
-#~   , NumericVector theta
-#~   , CharacterVector demes
-#~   , IntegerVector NH // length m indicators for each deme 
-#~   , IntegerVector AGE
-#~   , IntegerVector CARE
-#~   , IntegerVector RISK
-#~   , IntegerVector stageprog_recip // destination for migration
-#~   , IntegerVector age_recip
-#~   , IntegerVector care_recip
-#~   , NumericVector stageprog_rates //rates for each deme
-#~   , NumericVector age_rates
-#~   , NumericVector care_rates // note these depend on time
-#~ )
-
 dydt <- function(t,y, parms, ... ){
 	y <- pmax(y, 0 )
 	incidence <- inc.t( t, theta )
@@ -351,30 +322,30 @@ dydt <- function(t,y, parms, ... ){
 	  , y
 	  , theta
 	  , DEMES
-	  , NH
+	  , NH # length m indicators for each deme 
 	  , AGE
 	  , CARE
 	  , RISK
-	  , nh_wtransm
+	  , nh_wtransm # associated weight for each category
 	  , age_wtransm
 	  , care_wtransm
 	  , risk_wtransm
-	  , prRecipMat
+	  , prRecipMat # pstartstage & age mixing & prisklevel
 	)
 	
 	GG <- G_matrix( y
 	  , theta
 	  , DEMES
-	  , NH
+	  , NH # length m indicators for each deme
 	  , AGE
 	  , CARE
 	  , RISK
-	  , STAGEPROG_RECIP
+	  , STAGEPROG_RECIP # destination for migration
 	  , AGE_RECIP
 	  , CARE_RECIP
-	  , stageprog_rates
+	  , stageprog_rates # rates for each deme
 	  , age_rates
-	  , care_rates
+	  , care_rates # note these depend on time (as of 1996)
 	)
 	GGns <- GG
 	GGns[m, ] = GG[, m ] <- 0
