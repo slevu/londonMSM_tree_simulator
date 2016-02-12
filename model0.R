@@ -125,6 +125,7 @@ N_RISK_COMPS <- 2
 N_CARE_COMPS <- 3
 #~ also remember source 
 
+##- vector of strata names
 NH_COMPS <- paste(sep='', 'stage', 1:N_NH_COMPS )
 AGE_COMPS <- paste(sep='', 'age', 1:N_AGE_COMPS )
 RISK_COMPS <- paste( sep='', 'riskLevel', 1:N_RISK_COMPS )
@@ -132,7 +133,7 @@ CARE_COMPS <- paste(sep='', 'care', 1:N_CARE_COMPS)
 
 COMPS_list <- list( NH_COMPS, AGE_COMPS, CARE_COMPS, RISK_COMPS )
 
-
+##- list indices by strata name 
 NH_COORDS <- list()
 AGE_COORDS <- list()
 CARE_COORDS <- list()
@@ -153,10 +154,11 @@ for ( nh in NH_COMPS ){
 		}
 	}
 }
+##- demes name
 DEMES <- c( DEMES, 'src' )
 m <- length(DEMES)
 
-##- Could have done with expand.grid
+##- Could have done with expand.grid ?
 #   DEMES <- as.vector(
 #    apply( 
 #      expand.grid(NH_COMPS, 
@@ -166,7 +168,7 @@ m <- length(DEMES)
 #      )
 #    )
 
-# indicators for each deme; not C-indexing
+# level indicators for each deme; not C-indexing (start at 0)
 NH = rep(NA, m)
 AGE = rep(NA, m)
 CARE = rep(NA, m )
@@ -202,16 +204,19 @@ colnames(prRecipMat) = rownames(prRecipMat) <- DEMES
 .mweight <- function( rowdeme, coldeme ){
 	if (rowdeme=='src') return (0)
 	if (coldeme=='src') return (0)
+   ##- retrieve index of age for transmitter and age, stage, care, risk for recipient
 	rowage <-  as.numeric( regmatches( rowdeme, regexec( "\\.age([0-9])", rowdeme) )[[1]][2] )
 	colage <-  as.numeric( regmatches( coldeme, regexec( "\\.age([0-9])", coldeme) )[[1]][2] )
 	colpss <- as.numeric( regmatches( coldeme, regexec( "stage([0-9])", coldeme) )[[1]][2] )
 	colcare <- as.numeric( regmatches( coldeme, regexec( "care([0-9])", coldeme) )[[1]][2] )
 	colrisk <- as.numeric( regmatches( coldeme, regexec( "riskLevel([0-9])", coldeme) )[[1]][2] )
+	 ##- no transmission if recip care status in c(2,3) ?
 	wcare <- ifelse( colcare == 1, 1, 0)
+	 ##- risk level
 	wrisk <- ifelse( colrisk == 1, theta['pRiskLevel1'], 1 - theta['pRiskLevel1'] )
 #~ 	browser()
 	wrisk * wcare * pstarts[colpss] * theta['age_assort_factor']^abs( rowage - colage )
-	## thought it was  P(a -> a’) ∝ |a - a’|^coef ?
+	## P(a -> a’) ∝ coef^|a - a’|
 }
 ##- matrix of transmission weights
 for (i in 1:(m-1)) for (j in 1:(m-1)){
@@ -220,12 +225,13 @@ for (i in 1:(m-1)) for (j in 1:(m-1)){
 ##- normalize
 prRecipMat <- prRecipMat / rowSums( prRecipMat )
 ##- source
-prRecipMat[m,] <- 0
-prRecipMat[m,m] <- 1
+prRecipMat[m,] <- 0 # from src
+prRecipMat[m,m] <- 1 # src to src
 
 ####---- Migration matrix ----####
 ## mig mat
 # NOTE uses R indices 
+##- To which deme index goes a deme with one increment of age, care or stage
 STAGEPROG_RECIP <- rep(-1, m)
 CARE_RECIP <- rep(-1, m )
 AGE_RECIP <- rep(-1, m )
@@ -266,8 +272,10 @@ for (i in 1:(m-1)){
 
 ## initial conditions
 y0 <- setNames( rep(0, m ), DEMES )
+##- uniform start as undiagnosed
 y0[ CARE_COORDS$care1 ] <- 1 / length( CARE_COORDS$care1 )
-y0[m] <- theta['src0'] # initial source size 
+# initial source size 
+y0[m] <- theta['src0'] 
 
 
 
@@ -277,8 +285,10 @@ y0[m] <- theta['src0'] # initial source size
 # incidence (t) 
 phil_inc <- data.matrix( read.table( 'incidence.tsv') )[,1] 
 phil_inc_times <- seq( 1980, 2010, length.out = length(phil_inc))
+## plot(phil_inc_times, phil_inc)
 d_phil_inc_times <- phil_inc_times[2] - phil_inc_times[1]
-phil_inc.t <- approxfun( phil_inc_times, phil_inc, rule = 2 ) ## interpolation
+phil_inc.t <- approxfun( phil_inc_times, phil_inc, rule = 2 ) ## interpolation (use ?)
+##- return scaled incidence from A Phillips, PLoS ONE 2013, at time t
 inc.t <- function(t, theta) {
 	y <- days2years(t)
 	i <- min(length(phil_inc), max(1, 1 + floor( (y - phil_inc_times[1]) / d_phil_inc_times )) )
@@ -299,7 +309,8 @@ diag.t <- function(t, theta){
 	}
 	dr85
 }
-
+# diag <- sapply( years2days(phil_inc_times), function(t) diag.t( t, theta ) )
+# plot(phil_inc_times, diag)
 
 
 
@@ -311,12 +322,20 @@ tr.t <- function(t){
 }
 #~ ys <- 1990:2012
 #~ plot( ys, 1 / ( 1 + exp(-(ys - 2e3)/5)) )
+# tr <- sapply( years2days(phil_inc_times), tr.t )
+# plot(phil_inc_times, tr)
+
 
 
 dydt <- function(t,y, parms, ... ){
 	y <- pmax(y, 0 )
 	incidence <- inc.t( t, theta )
 	care_rates <- c( diag.t( t, theta), tr.t( t) )
+	
+	##- (birth) matrix F: gamma = (nh_wtransm(nh) * age_wtransm(age) * care_wtransm(care) * risk_wtransm (risk ))
+	## transm = gamma * I
+	## F = transm * prRecipMat
+	## (death rate for src population is in cpp function F_matrix)
 	
 	FF <- F_matrix( incidence
 	  , y
@@ -333,6 +352,7 @@ dydt <- function(t,y, parms, ... ){
 	  , prRecipMat # pstartstage & age mixing & prisklevel
 	)
 	
+	## migration matrix
 	GG <- G_matrix( y
 	  , theta
 	  , DEMES
@@ -579,6 +599,7 @@ if (F)
 		idiagnosed <- sum( o[nrow(o), 1 + c( CARE_COORDS$care2, CARE_COORDS$care3) ] )
 		print(paste( ifin, idiagnosed ))
 		print( theta[fit_names ] )
+		## minimize bias in inc and diag rate
 		((ifin - I2012) / I2012)^2 + (idiagnosed/ifin - propDiagnosed2012)^2
 	}
 	fit_names <- c('inc_scale', 'max_diag_rate', 'accel_diag_rate')
@@ -587,6 +608,7 @@ if (F)
 	theta_docked <- exp(o$par)
 	print((o))
 }
+
 
 ##- Output o and tree and inputs
 parms <- c(theta, nh_wtransm, age_wtransm, care_wtransm, risk_wtransm)
