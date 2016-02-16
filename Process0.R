@@ -1,5 +1,7 @@
 ####---- run model0.R ----####
 #### rm(list=ls())
+library(ape)
+library(ggplot2)
 ####---- process o and tree ----####
 ## Load newest Rdata
 l <- list.files(pattern="*.Rdata") # list.files(pattern="Rdata$") list.files(pattern="out")
@@ -22,8 +24,6 @@ t <- drop.tip(t, og )
 
 ## get distances
 ##- matrix first into distances
-library(ape)
-library(ggplot2)
 tree
 simtree <- as.dist(cophenetic.phylo(tree))
 uktree <- as.dist(cophenetic.phylo(t))
@@ -45,6 +45,7 @@ simhc <- hclust(simx, method = "average") # UPGMA
 ukhc <- hclust(ukx, method = "average")
 
 ##- cut
+if (F){
 #- function of heights
 nheights <- 10 # number of threshold
 up <- round(mean(simx), 1) # cut up to the mean
@@ -53,6 +54,7 @@ simclus <- cutree(simhc, h = seq(up / nheights, up, by = up / nheights) ) # h = 
 up <- round(mean(ukx),1) # cut up to the mean
 ukclus <- cutree(ukhc,  h = seq(up / nheights, up, by = up /nheights) )
 # rm(simx, ukx)
+}
 
 #- function of k groups
 kgroups <- c(100, 500, 1000, 2000, 5000)
@@ -69,7 +71,7 @@ simfreqClust <- apply(simclus, 2, function(x) as.data.frame(table(x))) # list
 ukfreqClust <- apply(ukclus, 2, function(x) as.data.frame(table(x)))
 str(simfreqClust)
 head(simfreqClust[[1]])
-##- number of different clusters by threshold
+##- number of different clusters by threshold # if number varies !
 sapply(simfreqClust, function(x) dim(x)[1])
 sapply(ukfreqClust, function(x) dim(x)[1])
 
@@ -81,6 +83,19 @@ sapply(ukfreqClust, function(x) summary(x$Freq))
 
 ##- plot: distributions of cluster sizes for different number of clusters
 ##- dataframe: 
+df <- data.frame()
+for (i in 2:length(kgroups)){
+  df <- rbind(df,
+              rbind( cbind(gr = "sim", 
+                           k = names(simfreqClust)[i], 
+                           simfreqClust[[i]]) ,
+                     cbind(gr = "uk", 
+                           k = names(ukfreqClust)[i],
+                           ukfreqClust[[i]]) )
+              )
+}
+head(df)
+str(df)
 df <- rbind( cbind(gr = "sim", simfreqClust[[3]]) ,
              cbind(gr = "uk", ukfreqClust[[3]]) )
 
@@ -91,6 +106,29 @@ bp <- ggplot(data = df, aes(gr, log(Freq)))
 bp + geom_boxplot()  
 
 
+###---
+g <- ggplot(data = df, aes(x = Freq))
+
+g + geom_histogram(binwidth = 20) +
+  facet_grid(k  ~ gr, 
+               scales = "free",
+               space = "free")
+
+##- UPGMA comparison of cluster sizes
+g +  geom_histogram(origin = 0, binwidth = .5) + 
+  scale_x_continuous(breaks=c(0,1,3,10,30,100,300,1000,5000), 
+                     trans = "log1p",
+                     name = "Cluster size") +
+  scale_y_continuous(breaks=c(0, 30, 100, 300, 1000),
+                     trans = "log1p",
+                     name = "Number of clusters") +
+  facet_grid(k  ~ gr, 
+             scales = "free",
+             space = "free") +
+  theme_minimal()
+ # theme_bw()
+
+
 ##-- check assortativity 
 ## first use EdgeList at each level
 ## then function AssortMix
@@ -99,7 +137,3 @@ bp + geom_boxplot()
 ##- UCSD cluster
 ##
 ##
-### ex cscaling
-x <- matrix(1:10, ncol = 2)
-(centered.x <- scale(x, scale = FALSE))
-cov(centered.scaled.x <- scale(x)) # all 1
