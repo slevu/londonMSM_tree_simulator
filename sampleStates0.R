@@ -1,9 +1,9 @@
-cd4s <- read.csv('ukdrd2/cd4s.csv' )
-res <- read.csv('ukdrd2/resistance.csv')
-dem <- read.csv('ukdrd2/demographics.csv')
+cd4s <- read.csv('../phylo-uk/source/cd4s.csv' )
+res <- read.csv('../phylo-uk/source/resistance.csv')
+dem <- read.csv('../phylo-uk/source/demographics.csv')
 #~ W0 <- read.csv( '../msm0/W0.csv')
 #pids <- unique( W0$donor ) #doesnt work; only ~5k in cluster are counteed here
-dates <- read.table( 'ukdrd2/ExaML_trees/ExaML_result.subUKogC_noDRM.reroot_dropOG.dates', skip=1)
+dates <- read.table( '../phylo-uk/data/ExaML_result.subUKogC_noDRM.reroot_dropOG.dates', skip=1) # from raxml_lsd_inputs0-rerunSLV.R
 sids <- dates$V1
 pids <- res$patientindex[ match(sids, res$testindex) ]
 sampleTimes_birthday <- dates$V2
