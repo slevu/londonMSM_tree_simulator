@@ -165,11 +165,77 @@ g +  geom_histogram(origin = 0, binwidth = .5) +
 ##-- quantile-quantile
 
 ##- data 
-str(o)
-dim(o)
-str(tree)
-o[990:1000, 120:122]
-head(tree$tip.label)
+##- converting sample states in table of co-variates ?
+demes <- as.vector(read.csv(file = "demes.csv")$x)
+sampleTimes <- scan( file = 'sampleTimes' )
+ss  <- matrix( scan( file = 'sampleStates' ) , 
+               byrow = TRUE, 
+               ncol = length(demes))
+colnames(ss) <- demes
+dim(ss)
+
+demo <- data.frame()
+for (i in 1:dim(ss)[1]){ # dim(ss)[1]
+  deme <- names(which(ss[i,] == 1)) # name of column which has value 1
+  patient <- i
+  time <- sampleTimes[i]
+  age <- as.numeric( regmatches( deme, 
+                regexec( "\\.age([0-9])", deme) )[[1]][2] )
+  care <- as.numeric( regmatches( deme, 
+                regexec( "care([0-9])", deme) )[[1]][2] )
+  stage <- as.numeric( regmatches( deme, 
+                regexec( "stage([0-9])", deme) )[[1]][2] )
+  risk <- as.numeric( regmatches( deme, 
+                regexec( "riskLevel([0-9])", deme) )[[1]][2] )
+  demo <- rbind(demo, cbind(
+    patient, time, age, care, stage, risk))
+} 
+str(demo)
+date0 <- as.Date('1979-01-01')
+demo$datediag <- date0 + demo$time
+min(demo$datediag)
+max(demo$datediag)
+
+##- add cluster sizes ... and outdegrees
+############################################## laaaaaa
+##---- loop ----
+##- function to calculate both numclus and sizeclus for each seqindex into a LIST
+##- with same variable names
+if (F){
+
+b <- data.frame("seqindex" = hc$labels)
+l <- list()
+for (i in 1:5) {
+  #- cluster number
+  numclus <- as.data.frame(cutree(hc, h = i/100))
+  numclus <- cbind(rownames(numclus),  numclus)
+  colnames(numclus) <- c("seqindex", "numclus")
+  row.names(numclus) <- NULL
+  # head(numclus)
+  
+  #- size of cluster and binary variable belong to a cluster of size > 1
+  frclus <- as.data.frame(table(numclus[,2]))
+  frclus$clus <- ifelse(frclus$Freq > 1, 1, 0)
+  # head(frclus)
+  
+  #- merge and assign variable name
+  a <- merge(x = numclus, y = frclus, 
+             by.x = "numclus", by.y = "Var1", 
+             all.x = TRUE, sort = FALSE)
+  # head(a)
+  colnames(a) <- c("num", "seqindex", "size", "clus")
+  
+  #- append into a dataframe
+  l[[i]] <- merge(b, a, by="seqindex", sort = FALSE)
+}
+rm(a, numclus, frclus, i, b)
+# str(l)
+
+##-proportion in or out clusters
+lapply(l, function(x) prop.table(table(x$clus)))
+head(l[[1]])
+}
+
 ##-- check assortativity 
 ## first use EdgeList at each level
 ## then function AssortMix
