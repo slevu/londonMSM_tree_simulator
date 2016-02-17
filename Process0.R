@@ -71,6 +71,7 @@ simfreqClust <- apply(simclus, 2, function(x) as.data.frame(table(x))) # list
 ukfreqClust <- apply(ukclus, 2, function(x) as.data.frame(table(x)))
 str(simfreqClust)
 head(simfreqClust[[1]])
+
 ##- number of different clusters by threshold # if number varies !
 sapply(simfreqClust, function(x) dim(x)[1])
 sapply(ukfreqClust, function(x) dim(x)[1])
@@ -80,8 +81,55 @@ sapply(simfreqClust, function(x) summary(x$Freq))
 sapply(ukfreqClust, function(x) summary(x$Freq))
 ##- percentiles
 # sapply(freqClust, function(x) round(quantile(x$Freq, probs = c(0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.95, 0.99, 1))))
+# 
 
-##- plot: distributions of cluster sizes for different number of clusters
+##- distr of cluster sizes: log(x) and Y untransformed
+par(mfcol=c(2,5))
+for (i in 1:length(kgroups)){
+  h <- hist(log(ukfreqClust[[i]]$Freq), 
+       main = paste("uk", names(ukfreqClust)[i]),
+       xlab = "log(size)")
+  hist(log(simfreqClust[[i]]$Freq), 
+       main = paste("sim", names(simfreqClust)[i]),
+       xlab = "log(size)")
+}
+
+##- distr of cluster sizes: log(x) and log(y)
+par(mfcol=c(2,5))
+for (i in 1:length(kgroups)){
+  h <- hist(log(ukfreqClust[[i]]$Freq), plot = F)
+  h$counts <- log1p(h$counts) # log(y)
+  plot(h, ylab = "log(Freq)", 
+       main = paste("uk", names(ukfreqClust)[i]),
+       xlab = "log(size)")
+  
+  h <- hist(log(simfreqClust[[i]]$Freq), plot = F)
+  h$counts <- log1p(h$counts) # log(y)
+  plot(h, ylab = "log(Freq)",
+          main = paste("sim", names(simfreqClust)[i]),
+          xlab = "log(size)")
+  
+}
+
+##- QQ plot
+par(mfcol=c(2,5))
+for (i in 1:length(kgroups)){
+  qqplot(ukfreqClust[[i]]$Freq, 
+         simfreqClust[[i]]$Freq,
+         main = names(ukfreqClust)[i],
+         xlab = "uk", ylab = "sim")
+  qqline(y, col = 2)
+  qqplot(log(ukfreqClust[[i]]$Freq), 
+         log(simfreqClust[[i]]$Freq),
+         main = names(ukfreqClust)[i],
+         xlab = "log(uk)", ylab = "log(sim)")
+
+}
+
+
+
+
+##- ggplot: distributions of cluster sizes for different number of clusters
 ##- dataframe: 
 df <- data.frame()
 for (i in 2:length(kgroups)){
@@ -96,25 +144,10 @@ for (i in 2:length(kgroups)){
 }
 head(df)
 str(df)
-df <- rbind( cbind(gr = "sim", simfreqClust[[3]]) ,
-             cbind(gr = "uk", ukfreqClust[[3]]) )
 
-g <- ggplot(data = df, aes(x = Freq, group = gr))
-g + geom_histogram(binwidth = 10) + facet_grid( ~ gr)
-
-bp <- ggplot(data = df, aes(gr, log(Freq)))
-bp + geom_boxplot()  
-
-
-###---
-g <- ggplot(data = df, aes(x = Freq))
-
-g + geom_histogram(binwidth = 20) +
-  facet_grid(k  ~ gr, 
-               scales = "free",
-               space = "free")
 
 ##- UPGMA comparison of cluster sizes
+g <- ggplot(data = df, aes(Freq))
 g +  geom_histogram(origin = 0, binwidth = .5) + 
   scale_x_continuous(breaks=c(0,1,3,10,30,100,300,1000,5000), 
                      trans = "log1p",
@@ -129,11 +162,28 @@ g +  geom_histogram(origin = 0, binwidth = .5) +
  # theme_bw()
 
 
+##-- quantile-quantile
+
+##- data 
+str(o)
+dim(o)
+str(tree)
+o[990:1000, 120:122]
+head(tree$tip.label)
 ##-- check assortativity 
 ## first use EdgeList at each level
 ## then function AssortMix
 
+##- false discovery rate: trnamission rates are equal according to cluster or SA ?
+## on 100 trees, find significant association
+## 
+## study variance in cluster size, outdegrees changes with respect to the risk levels
 
 ##- UCSD cluster
 ##
 ##
+y <- rt(200, df = 5)
+qqnorm(y); qqline(y, col = 2)
+qqplot(y, rt(300, df = 5))
+
+qqnorm(precip, ylab = "Precipitation [in/yr] for 70 US cities")
