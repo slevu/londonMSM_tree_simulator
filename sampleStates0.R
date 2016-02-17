@@ -4,6 +4,7 @@ dem <- read.csv('../phylo-uk/source/demographics.csv')
 #~ W0 <- read.csv( '../msm0/W0.csv')
 #pids <- unique( W0$donor ) #doesnt work; only ~5k in cluster are counteed here
 dates <- read.table( '../phylo-uk/data/ExaML_result.subUKogC_noDRM.reroot_dropOG.dates', skip=1) # from raxml_lsd_inputs0-rerunSLV.R
+
 sids <- dates$V1
 pids <- res$patientindex[ match(sids, res$testindex) ]
 sampleTimes_birthday <- dates$V2
@@ -67,7 +68,9 @@ for ( nh in NH_COMPS ){
 DEMES <- c( DEMES, 'src' )
 m <- length(DEMES)
 #pid2sampleStates <- function(pid)
+write.csv( file = 'demes.csv' , DEMES, row.names = F )
 
+##- match CD4 stage and age quantile of UK data, undiagnosed, allocate risk level
 sampleStates <- t( sapply( 1:length(pids), function(i) {
 	nh <- paste(sep='', 'stage', cd4Stages[i])
 	age <- paste(sep='', 'age', ageQuants[i])
