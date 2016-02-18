@@ -1,0 +1,68 @@
+\documentclass[]{revtex4} %twocolumn revtex4
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+
+\begin{document}
+
+\title{Simulated tree - Feb 2016}
+\author{S. Le Vu}
+%\affiliation{ICL}
+\date{\today}
+
+\maketitle
+
+<<external-code, echo=FALSE, cache= FALSE>>=
+library(knitr)
+read_chunk('Process0.R')
+@
+
+<<setup, echo=FALSE>>=
+opts_chunk$set(comment="", message=FALSE, tidy.opts=list(width.cutoff=120), options(width=100), fig.align='center',fig.height=6, fig.width=10, out.width='10cm',  fig.show='hold', fig.path='figure/plot')
+@
+
+<<lib, warning = FALSE>>=
+@
+
+\section{Load stuff}
+Import simulation outputs
+<< load sim >>=
+@
+
+Import ExaML tree 0
+<< load uk stuff >>=
+@
+
+\section{Tree distances}
+Patristic distances ?
+<<get distances>>=
+@
+
+\section{Clustering}
+Clustering with fixed number of groups ?
+<<cluster UPGMA>>=
+@
+
+Distribution of sizes - untransformed, transformed
+<<plot cluster size>>=
+@
+
+QQ plot
+<<QQ plot>>=
+@
+% ggplot unecessary
+
+\section{Add patients data}
+Add data from sample states and time
+<<data>>=
+@
+
+Add cluster size by patient
+<<add cluster sizes>>=
+@
+
+
+
+
+
+\end{document}
