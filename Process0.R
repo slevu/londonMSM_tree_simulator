@@ -1,38 +1,52 @@
 ####---- run model0.R ----####
+## should run model with scenarios
+
 #### rm(list=ls())
+
+####---- lib ----
 library(ape)
 library(ggplot2)
-####---- process o and tree ----####
+
+####---- load sim ----
 ## Load newest Rdata
 l <- list.files(pattern="*.Rdata") # list.files(pattern="Rdata$") list.files(pattern="out")
 load(l[length(l)])
-# str(o)
-# require(deSolve)
-# ?ode
-##- ode(y, times, func, parms, method)
+ls()
+tree 
 
-####---- load ExaML tree ----####
-t <- read.tree(file = "../phylo-uk/data/ExaML_result.subUKogC_noDRM.finaltree.000")
+####---- load uk stuff ----
+t_uk <- read.tree(file = "../phylo-uk/data/ExaML_result.subUKogC_noDRM.finaltree.000")
 ## drop OG
 og <- c("Ref1", "Ref2", "Ref3", "Ref4", "Ref5", "Ref6", "HXB2")
-t <- drop.tip(t, og ) 
-# to drop all tips except wanted 
-# t_og <- drop.tip(t, which(!t$tip.label %in% og))
-# 
-####---- compare----#####
-####  cluster size to real data. Need to have same number of clusters...
+t_uk <- drop.tip(t_uk, og ) 
+t_uk
+
+####---- get distances ----
+####  cluster size to real data. Need to have same number of clusters ?
 
 ## get distances
 ##- matrix first into distances
-tree
-simtree <- as.dist(cophenetic.phylo(tree))
-uktree <- as.dist(cophenetic.phylo(t))
-head(simtree)
-head(uktree)
+
+#- sim tree
+if (file.exists("data/simtree_dist.rds")){
+  dsimtree <- readRDS("data/simtree_dist.rds")
+} else {
+dsimtree <- as.dist(cophenetic.phylo(tree))
+saveRDS(dsimtree, file = "data/simtree_dist.rds")
+}
+# uk tree
+if (file.exists("data/uktree_dist.rds")){
+  duktree <- readRDS("data/uktree_dist.rds")
+} else {
+  duktree <- as.dist(cophenetic.phylo(t_uk))
+  saveRDS(duktree, file = "data/uktree_dist.rds")
+}
+head(dsimtree)
+head(duktree)
 
 ## normalize
-simx <- simtree / (max(simtree) - min(simtree))
-ukx <- uktree / (max(uktree) - min(uktree))
+simx <- dsimtree / (max(dsimtree) - min(dsimtree))
+ukx <- duktree / (max(duktree) - min(duktree))
 # rm(simtree, uktree)
 
 ##- histogram distances
@@ -40,11 +54,11 @@ ukx <- uktree / (max(uktree) - min(uktree))
 hist(simx, breaks = 50, xlab = "distance", ylab = "frequency", main = "", col = "grey")
 hist(ukx, breaks = 50, xlab = "distance", ylab = "frequency", main = "", col = "grey")
 
-##- cluster UPGMA
+####---- cluster UPGMA ----
 simhc <- hclust(simx, method = "average") # UPGMA
 ukhc <- hclust(ukx, method = "average")
 
-##- cut
+##- cut based on height
 if (F){
 #- function of heights
 nheights <- 10 # number of threshold
@@ -56,35 +70,38 @@ ukclus <- cutree(ukhc,  h = seq(up / nheights, up, by = up /nheights) )
 # rm(simx, ukx)
 }
 
-#- function of k groups
-kgroups <- c(100, 500, 1000, 2000, 5000)
+#- cut as function of k groups
+kgroups <- c(500, 1000, 5000, 8000, 10000)
 simclus <- cutree(simhc, k = kgroups ) # h = breaks
 ukclus <- cutree(ukhc,  k = kgroups )
-
-# colnames(cluster) <- paste("c",colnames(cluster),sep='')
-# colnames(cluster) <- paste("c", 1:8, sep='')
+# colnames(simclus) <- paste("k",colnames(simclus),sep='')
+# colnames(ukclus) <- paste("k",colnames(ukclus),sep='')
 head(simclus)
 head(ukclus)
 
 ##- Calculate size(=Freq) of each cluster across different threshold
 simfreqClust <- apply(simclus, 2, function(x) as.data.frame(table(x))) # list
 ukfreqClust <- apply(ukclus, 2, function(x) as.data.frame(table(x)))
-str(simfreqClust)
-head(simfreqClust[[1]])
+# str(simfreqClust)
+# head(simfreqClust[[1]])
 
 ##- number of different clusters by threshold # if number varies !
-sapply(simfreqClust, function(x) dim(x)[1])
-sapply(ukfreqClust, function(x) dim(x)[1])
+# sapply(simfreqClust, function(x) dim(x)[1])
+# sapply(ukfreqClust, function(x) dim(x)[1])
 
 ##- cluster size
+#- sim
 sapply(simfreqClust, function(x) summary(x$Freq))
+#- uk
 sapply(ukfreqClust, function(x) summary(x$Freq))
 ##- percentiles
-# sapply(freqClust, function(x) round(quantile(x$Freq, probs = c(0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.95, 0.99, 1))))
+# sapply(freqClust, function(x) round(quantile(x$Freq, 
+# probs = c(0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.95, 0.99, 1))))
 # 
 
+####---- plot cluster size ----
 ##- distr of cluster sizes: log(x) and Y untransformed
-par(mfcol=c(2,5))
+par(mfcol=c(2, length(kgroups)))
 for (i in 1:length(kgroups)){
   h <- hist(log(ukfreqClust[[i]]$Freq), 
        main = paste("uk", names(ukfreqClust)[i]),
@@ -95,7 +112,7 @@ for (i in 1:length(kgroups)){
 }
 
 ##- distr of cluster sizes: log(x) and log(y)
-par(mfcol=c(2,5))
+par(mfcol=c(2, length(kgroups)))
 for (i in 1:length(kgroups)){
   h <- hist(log(ukfreqClust[[i]]$Freq), plot = F)
   h$counts <- log1p(h$counts) # log(y)
@@ -111,14 +128,14 @@ for (i in 1:length(kgroups)){
   
 }
 
-##- QQ plot
-par(mfcol=c(2,5))
+####---- QQ plot ----
+par(mfcol=c(2, length(kgroups)))
 for (i in 1:length(kgroups)){
   qqplot(ukfreqClust[[i]]$Freq, 
          simfreqClust[[i]]$Freq,
          main = names(ukfreqClust)[i],
          xlab = "uk", ylab = "sim")
-  qqline(y, col = 2)
+
   qqplot(log(ukfreqClust[[i]]$Freq), 
          log(simfreqClust[[i]]$Freq),
          main = names(ukfreqClust)[i],
@@ -126,9 +143,7 @@ for (i in 1:length(kgroups)){
 
 }
 
-
-
-
+####---- ggplot cluster size ----
 ##- ggplot: distributions of cluster sizes for different number of clusters
 ##- dataframe: 
 df <- data.frame()
@@ -162,9 +177,7 @@ g +  geom_histogram(origin = 0, binwidth = .5) +
  # theme_bw()
 
 
-##-- quantile-quantile
-
-##- data 
+####---- data ----
 ##- converting sample states in table of co-variates ?
 demes <- as.vector(read.csv(file = "demes.csv")$x)
 sampleTimes <- scan( file = 'sampleTimes' )
@@ -173,6 +186,7 @@ ss  <- matrix( scan( file = 'sampleStates' ) ,
                ncol = length(demes))
 colnames(ss) <- demes
 dim(ss)
+max(ss[,121]) # nothing on source
 
 demo <- data.frame()
 for (i in 1:dim(ss)[1]){ # dim(ss)[1]
@@ -191,50 +205,96 @@ for (i in 1:dim(ss)[1]){ # dim(ss)[1]
     patient, time, age, care, stage, risk))
 } 
 str(demo)
+
+##- date of diagnosis ?
 date0 <- as.Date('1979-01-01')
 demo$datediag <- date0 + demo$time
 min(demo$datediag)
 max(demo$datediag)
 
-##- add cluster sizes ... and outdegrees
-############################################## laaaaaa
+####---- add cluster sizes ----
+####... and outdegrees
+
 ##---- loop ----
 ##- function to calculate both numclus and sizeclus for each seqindex into a LIST
 ##- with same variable names
-if (F){
-
-b <- data.frame("seqindex" = hc$labels)
-l <- list()
-for (i in 1:5) {
+  ##- in list
+  l <- list()
+  for (i in 1:length(kgroups)) {
+    
   #- cluster number
-  numclus <- as.data.frame(cutree(hc, h = i/100))
-  numclus <- cbind(rownames(numclus),  numclus)
-  colnames(numclus) <- c("seqindex", "numclus")
+  numclus <- as.data.frame(simclus[, i])
+  numclus <- cbind(rownames(numclus), numclus)
+  colnames(numclus) <- c("id", "num")
   row.names(numclus) <- NULL
   # head(numclus)
   
-  #- size of cluster and binary variable belong to a cluster of size > 1
-  frclus <- as.data.frame(table(numclus[,2]))
-  frclus$clus <- ifelse(frclus$Freq > 1, 1, 0)
-  # head(frclus)
-  
-  #- merge and assign variable name
-  a <- merge(x = numclus, y = frclus, 
-             by.x = "numclus", by.y = "Var1", 
+  #- size of cluster
+  a <- merge(x = numclus, y = simfreqClust[[i]], 
+             by.x = "num", by.y = "x", 
              all.x = TRUE, sort = FALSE)
-  # head(a)
-  colnames(a) <- c("num", "seqindex", "size", "clus")
-  
-  #- append into a dataframe
-  l[[i]] <- merge(b, a, by="seqindex", sort = FALSE)
-}
-rm(a, numclus, frclus, i, b)
+  #- binary clustering variable
+  a$Clus <- ifelse(a$Freq > 1, 1, 0)
+  #- colnames
+  colnames(a)[which(colnames(a) =="Freq")] <- "size"
+  colnames(a)[which(colnames(a) =="Clus")] <- "clus"
+  l[[i]] <- a
+  names(l)[i] <- names(simfreqClust[i])
+  }
+
+  rm(a, numclus)
 # str(l)
 
 ##-proportion in or out clusters
-lapply(l, function(x) prop.table(table(x$clus)))
-head(l[[1]])
-}
+sapply(l, function(x) round(prop.table(table(x$clus)),2))
+##- cluster sizes
+sapply(l, function(x) summary(x$size))
+
+##---- merge ----
+listclus <- lapply(l, function(x) 
+merge(x, demo, 
+      by.x = "id", by.y = "patient", 
+      all.x = T, sort = FALSE))
+
+# head(listclus[[4]])
+# table(listclus[[4]]$clus)
+
+##---- logistic ---- 
+##- model: clus ~ age +  stage + time + risk
+##- care = 1 for all at diagnosis
+## ex. 
+logit_model = "clus ~ age + stage + time + risk"
+logit_model_std = "clus ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
+?glm
+lapply(listclus, function(x) summary(glm(formula = logit_model_std,
+                                 data = x,
+                                 family = binomial(link = "logit"))))
+
+# logistic <- function(x, m = logit_model){
+#   fit <- glm(m , data = x, 
+#                    family = binomial(link = "logit"))
+#   co <- coef(summary(fit))
+#   ## odds ratios and 95% CI
+#   # or <- exp(cbind(OR = coef(fit), confint(fit)))
+#   # return(list(co, or))
+#   return(cbind(co[,c(1,4)]))
+# }
+# 
+# ##- test 1 level
+# c <- listclus[[1]]
+# logistic(x = c, m = logit_model_std)
+# 
+# ##- all levels
+# lapply(listclus, function(x) logistic(x, m = logit_model_std))
+
+##---- linear ----
+lm_model = "size ~ age + stage + time + risk"
+lm_model_std = "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
+
+lapply(listclus, function(x) summary(lm(lm_model_std, data = x)))
+
+
+####---- end ----
 
 ##-- check assortativity 
 ## first use EdgeList at each level

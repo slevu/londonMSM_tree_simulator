@@ -43,7 +43,7 @@ Clustering with fixed number of groups ?
 <<cluster UPGMA>>=
 @
 
-Distribution of sizes - untransformed, transformed
+Distribution of sizes - semitransformed, transformed
 <<plot cluster size>>=
 @
 
@@ -58,7 +58,22 @@ Add data from sample states and time
 @
 
 Add cluster size by patient
-<<add cluster sizes>>=
+<<loop>>=
+@
+
+<<merge>>=
+@
+
+\section{Regressions}
+
+\subsection{Logistic}
+<<logistic>>=
+
+@
+
+\subsection{Linear}
+<<linear>>=
+
 @
 
 

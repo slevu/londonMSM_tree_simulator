@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.12.3)  18 FEB 2016 15:32
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.12.3)  18 FEB 2016 18:23
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -377,14 +377,14 @@ File: t1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
 (Font)              Font shape `T1/lmtt/b/n' tried instead on input line 71.
 Package color Info: Redefining color shadecolor on input line 80.
-Package color Info: Redefining color shadecolor on input line 95.
-Package color Info: Redefining color shadecolor on input line 118.
+Package color Info: Redefining color shadecolor on input line 107.
+Package color Info: Redefining color shadecolor on input line 130.
  [1{/usr/local/texlive/2015/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 <figure/plotget_distances-1.pdf, id=13, 722.7pt x 433.62pt>
 File: figure/plotget_distances-1.pdf Graphic file (type pdf)
 
 <use figure/plotget_distances-1.pdf>
-Package pdftex.def Info: figure/plotget_distances-1.pdf used on input line 162.
+Package pdftex.def Info: figure/plotget_distances-1.pdf used on input line 175.
 
 (pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
 
@@ -392,70 +392,97 @@ Package pdftex.def Info: figure/plotget_distances-1.pdf used on input line 162.
 File: figure/plotget_distances-2.pdf Graphic file (type pdf)
 
 <use figure/plotget_distances-2.pdf>
-Package pdftex.def Info: figure/plotget_distances-2.pdf used on input line 163.
+Package pdftex.def Info: figure/plotget_distances-2.pdf used on input line 176.
 
 (pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
-Package color Info: Redefining color shadecolor on input line 174.
-LaTeX Font Info:    Try loading font information for TS1+lmtt on input line 195
+ [2]
+Package color Info: Redefining color shadecolor on input line 187.
+LaTeX Font Info:    Try loading font information for TS1+lmtt on input line 208
 .
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/lm/ts1lmtt.fd
 File: ts1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
-) [2 <./figure/plotget_distances-1.pdf> <./figure/plotget_distances-2.pdf>] [3]
-Package color Info: Redefining color shadecolor on input line 268.
-
-<figure/plotplot_cluster_size-1.pdf, id=32, 722.7pt x 433.62pt>
+) [3 <./figure/plotget_distances-1.pdf> <./figure/plotget_distances-2.pdf>]
+Package color Info: Redefining color shadecolor on input line 281.
+ [4]
+<figure/plotplot_cluster_size-1.pdf, id=35, 722.7pt x 433.62pt>
 File: figure/plotplot_cluster_size-1.pdf Graphic file (type pdf)
 
 <use figure/plotplot_cluster_size-1.pdf>
 Package pdftex.def Info: figure/plotplot_cluster_size-1.pdf used on input line 
-300.
+313.
 (pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
 
-<figure/plotplot_cluster_size-2.pdf, id=33, 722.7pt x 433.62pt>
+<figure/plotplot_cluster_size-2.pdf, id=36, 722.7pt x 433.62pt>
 File: figure/plotplot_cluster_size-2.pdf Graphic file (type pdf)
 
 <use figure/plotplot_cluster_size-2.pdf>
 Package pdftex.def Info: figure/plotplot_cluster_size-2.pdf used on input line 
-301.
+314.
 (pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
- [4]
-Package color Info: Redefining color shadecolor on input line 311.
-
-<figure/plotQQ_plot-1.pdf, id=37, 722.7pt x 433.62pt>
+Package color Info: Redefining color shadecolor on input line 324.
+ [5 <./figure/plotplot_cluster_size-1.pdf> <./figure/plotplot_cluster_size-2.pd
+f>]
+<figure/plotQQ_plot-1.pdf, id=52, 722.7pt x 433.62pt>
 File: figure/plotQQ_plot-1.pdf Graphic file (type pdf)
 
 <use figure/plotQQ_plot-1.pdf>
-Package pdftex.def Info: figure/plotQQ_plot-1.pdf used on input line 329.
+Package pdftex.def Info: figure/plotQQ_plot-1.pdf used on input line 342.
 (pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
- [5 <./figure/plotplot_cluster_size-1.pdf> <./figure/plotplot_cluster_size-2.pd
-f>]
-Package color Info: Redefining color shadecolor on input line 341.
+Package color Info: Redefining color shadecolor on input line 354.
  [6 <./figure/plotQQ_plot-1.pdf>]
-Package color Info: Redefining color shadecolor on input line 409.
+Package color Info: Redefining color shadecolor on input line 422.
  [7]
-(./1_process_simtree.aux) ) 
+Package color Info: Redefining color shadecolor on input line 478.
+Package color Info: Redefining color shadecolor on input line 495.
+ [8]
+Underfull \vbox (badness 10000) detected at line 670
+ []
+
+
+Underfull \vbox (badness 10000) detected at line 670
+ []
+
+[9]
+Underfull \vbox (badness 10000) detected at line 670
+ []
+
+
+Underfull \vbox (badness 10000) detected at line 670
+ []
+
+[10]
+Package color Info: Redefining color shadecolor on input line 675.
+ [11]
+Underfull \vbox (badness 10000) detected at line 796
+ []
+
+
+Underfull \vbox (badness 10000) detected at line 796
+ []
+
+[12] [13] (./1_process_simtree.aux) ) 
 Here is how much of TeX's memory you used:
- 4049 strings out of 493089
- 55643 string characters out of 6134842
- 134381 words of memory out of 5000000
- 7474 multiletter control sequences out of 15000+600000
+ 4054 strings out of 493089
+ 55723 string characters out of 6134842
+ 143508 words of memory out of 5000000
+ 7479 multiletter control sequences out of 15000+600000
  25214 words of font info for 26 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  38i,5n,23p,303b,306s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/
-lm/lm-ts1.enc}{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}
-</usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/loca
-l/texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></usr/local/texlive/2
-015/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2015/texmf-d
-ist/fonts/type1/public/lm/lmr9.pfb></usr/local/texlive/2015/texmf-dist/fonts/ty
-pe1/public/lm/lmtk10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public
-/lm/lmtt10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmtti1
-0.pfb>
-Output written on 1_process_simtree.pdf (7 pages, 286832 bytes).
+{/usr/local/texlive/2015/texmf-dist/fonts/
+enc/dvips/lm/lm-ts1.enc}{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/
+lm-ec.enc}</usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx12.pfb>
+</usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></usr/local
+/texlive/2015/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/20
+15/texmf-dist/fonts/type1/public/lm/lmr9.pfb></usr/local/texlive/2015/texmf-dis
+t/fonts/type1/public/lm/lmtk10.pfb></usr/local/texlive/2015/texmf-dist/fonts/ty
+pe1/public/lm/lmtt10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public
+/lm/lmtti10.pfb>
+Output written on 1_process_simtree.pdf (13 pages, 302963 bytes).
 PDF statistics:
- 95 PDF objects out of 1000 (max. 8388607)
- 68 compressed objects within 1 object stream
+ 114 PDF objects out of 1000 (max. 8388607)
+ 81 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  26 words of extra memory for PDF output out of 10000 (max. 10000000)
 
