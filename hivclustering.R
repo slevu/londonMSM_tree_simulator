@@ -11,6 +11,10 @@ getwd()
 # setwd("../")
 # getwd()
 
+test <- read.csv(file = "~/Documents/phylo-uk/source/subUKogC_noDRM_151202_ucsdTN93.csv")
+dim(test)/12164 *12164 /2
+head(test)
+
 dsimtree <- readRDS("data/simtree_dist.rds")
 ## normalize
 d <- round(dsimtree / (max(dsimtree) - min(dsimtree)), 4)
@@ -18,15 +22,12 @@ rm(dsimtree)
 
 m <- as.matrix(d)
 dim(m)
-mm <- m[12160:12164, 12160:12164]
-dd <- as.dist(mm)
-dds <- as.dist(mm[mm < 0.5])
-mm[lower.tri(mm, diag = FALSE)]
-a <- m[ mm<0.3 ]
 
+lt <- m[lower.tri(m, diag = FALSE)]
+dim(lt)
 library(reshape2)
 system.time(
-  el <- melt(m)
+  el <- melt(lt)
 )
 head(el)
 ## get rid of distance > k = mean
@@ -39,9 +40,18 @@ as.dist(yoursymmetricmatrix[k, k])
 
 rm(d)
 str(dd)
-m <- as.matrix(dd)
+m <- as.matrix(d)
 dim(m)
 mm <- m[12160:12164, 12160:12164]
+dd <- as.dist(mm)
+
+ require(igraph)
+ g <- graph.adjacency(mm, mode = "lower", diag = FALSE)
+ plot(g)
+ get.edgelist(g)
+#     ?graph.adjacency
+melt(mm)
+
 mm[lower.tri(mm, diag = FALSE)]
 a <- m[ mm<0.3 ]
 str(a)
