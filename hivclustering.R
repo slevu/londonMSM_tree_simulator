@@ -11,9 +11,9 @@ getwd()
 # setwd("../")
 # getwd()
 
-test <- read.csv(file = "~/Documents/phylo-uk/source/subUKogC_noDRM_151202_ucsdTN93.csv")
-dim(test)/12164 *12164 /2
-head(test)
+# test <- read.csv(file = "~/Documents/phylo-uk/source/subUKogC_noDRM_151202_ucsdTN93.csv")
+# dim(test)/12164 *12164 /2
+# head(test)
 
 dsimtree <- readRDS("data/simtree_dist.rds")
 ## normalize
