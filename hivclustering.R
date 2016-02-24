@@ -91,9 +91,14 @@ for (thr in (2:6)/10){
   
   
   
-  freqClust <- tapply(cl$ClusterID, cl$t, 
-                      function(x) as.data.frame(table(x),
-                      stringsAsFactors = FALSE))
-str(freqClust)
-head(freqClust[[5]])
+  simfreqClust <- tapply(cl$ClusterID, cl$t, 
+                         function(x) as.data.frame(table(x),
+                                                   stringsAsFactors = FALSE))
+  # str(freqClust)
+  # head(freqClust[[5]])
+  
+  ##- number of different clusters by threshold
+  sapply(simfreqClust, function(x) dim(x)[1])
+  ##- cluster size
+  sapply(simfreqClust, function(x) summary(x$Freq))
 
