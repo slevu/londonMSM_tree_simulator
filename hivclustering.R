@@ -4,16 +4,13 @@ rm(list=ls())
 ####---- HIV clustering ----
 ####---- for simulated tree 
 ##----------------------------##
-# cd /Documents/softwares:
-# hivnetworkcsv -i dist_pour_hivclust.csv -c outhivclust.csv -t 0.04 -f plain
 
 getwd()
-# setwd("../")
-# getwd()
 
-# test <- read.csv(file = "~/Documents/phylo-uk/source/subUKogC_noDRM_151202_ucsdTN93.csv")
-# dim(test)/12164 *12164 /2
-# head(test)
+###--- could scale the time based distance by consensus mutation rate to obtain 'standard' substitution per site distances
+###--- first, construct edge list with distance as input for ucsd software
+###--- second, loop through distance thresholds 
+
 if(FALSE){
   
   dsimtree <- readRDS("data/simtree_dist.rds")
@@ -34,9 +31,9 @@ if(FALSE){
   library(reshape2)
   system.time(
     el <- melt(m, na.rm = TRUE)
-  )
+  ) # the na.rm removal takes most of time
   # head(el)
-  str(el)
+  # str(el)
   colnames(el) <- c('ID1', 'ID2', 'distance')
   ## omit the NA values
   # el <- na.omit(el)
@@ -54,7 +51,7 @@ if(FALSE){
 }
 
 ####---- loop threshold
-
+thr <- 2
 for (thr in (3:6)/10){
   inputCSV <- paste(tempdir(), "/input.csv", sep = "")
   ## output

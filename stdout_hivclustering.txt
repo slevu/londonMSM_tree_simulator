@@ -1,3 +1,13 @@
+### 0.2
+31164 edges on 10727 nodes
+Found 1920 clusters
+Maximum cluster size = 43 nodes
+Unknown : 10727
+0 directed edges
+{'Missing dates': 31164}
+Fitting the degree distribution to various densities
+Best distribution is 'Waring' with rho = 2080.91 [2020.44 - 2142.8]
+
 ### 0.3
 46469 edges on 11204 nodes
 Found 1713 clusters
