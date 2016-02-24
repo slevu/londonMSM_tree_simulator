@@ -1,0 +1,39 @@
+### 0.3
+46469 edges on 11204 nodes
+Found 1713 clusters
+Maximum cluster size = 52 nodes
+Unknown : 11204
+0 directed edges
+{'Missing dates': 46469}
+Fitting the degree distribution to various densities
+Best distribution is 'Waring' with rho = 787.483 [765.921 - 809.857]
+
+### 0.4
+58829 edges on 11383 nodes
+Found 1570 clusters
+Maximum cluster size = 52 nodes
+Unknown : 11383
+0 directed edges
+{'Missing dates': 58829}
+Fitting the degree distribution to various densities
+Best distribution is 'Waring' with rho = 565.181 [550.071 - 580.928]
+
+### 0.5
+68876 edges on 11552 nodes
+Found 1474 clusters
+Maximum cluster size = 53 nodes
+Unknown : 11552
+0 directed edges
+{'Missing dates': 68876}
+Fitting the degree distribution to various densities
+Best distribution is 'Waring' with rho = 917.316 [892.867 - 942.246]
+
+### 0.6
+1079405 edges on 11933 nodes
+Found 456 clusters
+Maximum cluster size = 9401 nodes
+Unknown : 11933
+0 directed edges
+{'Missing dates': 1079405}
+Fitting the degree distribution to various densities
+Best distribution is 'Waring' with rho = 1.71135 [1.69318 - 1.72985]
