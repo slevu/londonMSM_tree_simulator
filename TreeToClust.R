@@ -1,15 +1,15 @@
-rm(list=ls())
 ##----------------------------##
 ####---- function
 ####---- HIV clustering ----
-####---- for simulated tree 
+####---- for a tree 
 ##----------------------------##
-
-getwd()
 
 ###--- could scale the time based distance by consensus mutation rate to obtain 'standard' substitution per site distances
 ###--- first, construct edge list with distance as input for ucsd software
 ###--- second, loop through distance thresholds 
+ucsd_hivclust <- function(d){
+  
+}
 
 if(FALSE){
   
@@ -91,9 +91,14 @@ for (thr in (2:6)/10){
   
   
   
-  freqClust <- tapply(cl$ClusterID, cl$t, 
+  simfreqClust <- tapply(cl$ClusterID, cl$t, 
                       function(x) as.data.frame(table(x),
-                      stringsAsFactors = FALSE))
-str(freqClust)
-head(freqClust[[5]])
+                       stringsAsFactors = FALSE))
+# str(freqClust)
+# head(freqClust[[5]])
+
+##- number of different clusters by threshold
+sapply(simfreqClust, function(x) dim(x)[1])
+##- cluster size
+sapply(simfreqClust, function(x) summary(x$Freq))
 
