@@ -31,7 +31,7 @@ ucsd_hivclust <- function(d, normalize = FALSE){
     
   # choose threshold based on quantiles
     qt <- quantile(el$distance, 
-                   probs = c(0.005, 0.01, 0.05, 0.1, 0.25, 0.5) )
+                   probs = c(1e-3, 1e-2, 1e-1, 0.25, 0.5) )
     
   ## get rid of distance > larger quantile (= median)
   k <- round(qt[length(qt)], 2)
@@ -50,7 +50,7 @@ ucsd_hivclust <- function(d, normalize = FALSE){
   
 ####---- loop threshold (first 3 qt = 0.5, 1, 5, 10)
 
-  thr <- round(qt[1:4], 2)
+  thr <- round(qt[1:3], 2)
  cmd <- vector( mode= "character" )
  
   for ( t in thr ){
