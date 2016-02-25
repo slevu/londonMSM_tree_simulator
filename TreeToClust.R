@@ -8,10 +8,10 @@
 ###--- first, construct edge list with distance as input for ucsd software (d = distance matrix)
 ###--- second, loop through distance thresholds ( = vector of threshold based on quantiles)
 
-ucsd_hivclust <- function(d, normalize = FALSE){
+ucsd_hivclust <- function(d, quant = c(5e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5) ){
   
   ## normalize (if not normalized)
-  if(normalize == TRUE) {
+  if(max(d) > 1) {
     d <- round(d / (max(d) - min(d)), 4)
   }
   
@@ -31,12 +31,12 @@ ucsd_hivclust <- function(d, normalize = FALSE){
     
   # choose threshold based on quantiles
     qt <- quantile(el$distance, 
-                   probs = c(1e-3, 1e-2, 1e-1, 0.25, 0.5) )
+                   probs = quant )
     
   ## get rid of distance > larger quantile (= median)
   k <- round(qt[length(qt)], 2)
   subel <- el[el$distance < k,]
-  # head(subel)
+  # rm(el, m, subel, d)
 
   ## write csv without rownames and get input path
   inputCSV <- paste(tempdir(), "/input.csv", sep = "")
@@ -48,9 +48,9 @@ ucsd_hivclust <- function(d, normalize = FALSE){
   ## full path needed 
   exec <- "~/Documents/softwares/hivclustering/scripts/hivnetworkcsv"
   
-####---- loop threshold (first 3 qt = 0.5, 1, 5, 10)
+####---- loop threshold (first 3 qt = 0.05, 0.1, 1, 10)
 
-  thr <- round(qt[1:3], 2)
+  thr <- round(qt[1:4], 2)
  cmd <- vector( mode= "character" )
  
   for ( t in thr ){
@@ -71,24 +71,26 @@ ucsd_hivclust <- function(d, normalize = FALSE){
   ## distribution takes most time
   ## => just issue command
   ## to run on terminal
-  if ( !file.exists("output") ){
+  if ( !file.exists(outputCSV) ){
     system(cmd_hivclustering)
   }
   # save commands
-  cmd <- c(cmd, paste(cmd_hivclustering, "\n"))
+  cmd <- c(cmd, cmd_hivclustering)
   }
   
-###--- bin table in one dataframe
-  cl <- data.frame()
-  for(t in thr){
-    cl <- rbind(cl,
-            cbind(t,
-              read.csv(
-                paste(var.name, 
-                  "_ucsd_hivclust_output_", t,
-                  ".csv", sep = '')
-                      )))
+###--- bin table in one list
+  cl <- list()
+  for(i in 1:length(thr)){
+    ## add table i
+    CSV <- paste(var.name, 
+                 "_ucsd_hivclust_output_", thr[i],
+                 ".csv", sep = '')
+    if(file.exists(CSV)){
+       cl[[i]] <- read.csv(CSV)
+       # name threshold
+       names(cl)[i] <- thr[i]
+       }
   }
-
- return(list(cmd, cl))
+ 
+ return(list(qt, cmd, cl))
 }

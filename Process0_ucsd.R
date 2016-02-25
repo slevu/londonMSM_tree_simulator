@@ -4,98 +4,132 @@
 #### rm(list=ls())
 
 ####---- lib ----
-library(ape)
-library(ggplot2)
+# library(ape)
+# library(ggplot2)
 
-####---- load sim ----
-## Load newest Rdata
-l <- list.files(pattern="*.Rdata") # list.files(pattern="Rdata$") list.files(pattern="out")
-load(l[length(l)])
-ls()
-tree 
-
-####---- load uk stuff ----
-t_uk <- read.tree(file = "../phylo-uk/data/ExaML_result.subUKogC_noDRM.finaltree.000")
-## drop OG
-og <- c("Ref1", "Ref2", "Ref3", "Ref4", "Ref5", "Ref6", "HXB2")
-t_uk <- drop.tip(t_uk, og ) 
-t_uk
+if(FALSE){
+  ####---- load sim ----
+  ## Load newest Rdata
+  l <- list.files(pattern="*.Rdata") # list.files(pattern="Rdata$") list.files(pattern="out")
+  load(l[length(l)])
+  ls()
+  tree 
+  
+  ####---- load uk stuff ----
+  t_uk <- read.tree(file = "../phylo-uk/data/ExaML_result.subUKogC_noDRM.finaltree.000")
+  ## drop OG
+  og <- c("Ref1", "Ref2", "Ref3", "Ref4", "Ref5", "Ref6", "HXB2")
+  t_uk <- drop.tip(t_uk, og ) 
+  t_uk
+}
 
 ####---- get distances ----
 ####  cluster size to real data. Need to have same number of clusters ?
-
-## get distances
-##- matrix first into distances
-
-#- sim tree
-if (file.exists("data/simtree_dist.rds")){
-  dsimtree <- readRDS("data/simtree_dist.rds")
-} else {
-dsimtree <- as.dist(cophenetic.phylo(tree))
-saveRDS(dsimtree, file = "data/simtree_dist.rds")
+if(FALSE){
+  ## get distances
+  ##- matrix first into distances
+  
+  #- sim tree
+  if (file.exists("data/simtree_dist.rds")){
+    dsimtree <- readRDS("data/simtree_dist.rds")
+  } else {
+    dsimtree <- as.dist(cophenetic.phylo(tree))
+    saveRDS(dsimtree, file = "data/simtree_dist.rds")
+  }
+  # uk tree
+  if (file.exists("data/uktree_dist.rds")){
+    duktree <- readRDS("data/uktree_dist.rds")
+  } else {
+    duktree <- as.dist(cophenetic.phylo(t_uk))
+    saveRDS(duktree, file = "data/uktree_dist.rds")
+  }
+  
+  ## get and keep tips labels
+   sim.names <- data.frame("id" = labels(dsimtree), 
+                           stringsAsFactors = F)
+   saveRDS(sim.names, file = "sim.names.rds")
+   uk.names <- data.frame("id" = labels(duktree), 
+                           stringsAsFactors = F)
+   saveRDS(uk.names, file = "uk.names.rds")
+  
+  # head(dsimtree)
+  # head(duktree)
+  
+  ## normalize
+  dsimtree <- dsimtree / max(dsimtree)
+  duktree <- duktree / max(duktree)
+  
+  ##- histogram distances
+  # summary(x)
+  hist(dsimtree, breaks = 50, xlab = "distance", ylab = "frequency", main = "Simulated tree's distances", col = "grey")
+  hist(duktree, breaks = 50, xlab = "distance", ylab = "frequency", main = "UK MSM tree's distances", col = "grey")
 }
-# uk tree
-if (file.exists("data/uktree_dist.rds")){
-  duktree <- readRDS("data/uktree_dist.rds")
-} else {
-  duktree <- as.dist(cophenetic.phylo(t_uk))
-  saveRDS(duktree, file = "data/uktree_dist.rds")
-}
-head(dsimtree)
-head(duktree)
-
-## normalize
-dsimtree <- dsimtree / (max(dsimtree) - min(dsimtree))
-duktree <- duktree / (max(duktree) - min(duktree))
-# rm(simtree, uktree)
-
-##- histogram distances
-# summary(x)
-hist(dsimtree, breaks = 50, xlab = "distance", ylab = "frequency", main = "", col = "grey")
-hist(duktree, breaks = 50, xlab = "distance", ylab = "frequency", main = "", col = "grey")
-
 ####---- cluster UCSD ----
 source("TreeToClust.R")
 
 ## test for debug
 ## str(dsimtree)
+## d <-  dsimtree 
 # m <- as.matrix(dsimtree)
 # d <- as.dist(m[1:200, 1:200])
 # simclus <- ucsd_hivclust(d)
 # str(d)
 # head(cl)
 
-## only issue command to run on terminal
-system.time(
-  simclus <- ucsd_hivclust(dsimtree)
-)
+## get list of quantiles, commands and list of
+## dataframes of cluster members
+if(FALSE){
+  system.time(
+    simclus <- ucsd_hivclust(dsimtree)
+  )
+  
+  system.time(
+    ukclus <- ucsd_hivclust(duktree)
+  )
+  
+  ###--- save 
+  saveRDS(simclus, file = "data/simclus.rds")
+  saveRDS(ukclus, file = "data/ukclus.rds")
+ }
 
-system.time(
-  ukclus <- ucsd_hivclust(duktree)
-)
+# rm(dsimtree, duktree)
 
-###--- bind table in one dataframe
-list.files(tempdir())
 
-chop <- function(patrn){
-  ## list outputs
-  l <- list.files(getwd(), pattern = patrn)
-  ## bind outputs
-  cl <- list()
-  for(i in 1:length(l)){
-    cl[[i]] <-  read.csv( l[i] )
-    # name threshold
-    names(cl)[i] <- substr(l[i], 
-                           regexpr(l[i], pattern = ".csv")[1] - 4,
-                           regexpr(l[i], pattern = ".csv")[1] - 1)
-  }
-  return(cl)
-}
+####---- read ----
+### only cluster members
+simclus <- readRDS(file = "data/simclus.rds")[[3]]
+ukclus <- readRDS(file = "data/ukclus.rds")[[3]]
 
-simclus <- chop(patrn = "dsimtree")
-ukclus <- chop(patrn = "duktree")
-# str(simclus)
- 
+####---- quantiles ----
+## read saved results of UCSD clustering
+readRDS(file = "data/simclus.rds")[[1]]
+readRDS(file = "data/ukclus.rds")[[1]]
+####---- stop ----
+
+
+# ###--- bind table in one dataframe
+# # list.files(tempdir())
+# i <- 2
+# chop <- function(patrn){
+#   ## list outputs
+#   l <- list.files(getwd(), pattern = patrn)
+#   ## bind outputs
+#   cl <- list()
+#   for(i in 1:length(l)){
+#     cl[[i]] <-  read.csv( l[i] )
+#     # name threshold
+#     names(cl)[i] <- substr(l[i], 
+#                            regexpr(l[i], pattern = ".csv")[1] - 4,
+#                            regexpr(l[i], pattern = ".csv")[1] - 1)
+#   }
+#   return(cl)
+# }
+# 
+# simclus <- chop(patrn = "dsimtree")
+# ukclus <- chop(patrn = "duktree")
+# # str(simclus)
+#  str(cl)
+#  
 # ####---- cluster UPGMA ----
 # simhc <- hclust(dsimtree, method = "average") # UPGMA
 # ukhc <- hclust(duktree, method = "average")
@@ -121,13 +155,14 @@ ukclus <- chop(patrn = "duktree")
 # 
 # ###--- end UPGMA
 
-head(simclus)
-head(ukclus)
-
+####---- desc ----
 ##- Calculate size(=Freq) of each cluster across different threshold
-simfreqClust <- lapply(simclus, function(x) as.data.frame(table(x$ClusterID), stringsAsFactors = FALSE))
-
-ukfreqClust <- lapply(ukclus, function(x) as.data.frame(table(x$ClusterID), stringsAsFactors = FALSE))
+simfreqClust <- lapply(simclus, 
+                       function(x) as.data.frame(table(x$ClusterID), 
+                       stringsAsFactors = FALSE))
+ukfreqClust <- lapply(ukclus, 
+                      function(x) as.data.frame(table(x$ClusterID), 
+                      stringsAsFactors = FALSE))
 
 ##- number of different clusters by threshold
 sapply(simfreqClust, function(x) dim(x)[1])
@@ -136,13 +171,9 @@ sapply(ukfreqClust, function(x) dim(x)[1])
 sapply(simfreqClust, function(x) summary(x$Freq))
 sapply(ukfreqClust, function(x) summary(x$Freq))
 
-##- percentiles
-# sapply(freqClust, function(x) round(quantile(x$Freq, 
-# probs = c(0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 0.95, 0.99, 1))))
-# 
 
 ####---- plot cluster size ----
-## how many plots
+# ## how many plots
 a <- length(simfreqClust)
 b <- length(ukfreqClust)
 
@@ -157,7 +188,12 @@ for (i in 1:max(a, b)){
        xlab = "log(size)")
 }
 
+####---- plot log-log ----
 ##- distr of cluster sizes: log(x) and log(y)
+## how many plots
+a <- length(simfreqClust)
+b <- length(ukfreqClust)
+
 par(mfcol=c(2, max(a, b)))
 for (i in 1:max(a, b)){
   h <- hist(log(ukfreqClust[[i]]$Freq), plot = F)
@@ -179,18 +215,22 @@ par(mfcol=c(2, max(a, b)))
 for (i in 1:max(a, b)){
   qqplot(ukfreqClust[[i]]$Freq, 
          simfreqClust[[i]]$Freq,
-         main = names(ukfreqClust)[i],
+         main = paste("uk:", names(ukfreqClust)[i],
+                      "sim:", names(simfreqClust)[i]),
          xlab = "uk", ylab = "sim")
 
   qqplot(log(ukfreqClust[[i]]$Freq), 
          log(simfreqClust[[i]]$Freq),
-         main = names(ukfreqClust)[i],
+         main = paste("uk:", names(ukfreqClust)[i],
+                      "sim:", names(simfreqClust)[i]),
          xlab = "log(uk)", ylab = "log(sim)")
 
 }
+dev.off()
 
 ####---- data ----
 ##- converting sample states in table of co-variates ?
+if(FALSE){
 demes <- as.vector(read.csv(file = "demes.csv")$x)
 sampleTimes <- scan( file = 'sampleTimes' )
 ss  <- matrix( scan( file = 'sampleStates' ) , 
@@ -216,26 +256,29 @@ for (i in 1:dim(ss)[1]){ # dim(ss)[1]
   demo <- rbind(demo, cbind(
     patient, time, age, care, stage, risk))
 } 
-str(demo)
+# str(demo)
+saveRDS(demo, file = "demo.rds")
+}
+####---- demo ----
+demo <- readRDS("demo.rds")
 
 ##- date of diagnosis ?
 date0 <- as.Date('1979-01-01')
 demo$datediag <- date0 + demo$time
-min(demo$datediag)
-max(demo$datediag)
+# min(demo$datediag)
+# max(demo$datediag)
 
-####---- add cluster sizes ----
+###--- add cluster sizes
 ####... and outdegrees
 
-##---- loop ----
+###--- loop for
+## For simulations,
 ##- function to calculate both numclus and sizeclus for each seqindex into a LIST
 ##- with same variable names
 ##- For UCSD files, no ID if no cluster (size < 2) !!!
 
 ## get tips labels
-sim.names <- data.frame("id" = labels(dsimtree), 
-                        stringsAsFactors = F)
-
+sim.names <- readRDS("sim.names.rds")
   ##- in list
   l <- list()
   for (i in 1:length(simclus)) {
@@ -248,6 +291,9 @@ sim.names <- data.frame("id" = labels(dsimtree),
    b <- merge(x = a, y = simfreqClust[[i]], 
               by.x = "ClusterID", by.y = "Var1", 
               all.x = TRUE, sort = FALSE)
+   
+  #- size 1 if not into a cluster
+  b$Freq[is.na(b$Freq)] <- 1
 
   #- binary clustering variable
   b$binclus <- ifelse(b$Freq > 1 & !is.na(b$Freq), 1, 0)
@@ -260,32 +306,157 @@ sim.names <- data.frame("id" = labels(dsimtree),
   rm(a, b)
 # str(l)
 
+####---- proportion ----
 ##-proportion in or out clusters
 sapply(l, function(x) round(prop.table(table(x$binclus)),2))
 ##- cluster sizes (by individuals having such a size !!)
 sapply(l, function(x) summary(x$size))
 
-##---- merge ----
+####---- merge ----
 listclus <- lapply(l, function(x) 
 merge(x, demo, 
       by.x = "id", by.y = "patient", 
       all.x = T, sort = FALSE))
-
+print("coucou")
 # head(listclus[[3]])
-# table(listclus[[4]]$clus)
+# table(listclus[[1]]$binclus, useNA = "ifany")
 
-##########################llllllllllllllllaaaaaaaaa
+###--- sort dependency between indivduals from same cluster
+### 1. downsample to make analysis of one cluster size
+###  explained by median or mean of each co-variate.
+###  2. plot the distribution of covariates by cluster size. 
+###  With the intuition that smaller clusters are more explained
+###  by covariates and larger ones are more random. 
+###  Do it on real data and simulation
+
+# For each cluster size, compute mean of all coavariates
+
+####---- downsample ----
+##- 1. down-sample: mean of each variable
+## just on low and high threshold
+l <- listclus[c(1,length(listclus))]
+down <- lapply(l, function(x) aggregate(x[, 5:9], list("size" = x$size), mean))
+# str(down)
+# 
+##- linear regression
+lm_model_std = "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
+lapply(down, function(x) summary(lm(lm_model_std, data = x)))
+
+####---- lattice ----
+##- 2. plots
+library(lattice)
+# trellis.par.set(canonical.theme(color = FALSE))
+for(i in 1:length(l)){
+  print(histogram(~ stage|factor(size), 
+            main = paste("distribution of stages by cluster sizes at threshold =", names(l[i])),
+            data = l[[i]])
+  )
+}
+
+
+###--- for uk data ---
+
+
+##---- multivariate ----
+##- add demo outcome: stage of infection, treatment status, age group, CHIC or not
+load("../phylo-uk/data/sub.RData")
+##- selection of df covariates
+y <- df[,c("seqindex","patientindex",  
+           "agediag", "cd4", "vl", "onartflag",
+           "ydiag", "agediag_cut", "cd4cut",
+           "ydiag_cut", "CHICflag", "status")]
+
+y$logvl <- log(y$vl)
+y$logcd4 <- log(y$cd4)
+
+#### get tips labels
+# sim.names <- data.frame("id" = labels(dsimtree), 
+#                         stringsAsFactors = F)
+# saveRDS(sim.names, file = "sim.names.rds")
+uk.names <- readRDS("uk.names.rds") 
+##- in list
+l <- list()
+for (i in 1:length(ukclus)) {
+  ## merge cluster number (with NA)
+  a <- merge(x = uk.names, y = ukclus[[i]],
+             by.x = "id", by.y = "SequenceID",
+             all.x = TRUE, sort = FALSE)
+  
+  ## merge cluster size (with NA)
+  b <- merge(x = a, y = ukfreqClust[[i]], 
+             by.x = "ClusterID", by.y = "Var1", 
+             all.x = TRUE, sort = FALSE)
+  
+  #- size 1 if not into a cluster
+  b$Freq[is.na(b$Freq)] <- 1
+  
+  #- binary clustering variable
+  b$binclus <- ifelse(b$Freq > 1 & !is.na(b$Freq), 1, 0)
+  
+  #- colnames
+  colnames(b)[which(colnames(b) =="Freq")] <- "size"
+  l[[i]] <- b
+  names(l)[i] <- names(ukfreqClust[i])
+}
+rm(a, b)
+# str(l)
+
+####---- proportion UK ----
+##-proportion in or out clusters
+sapply(l, function(x) round(prop.table(table(x$binclus)),2))
+##- cluster sizes (by individuals having such a size !!)
+sapply(l, function(x) summary(x$size))
+
+####---- merge UK ----
+listUKclus <- lapply(l, function(x) 
+  merge(x, y, 
+        by.x = "id", by.y = "seqindex", 
+        all.x = T, sort = FALSE))
+
+####---- downsample UK ----
+##- 1. down-sample: median of each variable (with na.rm = T)
+## just on low and high threshold (but not too high !)
+l <- listUKclus[c(1,length(listUKclus)-1)]
+# head(l[[1]][, c("agediag", "logcd4", "ydiag")])
+down <- lapply(l, function(x) 
+  aggregate(x[, c("agediag", "logcd4", "ydiag", "logvl")],
+            list("size" = x$size), 
+            function(x) median(x, na.rm = TRUE)))
+# str(down) 
+# str(l)
+# 
+##- linear regression
+lm_model_std = "scale(size) ~ scale(agediag) + scale(logcd4) + scale(logvl) + scale(ydiag)"
+lapply(down, function(x) summary(lm(lm_model_std, data = x)))
+
+####---- lattice UK ----
+##- 2. plots
+library(lattice)
+# trellis.par.set(canonical.theme(color = FALSE))
+for(i in 1:length(l)){
+  print(histogram(~ logcd4|factor(size), 
+                  main = paste("distribution of log(cd4) by cluster sizes at threshold =", names(l[i])),
+                  data = l[[i]])
+  )
+}
+
+plot(x = l[[1]]$size, y = l[[1]]$logcd4)
+
+####---- surplus ----
+
 ##---- logistic ---- 
 ##- model: clus ~ age +  stage + time + risk
 ##- care = 1 for all at diagnosis
 ## ex. 
-logit_model = "clus ~ age + stage + time + risk"
-logit_model_std = "clus ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
-?glm
-lapply(listclus, function(x) summary(glm(formula = logit_model_std,
-                                 data = x,
-                                 family = binomial(link = "logit"))))
+logit_model_std = "binclus ~ scale(agediag) + scale(logcd4) + scale(ydiag)"
+lapply(l[1], function(x) summary(glm(formula = logit_model_std,
+                                 data = l[[1]],
+                                 family = binomial(link = "logit"))) 
+       )
 
+###################### missing values !!!!!!!! ###############
+
+####---- surplus ----
 # logistic <- function(x, m = logit_model){
 #   fit <- glm(m , data = x, 
 #                    family = binomial(link = "logit"))
@@ -323,9 +494,3 @@ lapply(listclus, function(x) summary(lm(lm_model_std, data = x)))
 
 ##- UCSD cluster
 ##
-##
-y <- rt(200, df = 5)
-qqnorm(y); qqline(y, col = 2)
-qqplot(y, rt(300, df = 5))
-
-qqnorm(precip, ylab = "Precipitation [in/yr] for 70 US cities")

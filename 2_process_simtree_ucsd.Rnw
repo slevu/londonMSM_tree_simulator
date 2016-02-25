@@ -1,0 +1,88 @@
+\documentclass[]{revtex4} %twocolumn revtex4
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+
+\begin{document}
+
+\title{Simulated tree clustered by UCSD soft. - Feb 2016}
+\author{S. Le Vu}
+%\affiliation{ICL}
+\date{\today}
+
+\maketitle
+
+<<external-code, echo=FALSE, cache= FALSE>>=
+library(knitr)
+read_chunk('Process0_ucsd.R')
+@
+
+<<setup, echo=FALSE>>=
+opts_chunk$set(comment="", message=FALSE, tidy.opts=list(width.cutoff=120), options(width=100), fig.align='center',fig.height=6, fig.width=10, out.width='10cm',  fig.show='hold', fig.path='figure/plot')
+@
+
+\section{Intro}
+\begin{itemize}
+\item "time-based" distances have been extracted form simulated coalescent tree
+\item distances normalized from 0 to 1
+\end{itemize}
+%' 
+%' << get distances, results='asis', echo = FALSE>>=
+%' @
+\begin{center}
+\includegraphics[scale=0.4]{figure/plotget_distances-1.pdf}
+\includegraphics[scale=0.4]{figure/plotget_distances-2.pdf}
+\end{center}
+
+\section{UCSD hivclustering}
+Read saved results from UCSD \textsf{hivclustering}
+<< read >>=
+@
+
+
+To construct clusters, threshold were determined by quantiles of distances (0.05\%, 0.1\%, 1\% and 10\%). For simulated and UK trees
+<< quantiles >>=
+@
+
+Number of clusters and stats for simulated and UK trees (cluster size 1 does not exist in these outputs)
+<< desc >>=
+@
+
+Plots of log(size) for UK and simulated clusters
+<< plot log-log >>=
+@
+
+QQ plots UK vs simulated, untransformed and log-log
+<< QQ plot >>=
+@
+
+\section{Associations}
+After merging with co-variates allocated from demes states, non-clustering individuals are assigned a cluster size of 1. 
+The proportion of individuals into clusters and stats for "size of cluster for each individuals"
+<<demo, echo = FALSE, include = FALSE>>=
+@
+
+<< proportion >>=
+@
+
+<< merge, echo = FALSE >>=
+@
+
+To sort out the dependency between indivduals from same cluster
+\begin{enumerate}
+\item "downsample" to make analysis of each cluster size explained by mean of each co-variate (from here, only clusters from lower and higher threshold represented)
+
+<< downsample >>=
+@
+Not any significant association !!
+
+\item plot the distribution of covariates by cluster size
+
+<< lattice >>=
+@
+
+What to tell ??
+\end{enumerate}
+
+
+\end{document}
