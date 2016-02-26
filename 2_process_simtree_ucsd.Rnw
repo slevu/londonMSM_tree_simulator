@@ -34,6 +34,10 @@ opts_chunk$set(comment="", message=FALSE, tidy.opts=list(width.cutoff=120), opti
 \includegraphics[scale=0.4]{figure/plotget_distances-2.pdf}
 \end{center}
 
+<< load sim, echo = FALSE, include = FALSE >>=
+
+@
+
 \section{UCSD hivclustering}
 Read saved results from UCSD \textsf{hivclustering}
 << read >>=
@@ -57,7 +61,10 @@ QQ plots UK vs simulated, untransformed and log-log
 @
 
 \section{Associations}
-After merging with co-variates allocated from demes states, non-clustering individuals are assigned a cluster size of 1. 
+After merging with co-variates allocated from demes states contained in tree, non-clustering individuals are assigned a cluster size of 1. 
+<< data >>=
+@
+
 The proportion of individuals into clusters and stats for "size of cluster for each individuals"
 <<demo, echo = FALSE, include = FALSE>>=
 @
@@ -68,21 +75,61 @@ The proportion of individuals into clusters and stats for "size of cluster for e
 << merge, echo = FALSE >>=
 @
 
-To sort out the dependency between indivduals from same cluster
+\section{Naive regressions on simulation}
+
+Linear
+<< sim linear >>=
+
+@
+
+Logistic
+<< sim logistic >>=
+
+@
+
+\section{Regressions on down-sampled simulation}
+To sort out the dependency between individuals from same cluster
 \begin{enumerate}
 \item "downsample" to make analysis of each cluster size explained by mean of each co-variate (from here, only clusters from lower and higher threshold represented)
 
 << downsample >>=
 @
-Not any significant association !!
+
 
 \item plot the distribution of covariates by cluster size
 
 << lattice >>=
 @
 
-What to tell ??
+
 \end{enumerate}
+
+\section{On real UK data}
+Same process ...
+<<multivariate, echo=FALSE>>=
+@
+
+Proportion in and out clusters
+<< proportion UK>>=
+@
+
+<<merge UK, echo=FALSE>>=
+
+@
+
+Naive regressions
+<<linear UK>>=
+@
+
+<<logistic UK>>=
+@
+
+Down-sampled regressions
+<<downsample UK>>=
+@
+
+<<lattice UK>>=
+@
 
 
 \end{document}

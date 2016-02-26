@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.12.3)  25 FEB 2016 18:10
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.12.3)  26 FEB 2016 17:30
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -386,93 +386,191 @@ File: figure/plotget_distances-2.pdf Graphic file (type pdf)
 <use figure/plotget_distances-2.pdf>
 Package pdftex.def Info: figure/plotget_distances-2.pdf used on input line 78.
 (pdftex.def)             Requested size: 289.07487pt x 173.44492pt.
-LaTeX Font Info:    Try loading font information for T1+lmss on input line 82.
+LaTeX Font Info:    Try loading font information for T1+lmss on input line 84.
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/lm/t1lmss.fd
 File: t1lmss.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-Package color Info: Redefining color shadecolor on input line 84.
-LaTeX Font Info:    Try loading font information for T1+lmtt on input line 85.
+Package color Info: Redefining color shadecolor on input line 86.
+LaTeX Font Info:    Try loading font information for T1+lmtt on input line 87.
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 87.
-Package color Info: Redefining color shadecolor on input line 96.
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 89.
+Package color Info: Redefining color shadecolor on input line 98.
  [1{/usr/local/texlive/2015/texmf-var/fonts/map/pdftex/updmap/pdftex.map} <./fi
 gure/plotget_distances-1.pdf> <./figure/plotget_distances-2.pdf>]
-Package color Info: Redefining color shadecolor on input line 117.
-Package color Info: Redefining color shadecolor on input line 171.
+Package color Info: Redefining color shadecolor on input line 119.
+Package color Info: Redefining color shadecolor on input line 173.
  [2]
 <figure/plotplot_log-log-1.pdf, id=32, 722.7pt x 433.62pt>
 File: figure/plotplot_log-log-1.pdf Graphic file (type pdf)
 
 <use figure/plotplot_log-log-1.pdf>
-Package pdftex.def Info: figure/plotplot_log-log-1.pdf used on input line 196.
+Package pdftex.def Info: figure/plotplot_log-log-1.pdf used on input line 198.
 (pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
-Package color Info: Redefining color shadecolor on input line 206.
+Package color Info: Redefining color shadecolor on input line 208.
 
 <figure/plotQQ_plot-1.pdf, id=33, 722.7pt x 433.62pt>
 File: figure/plotQQ_plot-1.pdf Graphic file (type pdf)
 
 <use figure/plotQQ_plot-1.pdf>
-Package pdftex.def Info: figure/plotQQ_plot-1.pdf used on input line 231.
+Package pdftex.def Info: figure/plotQQ_plot-1.pdf used on input line 233.
 (pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
  [3 <./figure/plotplot_log-log-1.pdf>]
-Package color Info: Redefining color shadecolor on input line 245.
-Package color Info: Redefining color shadecolor on input line 272.
-Package color Info: Redefining color shadecolor on input line 284.
-LaTeX Font Info:    Try loading font information for TS1+lmtt on input line 343
+Package color Info: Redefining color shadecolor on input line 244.
+Package color Info: Redefining color shadecolor on input line 282.
+ [4 <./figure/plotQQ_plot-1.pdf>]
+Package color Info: Redefining color shadecolor on input line 314.
+LaTeX Font Info:    Try loading font information for TS1+lmtt on input line 417
 .
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/lm/ts1lmtt.fd
 File: ts1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
-) [4 <./figure/plotQQ_plot-1.pdf>]
-Package color Info: Redefining color shadecolor on input line 351.
-
-Overfull \hbox (18.99854pt too wide) in paragraph at lines 358--358
-[]            []\T1/lmtt/m/n/10 main[] []=[] []\T1/lmtt/b/n/10 paste[][]\T1/lmt
-t/m/n/10 ([][]"distribution of stages by cluster sizes at threshold ="[][],[] [
-]\T1/lmtt/b/n/10 names[][]\T1/lmtt/m/n/10 (l[i])),[][] 
+) [5]
+Underfull \vbox (badness 10000) detected at line 418
  []
 
-<figure/plotlattice-1.pdf, id=53, 722.7pt x 433.62pt>
+
+Underfull \vbox (badness 10000) detected at line 418
+ []
+
+[6]
+Package color Info: Redefining color shadecolor on input line 423.
+ [7]
+Underfull \vbox (badness 10000) detected at line 561
+ []
+
+
+Underfull \vbox (badness 10000) detected at line 561
+ []
+
+[8]
+Package color Info: Redefining color shadecolor on input line 570.
+ [9]
+Underfull \vbox (badness 10000) detected at line 677
+ []
+
+
+Underfull \vbox (badness 10000) detected at line 677
+ []
+
+[10]
+Package color Info: Redefining color shadecolor on input line 684.
+
+Overfull \hbox (39.99847pt too wide) in paragraph at lines 691--691
+[]            []\T1/lmtt/m/n/10 main[] []=[] []\T1/lmtt/b/n/10 paste[][]\T1/lmt
+t/m/n/10 ([][]"distribution of stages by cluster sizes at threshold ="[][],[] [
+]\T1/lmtt/b/n/10 names[][]\T1/lmtt/m/n/10 (simli[i])),[][] 
+ []
+
+<figure/plotlattice-1.pdf, id=72, 722.7pt x 433.62pt>
 File: figure/plotlattice-1.pdf Graphic file (type pdf)
 
 <use figure/plotlattice-1.pdf>
-Package pdftex.def Info: figure/plotlattice-1.pdf used on input line 365.
+Package pdftex.def Info: figure/plotlattice-1.pdf used on input line 698.
 (pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
 
-<figure/plotlattice-2.pdf, id=54, 722.7pt x 433.62pt>
+<figure/plotlattice-2.pdf, id=73, 722.7pt x 433.62pt>
 File: figure/plotlattice-2.pdf Graphic file (type pdf)
 
 <use figure/plotlattice-2.pdf>
-Package pdftex.def Info: figure/plotlattice-2.pdf used on input line 366.
+Package pdftex.def Info: figure/plotlattice-2.pdf used on input line 699.
 (pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
- [5] [6 <./figure/plotlattice-1.pdf> <./figure/plotlattice-2.pdf>] (./2_process
-_simtree_ucsd.aux) ) 
+
+<figure/plotlattice-3.pdf, id=74, 722.7pt x 433.62pt>
+File: figure/plotlattice-3.pdf Graphic file (type pdf)
+
+<use figure/plotlattice-3.pdf>
+Package pdftex.def Info: figure/plotlattice-3.pdf used on input line 700.
+(pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
+
+<figure/plotlattice-4.pdf, id=75, 722.7pt x 433.62pt>
+File: figure/plotlattice-4.pdf Graphic file (type pdf)
+
+<use figure/plotlattice-4.pdf>
+Package pdftex.def Info: figure/plotlattice-4.pdf used on input line 701.
+(pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
+ [11 <./figure/plotlattice-1.pdf>]
+Package color Info: Redefining color shadecolor on input line 718.
+ [12 <./figure/plotlattice-2.pdf> <./figure/plotlattice-3.pdf> <./figure/plotla
+ttice-4.pdf>]
+Package color Info: Redefining color shadecolor on input line 748.
+
+[13]
+Package color Info: Redefining color shadecolor on input line 831.
+ [14]
+Underfull \vbox (badness 10000) detected at line 929
+ []
+
+
+Underfull \vbox (badness 10000) detected at line 929
+ []
+
+[15]
+Package color Info: Redefining color shadecolor on input line 934.
+ [16] [17]
+Package color Info: Redefining color shadecolor on input line 1094.
+
+Overfull \hbox (46.49838pt too wide) in paragraph at lines 1101--1101
+[]                  []\T1/lmtt/m/n/10 main[] []=[] []\T1/lmtt/b/n/10 paste[][]\
+T1/lmtt/m/n/10 ([][]"distribution of sqrt(cd4) by cluster sizes at threshold ="
+[][],[] []\T1/lmtt/b/n/10 names[][]\T1/lmtt/m/n/10 (li[i])),[][] 
+ []
+
+[18] <figure/plotlattice_UK-1.pdf, id=125, 722.7pt x 433.62pt>
+File: figure/plotlattice_UK-1.pdf Graphic file (type pdf)
+
+<use figure/plotlattice_UK-1.pdf>
+Package pdftex.def Info: figure/plotlattice_UK-1.pdf used on input line 1110.
+(pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
+
+<figure/plotlattice_UK-2.pdf, id=126, 722.7pt x 433.62pt>
+File: figure/plotlattice_UK-2.pdf Graphic file (type pdf)
+
+<use figure/plotlattice_UK-2.pdf>
+Package pdftex.def Info: figure/plotlattice_UK-2.pdf used on input line 1111.
+(pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
+
+<figure/plotlattice_UK-3.pdf, id=127, 722.7pt x 433.62pt>
+File: figure/plotlattice_UK-3.pdf Graphic file (type pdf)
+
+<use figure/plotlattice_UK-3.pdf>
+Package pdftex.def Info: figure/plotlattice_UK-3.pdf used on input line 1112.
+(pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
+
+<figure/plotlattice_UK-4.pdf, id=128, 722.7pt x 433.62pt>
+File: figure/plotlattice_UK-4.pdf Graphic file (type pdf)
+
+<use figure/plotlattice_UK-4.pdf>
+Package pdftex.def Info: figure/plotlattice_UK-4.pdf used on input line 1113.
+(pdftex.def)             Requested size: 284.52756pt x 170.71892pt.
+ [19 <./figure/plotlattice_UK-1.pdf> <./figure/plotlattice_UK-2.pdf> <./figure/
+plotlattice_UK-3.pdf>] [20 <./figure/plotlattice_UK-4.pdf>] (./2_process_simtre
+e_ucsd.aux) ) 
 Here is how much of TeX's memory you used:
- 4115 strings out of 493089
- 57202 string characters out of 6134842
- 131781 words of memory out of 5000000
- 7532 multiletter control sequences out of 15000+600000
+ 4147 strings out of 493089
+ 58082 string characters out of 6134842
+ 137782 words of memory out of 5000000
+ 7558 multiletter control sequences out of 15000+600000
  28042 words of font info for 27 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 38i,5n,23p,302b,352s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-t
-s1.enc}{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}</usr/l
-ocal/texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texli
-ve/2015/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></usr/local/texlive/2015/tex
-mf-dist/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2015/texmf-dist/fon
-ts/type1/public/lm/lmr9.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/pub
-lic/lm/lmss10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmt
-k10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></
-usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmtti10.pfb>
-Output written on 2_process_simtree_ucsd.pdf (6 pages, 269014 bytes).
+ 38i,5n,23p,302b,282s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}
+{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}</usr/local/te
+xlive/2015/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texlive/2015
+/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></usr/local/texlive/2015/texmf-dist
+/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type
+1/public/lm/lmr9.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/
+lmss10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmtk10.pfb
+></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/loc
+al/texlive/2015/texmf-dist/fonts/type1/public/lm/lmtti10.pfb>
+Output written on 2_process_simtree_ucsd.pdf (20 pages, 848286 bytes).
 PDF statistics:
- 103 PDF objects out of 1000 (max. 8388607)
- 74 compressed objects within 1 object stream
+ 191 PDF objects out of 1000 (max. 8388607)
+ 135 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
- 31 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 61 words of extra memory for PDF output out of 10000 (max. 10000000)
 

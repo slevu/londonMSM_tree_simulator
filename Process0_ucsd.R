@@ -7,7 +7,7 @@
 # library(ape)
 # library(ggplot2)
 
-if(FALSE){
+if(TRUE){
   ####---- load sim ----
   ## Load newest Rdata
   l <- list.files(pattern="*.Rdata") # list.files(pattern="Rdata$") list.files(pattern="out")
@@ -232,20 +232,13 @@ dev.off()
 ##- converting sample states in table of co-variates ?
 
 if(TRUE){
-demes <- as.vector(read.csv(file = "demes.csv")$x)
-sampleTimes <- tree$sampleTimes
-sampleStates  <- tree$sampleStates
+# sampleTimes <- tree$sampleTimes
+# sampleStates  <- tree$sampleStates 
 
-###lllllllll aaaaaaaa
-###
-colnames(ss) <- demes
-dim(ss)
-max(ss[,121]) # nothing on source
-
-demo <- data.frame()
-for (i in 1:dim(ss)[1]){ # dim(ss)[1]
-  deme <- names(which(ss[i,] == 1)) # name of column which has value 1
-  patient <- i
+demo <- matrix(NA, nrow =  length(tree$sampleTimes), ncol = 6)
+for (i in 1:dim(sampleStates)[1]){ # dim(ss)[1]
+  deme <- names(which.max(sampleStates[i,])) # name of column which has max value
+  patient <- as.numeric(rownames(tree$sampleStates)[i])
   time <- sampleTimes[i]
   age <- as.numeric( regmatches( deme, 
                 regexec( "\\.age([0-9])", deme) )[[1]][2] )
@@ -255,11 +248,12 @@ for (i in 1:dim(ss)[1]){ # dim(ss)[1]
                 regexec( "stage([0-9])", deme) )[[1]][2] )
   risk <- as.numeric( regmatches( deme, 
                 regexec( "riskLevel([0-9])", deme) )[[1]][2] )
-  demo <- rbind(demo, cbind(
-    patient, time, age, care, stage, risk))
+  demo[i,] <- cbind(patient, time, age, care, stage, risk)
 } 
-# str(demo)
-saveRDS(demo, file = "demo.rds")
+colnames(demo) <- cbind("patient", "time",
+                        "age", "care", "stage", "risk")
+
+saveRDS(as.data.frame(demo), file = "demo.rds")
 }
 ####---- demo ----
 demo <- readRDS("demo.rds")
@@ -323,10 +317,12 @@ merge(x, demo,
 # head(listclus[[3]])
 # table(listclus[[1]]$binclus, useNA = "ifany")
 
-####---- sim naive regressions ----
-## just on low and high threshold
-simli <- listclus[c(1,length(listclus))]
+####--- sim naive regressions ---
+
 ####---- sim linear ----
+###### just on low and high threshold
+simli <- listclus[c(1:length(listclus))]
+
 lm_model_std = "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
 lapply(simli , function(x) summary(lm(lm_model_std, data = x)))
 
@@ -431,15 +427,16 @@ listUKclus <- lapply(l, function(x)
         by.x = "id", by.y = "seqindex", 
         all.x = T, sort = FALSE))
 
-####---- naive regressions ----
+####--- naive regressions ---
+
+
+####---- linear UK----
 #### just on low and high threshold (but not too high !)
 li <- listUKclus[ 1:(length(listUKclus)-1) ]
-
-####---- linear ----
 lm_model_std = "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) +  scale(ydiag)"
 lapply(li, function(x) summary(lm(lm_model_std, data = x)))
 
-##---- logistic ---- 
+##---- logistic UK ---- 
 ##- model: clus ~ age +  stage + time + risk
 ##- care = 1 for all at diagnosis
 ## ex. 
@@ -483,11 +480,6 @@ for(i in 1:length(li)){
 plot(x = li[[1]]$size, y = li[[1]]$sqrtcd4)
 
 ####---- surplus ----
-
-
-
-###################### missing values !!!!!!!! ###############
-
 
 
 
