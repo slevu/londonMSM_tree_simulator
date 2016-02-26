@@ -14,7 +14,7 @@ if(FALSE){
   load(l[length(l)])
   ls()
   tree 
-  
+
   ####---- load uk stuff ----
   t_uk <- read.tree(file = "../phylo-uk/data/ExaML_result.subUKogC_noDRM.finaltree.000")
   ## drop OG
@@ -317,9 +317,26 @@ listclus <- lapply(l, function(x)
 merge(x, demo, 
       by.x = "id", by.y = "patient", 
       all.x = T, sort = FALSE))
-print("coucou")
+
 # head(listclus[[3]])
 # table(listclus[[1]]$binclus, useNA = "ifany")
+
+####---- sim naive regressions ----
+## just on low and high threshold
+simli <- listclus[c(1,length(listclus))]
+####---- sim linear ----
+lm_model_std = "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
+lapply(simli , function(x) summary(lm(lm_model_std, data = x)))
+
+##---- sim logistic ---- 
+##- model: clus ~ age +  stage + time + risk
+##- care = 1 for all at diagnosis
+## ex. 
+logit_model_std = "binclus ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
+lapply(simli , function(x) summary(glm(formula = logit_model_std,
+                                   data = x,
+                                   family = binomial(link = "logit"))
+))
 
 ###--- sort dependency between indivduals from same cluster
 ### 1. downsample to make analysis of one cluster size
@@ -333,33 +350,32 @@ print("coucou")
 
 ####---- downsample ----
 ##- 1. down-sample: mean of each variable
-## just on low and high threshold
-l <- listclus[c(1,length(listclus))]
-down <- lapply(l, function(x) aggregate(x[, 5:9], list("size" = x$size), mean))
+down <- lapply(simli, function(x) aggregate(x[, 5:9], list("size" = x$size), mean))
 # str(down)
-# 
+
 ##- linear regression
-lm_model_std = "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
 lapply(down, function(x) summary(lm(lm_model_std, data = x)))
 
 ####---- lattice ----
 ##- 2. plots
 library(lattice)
 # trellis.par.set(canonical.theme(color = FALSE))
-for(i in 1:length(l)){
+for(i in 1:length(simli)){
   print(histogram(~ stage|factor(size), 
-            main = paste("distribution of stages by cluster sizes at threshold =", names(l[i])),
-            data = l[[i]])
+            main = paste("distribution of stages by cluster sizes at threshold =", names(simli[i])),
+            data = simli[[i]])
   )
 }
 
 
-###--- for uk data ---
-
+###-------------------###
+###--- for uk data ---###
+###-------------------###
 
 ##---- multivariate ----
 ##- add demo outcome: stage of infection, treatment status, age group, CHIC or not
 load("../phylo-uk/data/sub.RData")
+rm(s)
 ##- selection of df covariates
 y <- df[,c("seqindex","patientindex",  
            "agediag", "cd4", "vl", "onartflag",
@@ -367,16 +383,16 @@ y <- df[,c("seqindex","patientindex",
            "ydiag_cut", "CHICflag", "status")]
 
 y$logvl <- log(y$vl)
-y$logcd4 <- log(y$cd4)
+y$sqrtcd4 <- sqrt(y$cd4)
 
 #### get tips labels
 # sim.names <- data.frame("id" = labels(dsimtree), 
 #                         stringsAsFactors = F)
 # saveRDS(sim.names, file = "sim.names.rds")
 uk.names <- readRDS("uk.names.rds") 
-##- in list
+##- in list 
 l <- list()
-for (i in 1:length(ukclus)) {
+for ( i in 1:length(ukclus) ) {
   ## merge cluster number (with NA)
   a <- merge(x = uk.names, y = ukclus[[i]],
              by.x = "id", by.y = "SequenceID",
@@ -413,72 +429,65 @@ listUKclus <- lapply(l, function(x)
         by.x = "id", by.y = "seqindex", 
         all.x = T, sort = FALSE))
 
-####---- downsample UK ----
-##- 1. down-sample: median of each variable (with na.rm = T)
-## just on low and high threshold (but not too high !)
-l <- listUKclus[c(1,length(listUKclus)-1)]
-# head(l[[1]][, c("agediag", "logcd4", "ydiag")])
-down <- lapply(l, function(x) 
-  aggregate(x[, c("agediag", "logcd4", "ydiag", "logvl")],
-            list("size" = x$size), 
-            function(x) median(x, na.rm = TRUE)))
-# str(down) 
-# str(l)
-# 
-##- linear regression
-lm_model_std = "scale(size) ~ scale(agediag) + scale(logcd4) + scale(logvl) + scale(ydiag)"
-lapply(down, function(x) summary(lm(lm_model_std, data = x)))
+####---- naive regressions ----
+#### just on low and high threshold (but not too high !)
+li <- listUKclus[ 1:(length(listUKclus)-1) ]
 
-####---- lattice UK ----
-##- 2. plots
-library(lattice)
-# trellis.par.set(canonical.theme(color = FALSE))
-for(i in 1:length(l)){
-  print(histogram(~ logcd4|factor(size), 
-                  main = paste("distribution of log(cd4) by cluster sizes at threshold =", names(l[i])),
-                  data = l[[i]])
-  )
-}
-
-plot(x = l[[1]]$size, y = l[[1]]$logcd4)
-
-####---- surplus ----
+####---- linear ----
+lm_model_std = "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) +  scale(ydiag)"
+lapply(li, function(x) summary(lm(lm_model_std, data = x)))
 
 ##---- logistic ---- 
 ##- model: clus ~ age +  stage + time + risk
 ##- care = 1 for all at diagnosis
 ## ex. 
-logit_model_std = "binclus ~ scale(agediag) + scale(logcd4) + scale(ydiag)"
-lapply(l[1], function(x) summary(glm(formula = logit_model_std,
-                                 data = l[[1]],
-                                 family = binomial(link = "logit"))) 
-       )
+logit_model_std = "binclus ~ scale(agediag) + scale(sqrt(cd4)) + scale(ydiag)"
+lapply(li, function(x) summary(glm(formula = logit_model_std,
+                                     data = x,
+                                     family = binomial(link = "logit"))
+                               ))
+
+
+####---- downsample UK ----
+##- 1. down-sample: MEDIAN of each variable (with na.rm = T)
+
+# head(li[[1]][, c("agediag", "sqrtcd4", "ydiag")])
+down_median <- lapply(li, function(x) 
+  aggregate(x[, c("agediag", "sqrtcd4", "ydiag", "logvl")],
+            list("size" = x$size), 
+            function(x) median(x, na.rm = TRUE)))
+
+down_mean <- lapply(li, function(x) 
+  aggregate(x[, c("agediag", "sqrtcd4", "ydiag", "logvl")],
+            list("size" = x$size), 
+            function(x) mean(x, na.rm = TRUE)))
+# str(down_mean) 
+##- linear regression
+lm_model_std = "scale(size) ~ scale(agediag) + scale(sqrtcd4) + scale(ydiag)"
+lapply(down_median, function(x) summary(lm(lm_model_std, data = x)))
+lapply(down_mean, function(x) summary(lm(lm_model_std, data = x)))
+
+####---- lattice UK ----
+##- 2. plots
+library(lattice)
+# trellis.par.set(canonical.theme(color = FALSE))
+for(i in 1:length(li)){
+  print(histogram(~ sqrtcd4|factor(size), 
+                  main = paste("distribution of sqrt(cd4) by cluster sizes at threshold =", names(li[i])),
+                  data = li[[i]])
+  )
+}
+
+plot(x = li[[1]]$size, y = li[[1]]$sqrtcd4)
+
+####---- surplus ----
+
+
 
 ###################### missing values !!!!!!!! ###############
 
-####---- surplus ----
-# logistic <- function(x, m = logit_model){
-#   fit <- glm(m , data = x, 
-#                    family = binomial(link = "logit"))
-#   co <- coef(summary(fit))
-#   ## odds ratios and 95% CI
-#   # or <- exp(cbind(OR = coef(fit), confint(fit)))
-#   # return(list(co, or))
-#   return(cbind(co[,c(1,4)]))
-# }
-# 
-# ##- test 1 level
-# c <- listclus[[1]]
-# logistic(x = c, m = logit_model_std)
-# 
-# ##- all levels
-# lapply(listclus, function(x) logistic(x, m = logit_model_std))
 
-##---- linear ----
-lm_model = "size ~ age + stage + time + risk"
-lm_model_std = "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
 
-lapply(listclus, function(x) summary(lm(lm_model_std, data = x)))
 
 
 ####---- end ----
