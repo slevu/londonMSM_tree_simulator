@@ -230,12 +230,14 @@ dev.off()
 
 ####---- data ----
 ##- converting sample states in table of co-variates ?
-if(FALSE){
+
+if(TRUE){
 demes <- as.vector(read.csv(file = "demes.csv")$x)
-sampleTimes <- scan( file = 'sampleTimes' )
-ss  <- matrix( scan( file = 'sampleStates' ) , 
-               byrow = TRUE, 
-               ncol = length(demes))
+sampleTimes <- tree$sampleTimes
+sampleStates  <- tree$sampleStates
+
+###lllllllll aaaaaaaa
+###
 colnames(ss) <- demes
 dim(ss)
 max(ss[,121]) # nothing on source
