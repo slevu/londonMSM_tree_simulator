@@ -130,40 +130,40 @@ Number of clusters and stats for simulated and UK trees (cluster size 1 does not
 \hlkwd{sapply}\hlstd{(simfreqClust,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{dim}\hlstd{(x)[}\hlnum{1}\hlstd{])}
 \end{alltt}
 \begin{verbatim}
-0.23 0.53 0.59 0.68 
-1848 1357  529   61 
+0.23 0.53 0.59 
+1848 1357  529 
 \end{verbatim}
 \begin{alltt}
 \hlkwd{sapply}\hlstd{(ukfreqClust,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{dim}\hlstd{(x)[}\hlnum{1}\hlstd{])}
 \end{alltt}
 \begin{verbatim}
-0.07 0.11 0.19 0.26 
-1490 1261  213    7 
+0.07 0.11 0.19 
+1490 1261  213 
 \end{verbatim}
 \begin{alltt}
 \hlcom{##- cluster size}
 \hlkwd{sapply}\hlstd{(simfreqClust,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{summary}\hlstd{(x}\hlopt{$}\hlstd{Freq))}
 \end{alltt}
 \begin{verbatim}
-          0.23    0.53    0.59    0.68
-Min.     2.000   2.000    2.00     2.0
-1st Qu.  2.000   3.000    2.00     2.0
-Median   4.000   5.000    4.00     2.0
-Mean     5.924   8.565   22.49   198.2
-3rd Qu.  7.250  10.000    8.00     4.0
-Max.    47.000 989.000 8766.00 11900.0
+          0.23    0.53    0.59
+Min.     2.000   2.000    2.00
+1st Qu.  2.000   3.000    2.00
+Median   4.000   5.000    4.00
+Mean     5.924   8.565   22.49
+3rd Qu.  7.250  10.000    8.00
+Max.    47.000 989.000 8766.00
 \end{verbatim}
 \begin{alltt}
 \hlkwd{sapply}\hlstd{(ukfreqClust,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{summary}\hlstd{(x}\hlopt{$}\hlstd{Freq))}
 \end{alltt}
 \begin{verbatim}
-           0.07     0.11     0.19  0.26
-Min.      2.000    2.000     2.00     2
-1st Qu.   2.000    2.000     2.00     2
-Median    3.000    3.000     2.00     2
-Mean      5.117    7.427    54.67  1733
-3rd Qu.   4.000    5.000     3.00     3
-Max.    162.000 2235.000 10900.00 12110
+           0.07     0.11     0.19
+Min.      2.000    2.000     2.00
+1st Qu.   2.000    2.000     2.00
+Median    3.000    3.000     2.00
+Mean      5.117    7.427    54.67
+3rd Qu.   4.000    5.000     3.00
+Max.    162.000 2235.000 10900.00
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -250,10 +250,10 @@ After merging with co-variates allocated from demes states contained in tree, no
 \hlcom{# sampleStates  <- tree$sampleStates }
 
 \hlstd{demo} \hlkwb{<-} \hlkwd{matrix}\hlstd{(}\hlnum{NA}\hlstd{,} \hlkwc{nrow} \hlstd{=}  \hlkwd{length}\hlstd{(tree}\hlopt{$}\hlstd{sampleTimes),} \hlkwc{ncol} \hlstd{=} \hlnum{6}\hlstd{)}
-\hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlkwd{dim}\hlstd{(sampleStates)[}\hlnum{1}\hlstd{])\{} \hlcom{# dim(ss)[1]}
-  \hlstd{deme} \hlkwb{<-} \hlkwd{names}\hlstd{(}\hlkwd{which.max}\hlstd{(sampleStates[i,]))} \hlcom{# name of column which has max value}
+\hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlkwd{dim}\hlstd{(tree}\hlopt{$}\hlstd{sampleStates)[}\hlnum{1}\hlstd{])\{} \hlcom{# dim(ss)[1]}
+  \hlstd{deme} \hlkwb{<-} \hlkwd{names}\hlstd{(}\hlkwd{which.max}\hlstd{(tree}\hlopt{$}\hlstd{sampleStates[i,]))} \hlcom{# name of column which has max value}
   \hlstd{patient} \hlkwb{<-} \hlkwd{as.numeric}\hlstd{(}\hlkwd{rownames}\hlstd{(tree}\hlopt{$}\hlstd{sampleStates)[i])}
-  \hlstd{time} \hlkwb{<-} \hlstd{sampleTimes[i]}
+  \hlstd{time} \hlkwb{<-} \hlstd{tree}\hlopt{$}\hlstd{sampleTimes[i]}
   \hlstd{age} \hlkwb{<-} \hlkwd{as.numeric}\hlstd{(} \hlkwd{regmatches}\hlstd{( deme,}
                 \hlkwd{regexec}\hlstd{(} \hlstr{"\textbackslash{}\textbackslash{}.age([0-9])"}\hlstd{, deme) )[[}\hlnum{1}\hlstd{]][}\hlnum{2}\hlstd{] )}
   \hlstd{care} \hlkwb{<-} \hlkwd{as.numeric}\hlstd{(} \hlkwd{regmatches}\hlstd{( deme,}
@@ -285,22 +285,22 @@ The proportion of individuals into clusters and stats for "size of cluster for e
 \hlkwd{sapply}\hlstd{(l,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{round}\hlstd{(}\hlkwd{prop.table}\hlstd{(}\hlkwd{table}\hlstd{(x}\hlopt{$}\hlstd{binclus)),}\hlnum{2}\hlstd{))}
 \end{alltt}
 \begin{verbatim}
-  0.23 0.53 0.59 0.68
-0  0.1 0.04 0.02 0.01
-1  0.9 0.96 0.98 0.99
+  0.23 0.53 0.59
+0  0.1 0.04 0.02
+1  0.9 0.96 0.98
 \end{verbatim}
 \begin{alltt}
 \hlcom{##- cluster sizes (by individuals having such a size !!)}
 \hlkwd{sapply}\hlstd{(l,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{summary}\hlstd{(x}\hlopt{$}\hlstd{size))}
 \end{alltt}
 \begin{verbatim}
-          0.23   0.53 0.59  0.68
-Min.     1.000   1.00    1     1
-1st Qu.  3.000   6.00   20 11900
-Median   8.000  13.00 8766 11900
-Mean     9.889  93.94 6320 11640
-3rd Qu. 14.000  25.00 8766 11900
-Max.    47.000 989.00 8766 11900
+          0.23   0.53 0.59
+Min.     1.000   1.00    1
+1st Qu.  3.000   6.00   20
+Median   8.000  13.00 8766
+Mean     9.889  93.94 6320
+3rd Qu. 14.000  25.00 8766
+Max.    47.000 989.00 8766
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -390,30 +390,57 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 Residual standard error: 0.9761 on 12159 degrees of freedom
 Multiple R-squared:  0.04746,	Adjusted R-squared:  0.04715 
 F-statistic: 151.5 on 4 and 12159 DF,  p-value: < 2.2e-16
-
-
-$`0.68`
+\end{verbatim}
+\begin{alltt}
+\hlcom{##- univariate}
+\hlkwd{summary}\hlstd{(}\hlkwd{lm}\hlstd{(}
+  \hlkwd{scale}\hlstd{(size)} \hlopt{~} \hlkwd{scale}\hlstd{(stage),}
+  \hlkwc{data} \hlstd{= simli[[}\hlnum{3}\hlstd{]]}
+\hlstd{))}
+\end{alltt}
+\begin{verbatim}
 
 Call:
-lm(formula = lm_model_std, data = x)
+lm(formula = scale(size) ~ scale(stage), data = simli[[3]])
 
 Residuals:
     Min      1Q  Median      3Q     Max 
--6.7106  0.0242  0.1557  0.2667  0.4853 
+-1.6223 -1.5925  0.6158  0.6303  0.6376 
 
 Coefficients:
-               Estimate Std. Error t value Pr(>|t|)    
-(Intercept)   2.957e-14  8.948e-03   0.000   1.0000    
-scale(age)    2.061e-02  9.018e-03   2.286   0.0223 *  
-scale(stage)  1.577e-02  9.024e-03   1.748   0.0806 .  
-scale(time)  -1.574e-01  8.984e-03 -17.525   <2e-16 ***
-scale(risk)   2.760e-03  8.951e-03   0.308   0.7578    
+              Estimate Std. Error t value Pr(>|t|)
+(Intercept)  6.155e-14  9.067e-03   0.000    1.000
+scale(stage) 9.264e-03  9.067e-03   1.022    0.307
+
+Residual standard error: 1 on 12162 degrees of freedom
+Multiple R-squared:  8.583e-05,	Adjusted R-squared:  3.61e-06 
+F-statistic: 1.044 on 1 and 12162 DF,  p-value: 0.3069
+\end{verbatim}
+\begin{alltt}
+\hlkwd{summary}\hlstd{(}\hlkwd{lm}\hlstd{(}
+  \hlkwd{scale}\hlstd{(size)} \hlopt{~} \hlkwd{scale}\hlstd{(risk),}
+  \hlkwc{data} \hlstd{= simli[[}\hlnum{1}\hlstd{]]}
+\hlstd{))}
+\end{alltt}
+\begin{verbatim}
+
+Call:
+lm(formula = scale(size) ~ scale(risk), data = simli[[1]])
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-1.0636 -0.7670 -0.2354  0.4745  4.4386 
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)   
+(Intercept) -1.548e-15  9.065e-03   0.000  1.00000   
+scale(risk) -2.396e-02  9.065e-03  -2.643  0.00823 **
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-Residual standard error: 0.9869 on 12159 degrees of freedom
-Multiple R-squared:  0.02629,	Adjusted R-squared:  0.02597 
-F-statistic: 82.07 on 4 and 12159 DF,  p-value: < 2.2e-16
+Residual standard error: 0.9998 on 12162 degrees of freedom
+Multiple R-squared:  0.000574,	Adjusted R-squared:  0.0004918 
+F-statistic: 6.985 on 1 and 12162 DF,  p-value: 0.008229
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -517,35 +544,6 @@ Residual deviance: 2548.8  on 12159  degrees of freedom
 AIC: 2558.8
 
 Number of Fisher Scoring iterations: 6
-
-
-$`0.68`
-
-Call:
-glm(formula = logit_model_std, family = binomial(link = "logit"), 
-    data = x)
-
-Deviance Residuals: 
-    Min       1Q   Median       3Q      Max  
--3.4607   0.0303   0.0623   0.1195   0.3359  
-
-Coefficients:
-             Estimate Std. Error z value Pr(>|z|)    
-(Intercept)   6.40088    0.27710  23.099   <2e-16 ***
-scale(age)    0.03189    0.11270   0.283    0.777    
-scale(stage) -0.14424    0.11961  -1.206    0.228    
-scale(time)  -1.90394    0.23043  -8.262   <2e-16 ***
-scale(risk)  -0.05687    0.11475  -0.496    0.620    
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-(Dispersion parameter for binomial family taken to be 1)
-
-    Null deviance: 871.97  on 12163  degrees of freedom
-Residual deviance: 755.78  on 12159  degrees of freedom
-AIC: 765.78
-
-Number of Fisher Scoring iterations: 9
 \end{verbatim}
 \begin{alltt}
 \hlcom{###--- sort dependency between indivduals from same cluster}
@@ -645,34 +643,6 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 Residual standard error: 0.9215 on 24 degrees of freedom
 Multiple R-squared:  0.2722,	Adjusted R-squared:  0.1509 
 F-statistic: 2.244 on 4 and 24 DF,  p-value: 0.09424
-
-
-$`0.68`
-
-Call:
-lm(formula = lm_model_std, data = x)
-
-Residuals:
-       1        2        3        4        5        6        7        8        9 
- 0.16838 -0.22310  0.06874  0.24689  0.01718  0.08857 -0.29756 -0.16086  0.09177 
-attr(,"scaled:center")
-[1] 1327
-attr(,"scaled:scale")
-[1] 3965
-
-Coefficients:
-               Estimate Std. Error t value Pr(>|t|)    
-(Intercept)  -7.721e-16  8.737e-02   0.000 1.000000    
-scale(age)   -1.782e-01  2.319e-01  -0.768 0.485203    
-scale(stage) -2.047e-02  1.971e-01  -0.104 0.922257    
-scale(time)  -1.087e+00  1.181e-01  -9.206 0.000773 ***
-scale(risk)   9.266e-03  1.305e-01   0.071 0.946805    
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-Residual standard error: 0.2621 on 4 degrees of freedom
-Multiple R-squared:  0.9657,	Adjusted R-squared:  0.9313 
-F-statistic: 28.11 on 4 and 4 DF,  p-value: 0.003458
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -698,7 +668,6 @@ F-statistic: 28.11 on 4 and 4 DF,  p-value: 0.003458
 {\centering \includegraphics[width=10cm]{figure/plotlattice-1} 
 \includegraphics[width=10cm]{figure/plotlattice-2} 
 \includegraphics[width=10cm]{figure/plotlattice-3} 
-\includegraphics[width=10cm]{figure/plotlattice-4} 
 
 }
 
@@ -721,22 +690,22 @@ Proportion in and out clusters
 \hlkwd{sapply}\hlstd{(l,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{round}\hlstd{(}\hlkwd{prop.table}\hlstd{(}\hlkwd{table}\hlstd{(x}\hlopt{$}\hlstd{binclus)),}\hlnum{2}\hlstd{))}
 \end{alltt}
 \begin{verbatim}
-  0.07 0.11 0.19 0.26
-0 0.37 0.23 0.04    0
-1 0.63 0.77 0.96    1
+  0.07 0.11 0.19
+0 0.37 0.23 0.04
+1 0.63 0.77 0.96
 \end{verbatim}
 \begin{alltt}
 \hlcom{##- cluster sizes (by individuals having such a size !!)}
 \hlkwd{sapply}\hlstd{(l,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{summary}\hlstd{(x}\hlopt{$}\hlstd{size))}
 \end{alltt}
 \begin{verbatim}
-          0.07   0.11  0.19  0.26
-Min.      1.00    1.0     1     1
-1st Qu.   1.00    2.0 10900 12110
-Median    3.00    8.0 10900 12110
-Mean     15.47  426.5  9762 12060
-3rd Qu.  12.00   62.0 10900 12110
-Max.    162.00 2235.0 10900 12110
+          0.07   0.11  0.19
+Min.      1.00    1.0     1
+1st Qu.   1.00    2.0 10900
+Median    3.00    8.0 10900
+Mean     15.47  426.5  9762
+3rd Qu.  12.00   62.0 10900
+Max.    162.00 2235.0 10900
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -799,30 +768,6 @@ Residual standard error: 0.9763 on 11857 degrees of freedom
   (303 observations deleted due to missingness)
 Multiple R-squared:  0.04349,	Adjusted R-squared:  0.04324 
 F-statistic: 179.7 on 3 and 11857 DF,  p-value: < 2.2e-16
-
-
-$`0.19`
-
-Call:
-lm(formula = lm_model_std, data = x)
-
-Residuals:
-    Min      1Q  Median      3Q     Max 
--3.5153  0.1284  0.3212  0.4572  0.7435 
-
-Coefficients:
-                   Estimate Std. Error t value Pr(>|t|)    
-(Intercept)       7.343e-04  9.030e-03   0.081    0.935    
-scale(agediag)    8.434e-02  9.416e-03   8.956   <2e-16 ***
-scale(sqrt(cd4)) -7.202e-06  9.162e-03  -0.001    0.999    
-scale(ydiag)     -1.932e-01  9.353e-03 -20.661   <2e-16 ***
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-Residual standard error: 0.9834 on 11857 degrees of freedom
-  (303 observations deleted due to missingness)
-Multiple R-squared:  0.0364,	Adjusted R-squared:  0.03616 
-F-statistic: 149.3 on 3 and 11857 DF,  p-value: < 2.2e-16
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -896,35 +841,6 @@ Residual deviance: 12217  on 11857  degrees of freedom
 AIC: 12225
 
 Number of Fisher Scoring iterations: 4
-
-
-$`0.19`
-
-Call:
-glm(formula = logit_model_std, family = binomial(link = "logit"), 
-    data = x)
-
-Deviance Residuals: 
-    Min       1Q   Median       3Q      Max  
--2.9359   0.2445   0.2847   0.3260   0.4972  
-
-Coefficients:
-                 Estimate Std. Error z value Pr(>|z|)    
-(Intercept)       3.18233    0.04862  65.451  < 2e-16 ***
-scale(agediag)    0.22531    0.04997   4.509 6.52e-06 ***
-scale(sqrt(cd4))  0.16324    0.04603   3.546 0.000391 ***
-scale(ydiag)     -0.36144    0.05234  -6.906 4.98e-12 ***
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-(Dispersion parameter for binomial family taken to be 1)
-
-    Null deviance: 4182.4  on 11860  degrees of freedom
-Residual deviance: 4114.1  on 11857  degrees of freedom
-  (303 observations deleted due to missingness)
-AIC: 4122.1
-
-Number of Fisher Scoring iterations: 6
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -993,29 +909,6 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 Residual standard error: 0.9714 on 48 degrees of freedom
 Multiple R-squared:  0.1119,	Adjusted R-squared:  0.05639 
 F-statistic: 2.016 on 3 and 48 DF,  p-value: 0.1242
-
-
-$`0.19`
-
-Call:
-lm(formula = lm_model_std, data = x)
-
-Residuals:
-     Min       1Q   Median       3Q      Max 
--1.31673 -0.43625  0.00839  0.08538  2.67861 
-
-Coefficients:
-                 Estimate Std. Error t value Pr(>|t|)  
-(Intercept)     3.119e-14  2.123e-01   0.000   1.0000  
-scale(agediag) -9.571e-02  2.363e-01  -0.405   0.6916  
-scale(sqrtcd4)  1.170e-02  2.350e-01   0.050   0.9610  
-scale(ydiag)   -6.008e-01  2.347e-01  -2.560   0.0227 *
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-Residual standard error: 0.9006 on 14 degrees of freedom
-Multiple R-squared:  0.332,	Adjusted R-squared:  0.1889 
-F-statistic: 2.319 on 3 and 14 DF,  p-value: 0.1198
 \end{verbatim}
 \begin{alltt}
 \hlkwd{lapply}\hlstd{(down_mean,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{summary}\hlstd{(}\hlkwd{lm}\hlstd{(lm_model_std,} \hlkwc{data} \hlstd{= x)))}
@@ -1063,29 +956,6 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 Residual standard error: 0.9711 on 48 degrees of freedom
 Multiple R-squared:  0.1124,	Adjusted R-squared:  0.05693 
 F-statistic: 2.026 on 3 and 48 DF,  p-value: 0.1227
-
-
-$`0.19`
-
-Call:
-lm(formula = lm_model_std, data = x)
-
-Residuals:
-     Min       1Q   Median       3Q      Max 
--1.09593 -0.23176 -0.07406  0.14949  2.05229 
-
-Coefficients:
-                 Estimate Std. Error t value Pr(>|t|)   
-(Intercept)    -2.749e-14  1.858e-01   0.000  1.00000   
-scale(agediag)  1.220e-02  2.830e-01   0.043  0.96623   
-scale(sqrtcd4)  2.938e-01  3.242e-01   0.906  0.38022   
-scale(ydiag)   -8.235e-01  2.357e-01  -3.494  0.00358 **
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-Residual standard error: 0.7884 on 14 degrees of freedom
-Multiple R-squared:  0.4881,	Adjusted R-squared:  0.3785 
-F-statistic:  4.45 on 3 and 14 DF,  p-value: 0.02147
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -1110,7 +980,6 @@ F-statistic:  4.45 on 3 and 14 DF,  p-value: 0.02147
 {\centering \includegraphics[width=10cm]{figure/plotlattice_UK-1} 
 \includegraphics[width=10cm]{figure/plotlattice_UK-2} 
 \includegraphics[width=10cm]{figure/plotlattice_UK-3} 
-\includegraphics[width=10cm]{figure/plotlattice_UK-4} 
 
 }
 

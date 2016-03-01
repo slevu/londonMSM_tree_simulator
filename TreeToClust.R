@@ -1,3 +1,7 @@
+##- todo :
+## use system2
+## set stderr = TRUE to capture warnings
+
 ##----------------------------##
 ####---- function
 ####---- HIV clustering ----
@@ -9,10 +13,12 @@
 ###--- second, loop through distance thresholds ( = vector of threshold based on quantiles)
 
 ucsd_hivclust <- function(d, quant = c(5e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5) ){
+  ## get var.name for output path
+  var.name <- substitute(d)
   
   ## normalize (if not normalized)
   if(max(d) > 1) {
-    d <- round(d / (max(d) - min(d)), 4)
+    d <- round(d / max(d), 4)
   }
   
   ## as matrix
@@ -22,13 +28,20 @@ ucsd_hivclust <- function(d, quant = c(5e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5) ){
   ## filling upper with NA
   m[upper.tri(m, diag=TRUE)] <- NA
   
-  ## create edge list
+  ## create edge list if not there
   require(reshape2)
+  out_edge_list <- paste("data/", var.name, "_el.rds", sep = '')
+  
+  if (file.exists(out_edge_list)){
+    el <- readRDS(out_edge_list)
+    } else {
   # system.time(
-    el <- melt(m, na.rm = TRUE)
+      el <- melt(m, na.rm = TRUE)
   # ) # the na.rm removal takes most of time
-    colnames(el) <- c('ID1', 'ID2', 'distance')
-    
+      colnames(el) <- c('ID1', 'ID2', 'distance')
+      saveRDS(el, file = out_edge_list)
+  }
+
   # choose threshold based on quantiles
     qt <- quantile(el$distance, 
                    probs = quant )
@@ -41,16 +54,13 @@ ucsd_hivclust <- function(d, quant = c(5e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5) ){
   ## write csv without rownames and get input path
   inputCSV <- paste(tempdir(), "/input.csv", sep = "")
   write.csv(subel, file = inputCSV, row.names = FALSE )
-  
-  ## get var.name for output path
-  var.name <- substitute(d)
 
   ## full path needed 
-  exec <- "~/Documents/softwares/hivclustering/scripts/hivnetworkcsv"
+  exec <- '~/Documents/softwares/hivclustering/scripts/hivnetworkcsv'
   
 ####---- loop threshold (first 3 qt = 0.05, 0.1, 1, 10)
 
-  thr <- round(qt[1:4], 2)
+  thr <- round(qt[1:3], 2)
  cmd <- vector( mode= "character" )
  
   for ( t in thr ){

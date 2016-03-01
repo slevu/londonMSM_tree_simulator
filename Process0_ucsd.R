@@ -4,8 +4,8 @@
 #### rm(list=ls())
 
 ####---- lib ----
-# library(ape)
-# library(ggplot2)
+library(ape)
+library(ggplot2)
 
 if(TRUE){
   ####---- load sim ----
@@ -236,10 +236,10 @@ if(TRUE){
 # sampleStates  <- tree$sampleStates 
 
 demo <- matrix(NA, nrow =  length(tree$sampleTimes), ncol = 6)
-for (i in 1:dim(sampleStates)[1]){ # dim(ss)[1]
-  deme <- names(which.max(sampleStates[i,])) # name of column which has max value
+for (i in 1:dim(tree$sampleStates)[1]){ # dim(ss)[1]
+  deme <- names(which.max(tree$sampleStates[i,])) # name of column which has max value
   patient <- as.numeric(rownames(tree$sampleStates)[i])
-  time <- sampleTimes[i]
+  time <- tree$sampleTimes[i]
   age <- as.numeric( regmatches( deme, 
                 regexec( "\\.age([0-9])", deme) )[[1]][2] )
   care <- as.numeric( regmatches( deme, 
@@ -261,7 +261,7 @@ demo <- readRDS("demo.rds")
 ##- date of diagnosis ?
 date0 <- as.Date('1979-01-01')
 demo$datediag <- date0 + demo$time
-# min(demo$datediag)
+# min(demo$datediag) head(demo)
 # max(demo$datediag)
 
 ###--- add cluster sizes
@@ -325,6 +325,17 @@ simli <- listclus[c(1:length(listclus))]
 
 lm_model_std = "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
 lapply(simli , function(x) summary(lm(lm_model_std, data = x)))
+
+##- univariate
+summary(lm(
+  scale(size) ~ scale(stage),
+  data = simli[[3]]
+))
+
+summary(lm(
+  scale(size) ~ scale(risk),
+  data = simli[[1]]
+))
 
 ##---- sim logistic ---- 
 ##- model: clus ~ age +  stage + time + risk

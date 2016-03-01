@@ -17,4 +17,20 @@
 ### and you can swap in the simulated time trees. 
 
 library(phangorn)
+library(ape)
 ?simSeq
+tree
+str(tree)
+tt <- extract.clade(tree, node = 20000)
+plot(tt)
+
+## substitution rate
+mu <- 2e-5
+## generate seq
+system.time(
+seqs0 <- simSeq(tt, rate = mu, l = 1e3, type="DNA", bf = rep(.25, 4 ), Q = NULL)
+)
+seqs <- as.DNAbin(seqs0)
+D <- dist.dna( seqs, model = 'JC69' )
+D
+
