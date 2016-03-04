@@ -2,6 +2,8 @@
 ### phangorn simSeq function
 ### need a substitution rate:
   ### either a consensus estimate from the litterature:
+    ### In Berry,... Leitner JVI 2007 (http://goo.gl/xgZsXh), 4.3e-3 [1.39 - 7.19] subs per site per year in B subtype 
+    ### http://goo.gl/xgZsXh
     ### In Lythgoe & Fraser, between host synonymous = 1.3e-3,
     ### non-synonymous = 3.4e-3 
   ### or an output from LSD: 10e-5 as default it seems ?

@@ -55,6 +55,15 @@ if(FALSE){
   # head(dsimtree)
   # head(duktree)
   
+   ## time to rate
+   rate <-  4.3e-3
+   ddsim <-  dsimtree /365 * rate
+   summary(ddsim)
+   hist(ddsim, breaks = 50, xlab = "distance", ylab = "frequency", main = "Simulated tree's distances", col = "grey")
+   ?pskill
+   ?setTimeLimit
+   ## http://goo.gl/AQVYRP
+   ## 
   ## normalize
   dsimtree <- dsimtree / max(dsimtree)
   duktree <- duktree / max(duktree)
