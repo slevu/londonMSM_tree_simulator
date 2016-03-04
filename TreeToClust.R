@@ -61,7 +61,9 @@ ucsd_hivclust <- function(d, quant = c(5e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5) ){
 ####---- loop threshold (first 3 qt = 0.05, 0.1, 1, 10)
 
   thr <- round(qt[1:3], 2)
+  ## empty results
  cmd <- vector( mode= "character" )
+ warn <- list()
  
   for ( t in thr ){
     print(paste("threshold =", t))
@@ -82,10 +84,13 @@ ucsd_hivclust <- function(d, quant = c(5e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5) ){
   ## => just issue command
   ## to run on terminal
   if ( !file.exists(outputCSV) ){
-    system(cmd_hivclustering)
+   stderr <-  system(
+     paste(cmd_hivclustering, "2>&1"),
+           intern = TRUE)
   }
-  # save commands
+  # save commands and 'stderr' warnings
   cmd <- c(cmd, cmd_hivclustering)
+  warn <- c(warn, c(t, stderr))
   }
   
 ###--- bin table in one list
