@@ -56,14 +56,17 @@ if(FALSE){
   # head(duktree)
   
    ## time to rate
+   if(FALSE){
    rate <-  4.3e-3
    ddsim <-  dsimtree /365 * rate
    summary(ddsim)
    hist(ddsim, breaks = 50, xlab = "distance", ylab = "frequency", main = "Simulated tree's distances", col = "grey")
    ?pskill
    ?setTimeLimit
+  
    ## http://goo.gl/AQVYRP
-   ## 
+    }
+   
   ## normalize
   dsimtree <- dsimtree / max(dsimtree)
   duktree <- duktree / max(duktree)
@@ -240,7 +243,7 @@ dev.off()
 ####---- data ----
 ##- converting sample states in table of co-variates ?
 
-if(TRUE){
+if(FALSE){
 # sampleTimes <- tree$sampleTimes
 # sampleStates  <- tree$sampleStates 
 
@@ -356,6 +359,7 @@ lapply(simli , function(x) summary(glm(formula = logit_model_std,
                                    family = binomial(link = "logit"))
 ))
 
+###--- Down-sample 1
 ###--- sort dependency between indivduals from same cluster
 ### 1. downsample to make analysis of one cluster size
 ###  explained by median or mean of each co-variate.
@@ -385,6 +389,36 @@ for(i in 1:length(simli)){
   )
 }
 
+###--- Down-sample 2
+### de-correlating: sample one individual by cluster. Repeat many times. Ensure much more power than downsampling with just one value per sample size.
+head(listclus[[1]])
+
+## petit
+#df <- head(listclus[[1]], 10)
+## grand
+df <- listclus[[1]]
+## sampling one id per cluster k times
+k <- 2
+## empty list
+down_listclus <- vector("list", k)
+## loop: k selection of id from df sampled by ClusterID
+for (i in 1:k){
+  down_listclus[[i]] <- df[df$id %in% tapply(df$id,
+                  df$ClusterID, 
+                  function(x) sample(x, 1)),]
+                  
+}
+dim(down_listclus[[1]])[1]
+
+##- linear regression
+lapply(down_listclus, 
+       function(x) 
+         summary(lm(lm_model_std, data = x)))
+## extract coefficient 
+## make quantiles( .1, 1, 5 % of p-value)
+## for each independant variable
+## use test_lmTotable.R
+## llllllllllllllllllaaaaaaaaaaa---------------------------->
 
 ###-------------------###
 ###--- for uk data ---###
