@@ -10,9 +10,9 @@
 
 ###--- could scale the time based distance by consensus mutation rate to obtain 'standard' substitution per site distances
 ###--- first, construct edge list with distance as input for ucsd software (d = distance matrix)
-###--- second, loop through distance thresholds ( = vector of threshold based on quantiles)
+###--- second, loop through distance thresholds ( = vector of threshold based on quantiles) d <- dsimtree
 
-ucsd_hivclust <- function(d, quant = c(5e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5) ){
+ucsd_hivclust <- function(d, quant = c(1e-4, 5e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5) ){
   ## get var.name for output path
   var.name <- substitute(d)
   
@@ -58,7 +58,7 @@ ucsd_hivclust <- function(d, quant = c(5e-4, 1e-3, 1e-2, 1e-1, 0.25, 0.5) ){
   ## full path needed 
   exec <- '~/Documents/softwares/hivclustering/scripts/hivnetworkcsv'
   
-####---- loop threshold (first 3 qt = 0.05, 0.1, 1, 10)
+####---- loop threshold (first 3 qt = 0.05, 0.1, 1, 10) t <- thr[2]
 
   thr <- round(qt[1:3], 2)
   ## empty results

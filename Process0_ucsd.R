@@ -55,11 +55,11 @@ if(FALSE){
   # head(dsimtree)
   # head(duktree)
   
-   ## time to rate
+   ###--- time to rate
    if(FALSE){
    rate <-  4.3e-3
-   ddsim <-  dsimtree /365 * rate
-   summary(ddsim)
+   dsimtree <-  dsimtree /365 * rate
+   summary(dsimtree)
    hist(ddsim, breaks = 50, xlab = "distance", ylab = "frequency", main = "Simulated tree's distances", col = "grey")
    ?pskill
    ?setTimeLimit
@@ -89,7 +89,7 @@ source("TreeToClust.R")
 # head(cl)
 
 ## get list of quantiles, commands and list of
-## dataframes of cluster members
+## dataframes of cluster members 
 if(FALSE){
   system.time(
     simclus <- ucsd_hivclust(dsimtree)
@@ -335,6 +335,7 @@ merge(x, demo,
 ###### just on low and high threshold
 simli <- listclus[c(1:length(listclus))]
 
+lm_model_std = "size ~ age + stage + time + risk"
 lm_model_std = "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
 lapply(simli , function(x) summary(lm(lm_model_std, data = x)))
 
@@ -398,7 +399,7 @@ head(listclus[[1]])
 ## grand
 df <- listclus[[1]]
 ## sampling one id per cluster k times
-k <- 2
+k <- 100
 ## empty list
 down_listclus <- vector("list", k)
 ## loop: k selection of id from df sampled by ClusterID
@@ -411,13 +412,50 @@ for (i in 1:k){
 dim(down_listclus[[1]])[1]
 
 ##- linear regression
-lapply(down_listclus, 
+fit <- lapply(down_listclus, 
        function(x) 
-         summary(lm(lm_model_std, data = x)))
-## extract coefficient 
+         summary(lm(lm_model_std, data = x))) # lm_model_std
+## extract coefficient
+length(fit)
+
+## test i <- 1
+# coef_lm <- vector("list", k)
+# for (i in 1:length(fit)){
+#   a <- (capture.output(fit[[i]]))
+# #   grep("Intercept", a)
+# #   grep("---", a)
+#   b <- a[(grep("Intercept", a)):(grep("---", a)-1)]
+#   
+#   coef_lm[[i]] <- read.table(textConnection( b ), fill = TRUE)
+#   names(coef_lm[[i]]) <- c("Var", colnames(coef(fit[[1]]) ), "Signif")
+# }
+# coef_lm
+
+## 2nd try
+
+## try to allocate the number of variables + intercept
+nvar <-  ifelse( gregexpr("\\+", lm_model_std)[[1]][1] == -1, 2,
+        length( gregexpr("\\+", lm_model_std)[[1]] ) + 2
+        ) 
+
+## matrix of coefficients
+coef_lm <- matrix(NA, nvar * k, 4, 
+                  dimnames = list(
+                    rep(rownames( coef(fit[[1]]) ), k),
+                    colnames(coef(fit[[1]])))) 
+# i <- 1
+for (i in 1:length(fit)){
+  fill <- (i-1)*nvar + 1:nvar
+  coef_lm[ fill,  ] <- coef(fit[[i]])
+}
+## number of p-value < 0.05
+coef_lm[rownames(coef_lm) == "scale(stage)", 4]
+tapply(coef_lm[,4], rownames(coef_lm), function(x) sum(x < 0.05))
+
 ## make quantiles( .1, 1, 5 % of p-value)
 ## for each independant variable
 ## use test_lmTotable.R
+## make plots of association
 ## llllllllllllllllllaaaaaaaaaaa---------------------------->
 
 ###-------------------###
