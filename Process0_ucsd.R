@@ -56,21 +56,18 @@ if(FALSE){
   # head(duktree)
   
    ###--- time to rate
-   if(FALSE){
+   if(TRUE){
    rate <-  4.3e-3
    dsimtree <-  dsimtree /365 * rate
    summary(dsimtree)
-   hist(ddsim, breaks = 50, xlab = "distance", ylab = "frequency", main = "Simulated tree's distances", col = "grey")
-   ?pskill
-   ?setTimeLimit
-  
-   ## http://goo.gl/AQVYRP
+     ## http://goo.gl/AQVYRP
     }
    
   ## normalize
-  dsimtree <- dsimtree / max(dsimtree)
-  duktree <- duktree / max(duktree)
-  
+#   dsimtree <- dsimtree / max(dsimtree)
+#   duktree <- duktree / max(duktree)
+   summary(duktree)
+   
   ##- histogram distances
   # summary(x)
   hist(dsimtree, breaks = 50, xlab = "distance", ylab = "frequency", main = "Simulated tree's distances", col = "grey")
@@ -95,9 +92,9 @@ if(FALSE){
     simclus <- ucsd_hivclust(dsimtree)
   )
   
-  system.time(
-    ukclus <- ucsd_hivclust(duktree)
-  )
+#   system.time(
+#     ukclus <- ucsd_hivclust(duktree)
+#   )
   
   ###--- save 
   saveRDS(simclus, file = "data/simclus.rds")
@@ -335,20 +332,20 @@ merge(x, demo,
 ###### just on low and high threshold
 simli <- listclus[c(1:length(listclus))]
 
-lm_model_std = "size ~ age + stage + time + risk"
+# lm_model_std = "size ~ age + stage + time + risk"
 lm_model_std = "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
 lapply(simli , function(x) summary(lm(lm_model_std, data = x)))
 
 ##- univariate
-summary(lm(
-  scale(size) ~ scale(stage),
-  data = simli[[3]]
-))
-
-summary(lm(
-  scale(size) ~ scale(risk),
-  data = simli[[1]]
-))
+# summary(lm(
+#   scale(size) ~ scale(stage),
+#   data = simli[[3]]
+# ))
+# 
+# summary(lm(
+#   scale(size) ~ scale(risk),
+#   data = simli[[1]]
+# ))
 
 ##---- sim logistic ---- 
 ##- model: clus ~ age +  stage + time + risk
@@ -456,6 +453,7 @@ tapply(coef_lm[,4], rownames(coef_lm), function(x) sum(x < 0.05))
 ## for each independant variable
 ## use test_lmTotable.R
 ## make plots of association
+## loop at different thershold
 ## llllllllllllllllllaaaaaaaaaaa---------------------------->
 
 ###-------------------###
