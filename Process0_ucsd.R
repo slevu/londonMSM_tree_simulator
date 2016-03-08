@@ -13,7 +13,7 @@ if(TRUE){
   l <- list.files(pattern="*.Rdata") # list.files(pattern="Rdata$") list.files(pattern="out")
   load(l[length(l)])
   ls()
-  tree 
+  simtree <- tree 
 
   ####---- load uk stuff ----
   t_uk <- read.tree(file = "../phylo-uk/data/ExaML_result.subUKogC_noDRM.finaltree.000")
@@ -23,58 +23,44 @@ if(TRUE){
   t_uk
 }
 
-####---- get distances ----
-####  cluster size to real data. Need to have same number of clusters ?
-if(FALSE){
-  ## get distances
-  ##- matrix first into distances
-  
-  #- sim tree
-  if (file.exists("data/simtree_dist.rds")){
-    dsimtree <- readRDS("data/simtree_dist.rds")
-  } else {
-    dsimtree <- as.dist(cophenetic.phylo(tree))
-    saveRDS(dsimtree, file = "data/simtree_dist.rds")
-  }
-  # uk tree
-  if (file.exists("data/uktree_dist.rds")){
-    duktree <- readRDS("data/uktree_dist.rds")
-  } else {
-    duktree <- as.dist(cophenetic.phylo(t_uk))
-    saveRDS(duktree, file = "data/uktree_dist.rds")
-  }
+##-- Create edge list of transformed distances
+source("TReeToEdgeList.R")
+system.time(
+ path.el <-  TreeToEdgeList(simtree)
+)
+# path.el <- "data/simtree_el.rds"
+el <- readRDS(file = path.el)
+head(el)
+
+
+
+
+  # uk tree OR get TN93 distances ?
+#   if (file.exists("data/uktree_dist.rds")){
+#     duktree <- readRDS("data/uktree_dist.rds")
+#   } else {
+#     duktree <- as.dist(cophenetic.phylo(t_uk))
+#     saveRDS(duktree, file = "data/uktree_dist.rds")
+#   }
+#  dukTN93 <- readRDS(file = "../phylo-uk/source/subUKogC_noDRM_151202_ucsdTN93.rds" )
   
   ## get and keep tips labels
-   sim.names <- data.frame("id" = labels(dsimtree), 
-                           stringsAsFactors = F)
-   saveRDS(sim.names, file = "sim.names.rds")
-   uk.names <- data.frame("id" = labels(duktree), 
-                           stringsAsFactors = F)
-   saveRDS(uk.names, file = "uk.names.rds")
+#   if(FALSE){
+#      sim.names <- data.frame("id" = labels(dsimtree), 
+#                            stringsAsFactors = F)
+#    saveRDS(sim.names, file = "sim.names.rds")
+#    uk.names <- data.frame("id" = labels(duktree), 
+#                            stringsAsFactors = F)
+#    saveRDS(uk.names, file = "uk.names.rds")
+#   }
   
-  # head(dsimtree)
-  # head(duktree)
-  
-   ###--- time to rate
-   if(TRUE){
-   rate <-  4.3e-3
-   dsimtree <-  dsimtree /365 * rate
-   summary(dsimtree)
-     ## http://goo.gl/AQVYRP
-    }
-   
-  ## normalize
-#   dsimtree <- dsimtree / max(dsimtree)
-#   duktree <- duktree / max(duktree)
-   summary(duktree)
-   
-  ##- histogram distances
-  # summary(x)
-  hist(dsimtree, breaks = 50, xlab = "distance", ylab = "frequency", main = "Simulated tree's distances", col = "grey")
-  hist(duktree, breaks = 50, xlab = "distance", ylab = "frequency", main = "UK MSM tree's distances", col = "grey")
-}
+
+#  hist(duktree, breaks = 50, xlab = "distance", ylab = "frequency", main = "UK MSM tree's distances", col = "grey")
+
+
 ####---- cluster UCSD ----
-source("TreeToClust.R")
+# source("TreeToClust.R")
+source("EdgeListToClust.R")
 
 ## test for debug
 ## str(dsimtree)
@@ -89,7 +75,7 @@ source("TreeToClust.R")
 ## dataframes of cluster members 
 if(FALSE){
   system.time(
-    simclus <- ucsd_hivclust(dsimtree)
+    simclus <- ucsd_hivclust(el)
   )
   
 #   system.time(
@@ -333,6 +319,7 @@ merge(x, demo,
 simli <- listclus[c(1:length(listclus))]
 
 # lm_model_std = "size ~ age + stage + time + risk"
+lm_model_w_time = "scale(size) ~ scale(age) + scale(stage) + scale(risk)"
 lm_model_std = "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
 lapply(simli , function(x) summary(lm(lm_model_std, data = x)))
 
@@ -394,6 +381,7 @@ head(listclus[[1]])
 ## petit
 #df <- head(listclus[[1]], 10)
 ## grand
+lm_model <- lm_model_w_time # lm_model_std
 df <- listclus[[1]]
 ## sampling one id per cluster k times
 k <- 100
@@ -411,7 +399,7 @@ dim(down_listclus[[1]])[1]
 ##- linear regression
 fit <- lapply(down_listclus, 
        function(x) 
-         summary(lm(lm_model_std, data = x))) # lm_model_std
+         summary(lm(lm_model, data = x))) 
 ## extract coefficient
 length(fit)
 
@@ -431,8 +419,8 @@ length(fit)
 ## 2nd try
 
 ## try to allocate the number of variables + intercept
-nvar <-  ifelse( gregexpr("\\+", lm_model_std)[[1]][1] == -1, 2,
-        length( gregexpr("\\+", lm_model_std)[[1]] ) + 2
+nvar <-  ifelse( gregexpr("\\+", lm_model)[[1]][1] == -1, 2,
+        length( gregexpr("\\+", lm_model)[[1]] ) + 2
         ) 
 
 ## matrix of coefficients
@@ -446,15 +434,15 @@ for (i in 1:length(fit)){
   coef_lm[ fill,  ] <- coef(fit[[i]])
 }
 ## number of p-value < 0.05
-coef_lm[rownames(coef_lm) == "scale(stage)", 4]
+# coef_lm[rownames(coef_lm) == "scale(stage)", 4]
 tapply(coef_lm[,4], rownames(coef_lm), function(x) sum(x < 0.05))
-
+## llllllllllllllllllaaaaaaaaaaa----------------------------> ??????
 ## make quantiles( .1, 1, 5 % of p-value)
 ## for each independant variable
 ## use test_lmTotable.R
 ## make plots of association
 ## loop at different thershold
-## llllllllllllllllllaaaaaaaaaaa---------------------------->
+
 
 ###-------------------###
 ###--- for uk data ---###
