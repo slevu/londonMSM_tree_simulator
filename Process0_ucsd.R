@@ -328,6 +328,7 @@ merge(x, demo,
 
 # head(listclus[[3]])
 # table(listclus[[1]]$binclus, useNA = "ifany")
+# table(listclus[[1]]$size, useNA = "ifany")
 
 ####--- sim naive regressions ---
 
@@ -367,7 +368,7 @@ lapply(simli , function(x) summary(glm(formula = logit_model_std,
 ))
 
 ###--- Down-sample 1
-###--- sort dependency between indivduals from same cluster
+###--- sort out dependency between indivduals from same cluster
 ### 1. downsample to make analysis of one cluster size
 ###  explained by median or mean of each co-variate.
 ###  2. plot the distribution of covariates by cluster size. 
@@ -380,7 +381,9 @@ lapply(simli , function(x) summary(glm(formula = logit_model_std,
 ####---- downsample ----
 ##- 1. down-sample: mean of each variable
 down <- lapply(simli, function(x) aggregate(x[, 5:9], list("size" = x$size), mean))
-# str(down)
+# str(down) 
+# head(down[[1]])
+# head(simli[[1]])
 
 ##- linear regression
 lapply(down, function(x) summary(lm(lm_model, data = x)))
@@ -396,86 +399,142 @@ for(i in 1:length(simli)){
   )
 }
 
+
+##- plot correlation
+##- df containing indepvar in a list
+size.vs.covar <- function(l, depvar = "size",
+                          indepvar = c("stage", "risk", "age", "time")){
+  
+  par(mfcol=c(length(indepvar), length(l) ), 
+      mar = c(4,3,3,2)+0.1, oma = c(0, 0, 2, 0), bty = 'n') # b,l,t,r
+  for(c in 1:length(l)){
+    for(r in 1:length(indepvar)){
+      plot( x = l[[c]][, indepvar[r]], y = l[[c]][, depvar], 
+            ylab = '', xlab = '', font.main = 1,
+            main = paste(indepvar[r], names(down)[c]))
+    }
+  }
+  mtext(paste(depvar, "(y) vs co-variates (x) "), outer = TRUE, cex = 1)
+}
+
+size.vs.covar(down)
+dev.off()
+
+size.vs.covar(listclus)
+## For ggplot, unlist ...
+
 ###--- Down-sample 2
 ### de-correlating: sample one individual by cluster. Repeat many times. Ensure much more power than downsampling with just one value per sample size.
 head(listclus[[1]])
-
 summary(listclus[[1]]$size) ## contains size = 1
 
-###--- start function by threshold
-df <- listclus[[1]]
-## sampling one id per cluster k times
-k <- 100
-## empty list
-down_listclus <- vector("list", k)
-## loop: k selection of id from df sampled by ClusterID
-for (i in 1:k){
-  down_listclus[[i]] <- df[df$id %in% tapply(df$id,
+###--- start function by threshold 
+
+# df <- head(listclus[[1]],10)
+
+downsample <- function(df, iter = 100){
+  ##- sampling one id per cluster k times
+  k <- iter
+  ## loop
+    ## empty list
+    down_listclus <- vector("list", k)
+    ##  k selection of one id from df
+    ##   sampled by each ClusterID
+    for (i in 1:k){
+      down_listclus[[i]] <- df[df$id %in% 
+                                 tapply(df$id,
                   df$ClusterID, 
                   function(x) sample(x, 1)),]
-                  
-}
-dim(down_listclus[[1]])[1]
-head(down_listclus[[1]])
-##- linear regression
-fit <- lapply(down_listclus, 
-       function(x) 
-         summary(lm(lm_model, data = x))) 
-## extract coefficient
-length(fit)
-
-## test i <- 1
-# coef_lm <- vector("list", k)
-# for (i in 1:length(fit)){
-#   a <- (capture.output(fit[[i]]))
-# #   grep("Intercept", a)
-# #   grep("---", a)
-#   b <- a[(grep("Intercept", a)):(grep("---", a)-1)]
-#   
-#   coef_lm[[i]] <- read.table(textConnection( b ), fill = TRUE)
-#   names(coef_lm[[i]]) <- c("Var", colnames(coef(fit[[1]]) ), "Signif")
-# }
-# coef_lm
-
-## 2nd try
-
-## try to allocate the number of variables + intercept
-# nvar <-  ifelse( gregexpr("\\+", lm_model)[[1]][1] == -1, 2,
-#         length( gregexpr("\\+", lm_model)[[1]] ) + 2
-#         ) 
-nvar <- dim(coef(fit[[1]]))[1]
-
-## matrix of coefficients
-coef_lm <- matrix(NA, nvar * k, 4, 
+    }
+  # head(down_listclus[[1]])
+  # dim(down_listclus[[1]])
+  
+    
+  ##- linear regression
+  fit <- lapply(down_listclus,
+                function(x)
+                  summary(lm(lm_model, data = x))) 
+  
+  ##- extract coefficient
+    ## number of variables + intercept
+    nvar <- dim(coef(fit[[1]]))[1]
+    
+    ## empty matrix of coefficients
+    coef_lm <- matrix(NA, nvar * k, 4, 
                   dimnames = list(
                     rep(rownames( coef(fit[[1]]) ), k),
                     colnames(coef(fit[[1]])))) 
-# i <- 1
-for (i in 1:length(fit)){
-  fill <- (i-1)*nvar + 1:nvar
-  coef_lm[ fill,  ] <- coef(fit[[i]])
+    ## loop
+    for (i in 1:length(fit)){
+      fill <- (i-1)*nvar + 1:nvar
+      coef_lm[ fill,  ] <- coef(fit[[i]])
+    }
+  
+  ##- number of p-value < 0.05
+  sum <- tapply(coef_lm[,4], rownames(coef_lm), 
+                function(x) sum(x < 0.05) / length(x))
+  
+  ##- mean of co-variates over iterations
+  # head(down_listclus[[1]])
+    ## change structure
+    bind_df <- do.call(rbind, down_listclus)
+    ## mean by ClusterID
+    down.down <- aggregate(bind_df[, 5:9],
+                           list("ClusterID" = bind_df$ClusterID),                                                  mean)
+  
+  return(list(down_listclus = down_listclus,
+              fit = fit, coef_lm = coef_lm,
+              sum =  sum, down.down = down.down))
 }
-###--- number of p-value < 0.05
-# coef_lm[rownames(coef_lm) == "scale(stage)", 4]
-tapply(coef_lm[,4], rownames(coef_lm), function(x) sum(x < 0.05))
-tapply(coef_lm[,4], rownames(coef_lm), function(x) sum(x < 0.01))
+
+##- over thresholds
+dd <- sapply( listclus, function(x) downsample(df = x, iter = 10))
+dd
+dd["sum",]
+str(dd["down.down",])
+
+down_listclus <- unlist(dd[1,], recursive = FALSE)
+str(down_listclus)
+##################################-----------# LLLLLAAAAAAAA
+##################################
+dd["fit",]$`0.01`[[1]]
+dd[1,][[1]][1]
+dd[1, ][1][[1]][[1]]
+dd[1,]$`0.02`[[1]]
+class( dd[1, ][[1]][[1]] )
 
 ####---- lattice ----
 ##- 2. plots
 library(lattice)
 # trellis.par.set(canonical.theme(color = FALSE))
-for(i in 1:length(down_listclus[[1]]) ){
+
+##- size by stage
+for(i in 1:length(down_listclus) ){
   
   print(
-    histogram(~ stage|factor(size), 
+    histogram(~ factor(stage)|factor(size), 
                   main = '',
-                  data = down_listclus[[1]])
+                  data = down_listclus[[i]])
   )
-  
-  histogram(~ factor(risk)|factor(size), 
-            main = '',
-            data = down_listclus[[1]])
 }
+
+##- size by risk
+for(i in 1:length(down_listclus) ){
+  print(
+    histogram(~ factor(risk)|factor(size), 
+            main = '',
+            data = down_listclus[[i]])
+  )
+}
+
+  ##- distribution of cluster size by stage, etc.
+  
+  boxplot(size ~ factor(stage), 
+          main = 'size by stage', 
+          data = down_listclus[[4]])
+  
+  , main="Car Milage Data", 
+          xlab="Number of Cylinders", ylab="Miles Per Gallon")
 ## llllllllllllllllllaaaaaaaaaaa----------------------------> ??????
 ## make quantiles( .1, 1, 5 % of p-value)
 ## for each independant variable
