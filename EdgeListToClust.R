@@ -10,7 +10,7 @@
 
 ###--- loops through distance thresholds ( = vector of threshold based on quantiles) 
 
-ucsd_hivclust <- function(el, quant = c(1e-4, 5e-4, 1e-3, 1e-2, 1e-1) ){
+ucsd_hivclust <- function(el, quant = c(5e-5, 1e-4, 5e-4, 1e-3, 1e-2, 1e-1) ){
   ## get var.name for output path
   var.name <- "dsimtree"
   

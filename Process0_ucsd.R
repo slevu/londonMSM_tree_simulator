@@ -25,11 +25,14 @@ if(TRUE){
 
 ##-- Create edge list of transformed distances
 source("TReeToEdgeList.R")
+path.el <- "data/simtree_el.rds"
 system.time(
- path.el <-  TreeToEdgeList(simtree)
-)
-# path.el <- "data/simtree_el.rds"
-el <- readRDS(file = path.el)
+  if( !file.exists(path.el) ){
+    path.el <-  TreeToEdgeList(simtree)
+  } else
+    el <- readRDS(file = path.el)
+) 
+
 head(el)
 
 
@@ -272,7 +275,7 @@ demo$datediag <- date0 + demo$time
 sim.names <- readRDS("sim.names.rds")
   ##- in list
   l <- list()
-  for (i in 1:length(simclus)) {
+  for (i in 1:length(simclus) ) {
   ## merge cluster number (with NA)
    a <- merge(x = sim.names, y = simclus[[i]],
           by.x = "id", by.y = "SequenceID",
@@ -289,6 +292,13 @@ sim.names <- readRDS("sim.names.rds")
   #- binary clustering variable
   b$binclus <- ifelse(b$Freq > 1 & !is.na(b$Freq), 1, 0)
   
+  ##- pseudo ClusterID when size = 1
+  ## starting from max(ClusterID+1)
+  ## important pour down-sampling
+  .start <- max(b$ClusterID, na.rm = T)
+  .n <- dim(b[is.na(b$ClusterID),] )[1]
+   b$ClusterID[is.na(b$ClusterID)]  <- .start + 1:.n 
+
   #- colnames
   colnames(b)[which(colnames(b) =="Freq")] <- "size"
   l[[i]] <- b
@@ -296,6 +306,13 @@ sim.names <- readRDS("sim.names.rds")
   }
   rm(a, b)
 # str(l)
+
+## test
+# b <- l[[1]]
+# table(b$ClusterID, useNA = "ifany" )
+# table(b$size, useNA = "ifany" )
+# dim(b[is.na(b$ClusterID),] )
+# dim(b)
 
 ####---- proportion ----
 ##-proportion in or out clusters
@@ -319,9 +336,14 @@ merge(x, demo,
 simli <- listclus[c(1:length(listclus))]
 
 # lm_model_std = "size ~ age + stage + time + risk"
+lm_model_factor <- "size ~ factor(stage)"
+lm_model_ordinal <- "size ~ stage"
 lm_model_w_time = "scale(size) ~ scale(age) + scale(stage) + scale(risk)"
-lm_model_std = "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
-lapply(simli , function(x) summary(lm(lm_model_std, data = x)))
+lm_model_full = "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
+
+lm_model <-  lm_model_w_time #  lm_model_factor
+
+lapply(simli , function(x) summary(lm(lm_model, data = x)))
 
 ##- univariate
 # summary(lm(
@@ -361,7 +383,7 @@ down <- lapply(simli, function(x) aggregate(x[, 5:9], list("size" = x$size), mea
 # str(down)
 
 ##- linear regression
-lapply(down, function(x) summary(lm(lm_model_std, data = x)))
+lapply(down, function(x) summary(lm(lm_model, data = x)))
 
 ####---- lattice ----
 ##- 2. plots
@@ -378,10 +400,9 @@ for(i in 1:length(simli)){
 ### de-correlating: sample one individual by cluster. Repeat many times. Ensure much more power than downsampling with just one value per sample size.
 head(listclus[[1]])
 
-## petit
-#df <- head(listclus[[1]], 10)
-## grand
-lm_model <- lm_model_w_time # lm_model_std
+summary(listclus[[1]]$size) ## contains size = 1
+
+###--- start function by threshold
 df <- listclus[[1]]
 ## sampling one id per cluster k times
 k <- 100
@@ -395,7 +416,7 @@ for (i in 1:k){
                   
 }
 dim(down_listclus[[1]])[1]
-
+head(down_listclus[[1]])
 ##- linear regression
 fit <- lapply(down_listclus, 
        function(x) 
@@ -419,9 +440,10 @@ length(fit)
 ## 2nd try
 
 ## try to allocate the number of variables + intercept
-nvar <-  ifelse( gregexpr("\\+", lm_model)[[1]][1] == -1, 2,
-        length( gregexpr("\\+", lm_model)[[1]] ) + 2
-        ) 
+# nvar <-  ifelse( gregexpr("\\+", lm_model)[[1]][1] == -1, 2,
+#         length( gregexpr("\\+", lm_model)[[1]] ) + 2
+#         ) 
+nvar <- dim(coef(fit[[1]]))[1]
 
 ## matrix of coefficients
 coef_lm <- matrix(NA, nvar * k, 4, 
@@ -433,9 +455,27 @@ for (i in 1:length(fit)){
   fill <- (i-1)*nvar + 1:nvar
   coef_lm[ fill,  ] <- coef(fit[[i]])
 }
-## number of p-value < 0.05
+###--- number of p-value < 0.05
 # coef_lm[rownames(coef_lm) == "scale(stage)", 4]
 tapply(coef_lm[,4], rownames(coef_lm), function(x) sum(x < 0.05))
+tapply(coef_lm[,4], rownames(coef_lm), function(x) sum(x < 0.01))
+
+####---- lattice ----
+##- 2. plots
+library(lattice)
+# trellis.par.set(canonical.theme(color = FALSE))
+for(i in 1:length(down_listclus[[1]]) ){
+  
+  print(
+    histogram(~ stage|factor(size), 
+                  main = '',
+                  data = down_listclus[[1]])
+  )
+  
+  histogram(~ factor(risk)|factor(size), 
+            main = '',
+            data = down_listclus[[1]])
+}
 ## llllllllllllllllllaaaaaaaaaaa----------------------------> ??????
 ## make quantiles( .1, 1, 5 % of p-value)
 ## for each independant variable
