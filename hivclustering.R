@@ -1,4 +1,5 @@
-rm(list=ls())
+###--- not used, now in TreeToEdgeList adn EdgeListToCluster
+### rm(list=ls())
 ##----------------------------##
 ####---- function
 ####---- HIV clustering ----

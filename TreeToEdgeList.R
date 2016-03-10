@@ -7,8 +7,8 @@
 ###--- output: returns path for dataframe (ID1, ID2, distance)
 
 ###--- Scales the time based distance by consensus mutation rate to obtain 'standard' substitution per site distances
-
-TreeToEdgeList <- function(t, rate = 4.3e-3/365, 
+# tree.name <- "simtree"
+TreeToEdgeList <- function(t, rate = 1, 
                            output = "data/", fig = "figure/" , 
                            stats = TRUE, plot = TRUE ){
   
@@ -17,7 +17,14 @@ TreeToEdgeList <- function(t, rate = 4.3e-3/365,
   dist.mat.name <- paste(tree.name, "_dist", sep = '')
   dist.mat.path <- paste(output, dist.mat.name,".rds", sep = '')
   plot.name <- paste(fig, dist.mat.name, ".png", sep ='')
-                     
+  out_edge_list <- paste(output, tree.name, "_el.rds", sep = '')
+  
+  ## if file exists, don't run and return the path 
+  if (file.exists(out_edge_list) ){
+    print(paste('Edge list already exists here:', out_edge_list))
+    return(out_edge_list)
+  } else {
+    
   ###--- get distances
   if (file.exists(dist.mat.path)){
     d <- readRDS( dist.mat.path )
@@ -28,17 +35,22 @@ TreeToEdgeList <- function(t, rate = 4.3e-3/365,
   }
   
   ###--- time to rate
-  d <-  d * rate
+  if (rate != 1){
+    print(paste('distances scaled by rate =', rate, 'subst/site/day'))
+    d <-  d * rate
+  }
+  
  
   ###--- stats
   if(stats == TRUE){ print(summary(d)) }
   if(plot == TRUE){ 
+    print(paste("png plot saved:", plot.name))
     png(filename = plot.name, type="cairo",
         units="in", width=5, height=4, 
         pointsize=12, res=96)
     hist(d, breaks = 50, 
          xlab = "distance", ylab = "frequency",
-         main = '', # Tree's distances in subst/site
+         main = tree.name, # Tree's distances in subst/site
          col = "grey")
     dev.off()
    }
@@ -57,7 +69,6 @@ TreeToEdgeList <- function(t, rate = 4.3e-3/365,
   
   ###--- create edge list if not there
   require(reshape2)
-  out_edge_list <- paste(output, tree.name, "_el.rds", sep = '')
   if (file.exists(out_edge_list)){
     el <- readRDS(out_edge_list)
     } else {
@@ -66,8 +77,8 @@ TreeToEdgeList <- function(t, rate = 4.3e-3/365,
   # ) # the na.rm removal takes most of time
       colnames(el) <- c('ID1', 'ID2', 'distance')
       saveRDS(el, file = out_edge_list)
-      print("Edge list was saved")
+      print(paste("Edge list was saved:", out_edge_list))
     }
   return(out_edge_list)
 }
-  
+}  

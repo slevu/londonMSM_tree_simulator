@@ -14,144 +14,80 @@ if(TRUE){
   load(l[length(l)])
   ls()
   simtree <- tree 
+  rm(tree)
 
   ####---- load uk stuff ----
   t_uk <- read.tree(file = "../phylo-uk/data/ExaML_result.subUKogC_noDRM.finaltree.000")
   ## drop OG
   og <- c("Ref1", "Ref2", "Ref3", "Ref4", "Ref5", "Ref6", "HXB2")
-  t_uk <- drop.tip(t_uk, og ) 
-  t_uk
+  uktree <- drop.tip(t_uk, og ) 
+ }
+
+##-- Create edge list of (transformed) distances
+if(FALSE){
+  
+  source("TReeToEdgeList.R") # returns path to RDS file
+  
+  ##- simtree
+  system.time(
+  path.simtree_el <- TreeToEdgeList(simtree, 
+                       rate = 4.3e-3/365) # Berry et al. JVI 2007
+  ) 
+  
+  ##- uktree
+  system.time(
+    path.uktree_el <- TreeToEdgeList(uktree, 
+                        rate = 1) ) 
 }
 
-##-- Create edge list of transformed distances
-source("TReeToEdgeList.R")
-path.el <- "data/simtree_el.rds"
-system.time(
-  if( !file.exists(path.el) ){
-    path.el <-  TreeToEdgeList(simtree)
-  } else
-    el <- readRDS(file = path.el)
-) 
-
-head(el)
-
-
-
-
-  # uk tree OR get TN93 distances ?
-#   if (file.exists("data/uktree_dist.rds")){
-#     duktree <- readRDS("data/uktree_dist.rds")
-#   } else {
-#     duktree <- as.dist(cophenetic.phylo(t_uk))
-#     saveRDS(duktree, file = "data/uktree_dist.rds")
-#   }
+    
+# Alternatively take TN93 distances
 #  dukTN93 <- readRDS(file = "../phylo-uk/source/subUKogC_noDRM_151202_ucsdTN93.rds" )
   
-  ## get and keep tips labels
-#   if(FALSE){
-#      sim.names <- data.frame("id" = labels(dsimtree), 
-#                            stringsAsFactors = F)
-#    saveRDS(sim.names, file = "sim.names.rds")
-#    uk.names <- data.frame("id" = labels(duktree), 
-#                            stringsAsFactors = F)
-#    saveRDS(uk.names, file = "uk.names.rds")
-#   }
-  
-
-#  hist(duktree, breaks = 50, xlab = "distance", ylab = "frequency", main = "UK MSM tree's distances", col = "grey")
 
 
 ####---- cluster UCSD ----
 # source("TreeToClust.R")
 source("EdgeListToClust.R")
 
-## test for debug
-## str(dsimtree)
-## d <-  dsimtree 
-# m <- as.matrix(dsimtree)
-# d <- as.dist(m[1:200, 1:200])
-# simclus <- ucsd_hivclust(d)
-# str(d)
-# head(cl)
-
 ## get list of quantiles, commands and list of
 ## dataframes of cluster members 
 if(FALSE){
   system.time(
-    simclus <- ucsd_hivclust(el)
+    simclus <- ucsd_hivclust(path.simtree_el, 
+                             thr = c(0.015, 0.02, 0.05, 0.1))
   )
   
-#   system.time(
-#     ukclus <- ucsd_hivclust(duktree)
-#   )
+  system.time(
+    ukclus <- ucsd_hivclust(path.uktree_el,
+                            c(0.015, 0.02, 0.05, 0.1))
+  )
+  names(simclus)
+  names(ukclus)
+  # unlist(ukclus["warn"] , recursive = T, use.names = F)
   
   ###--- save 
-  saveRDS(simclus, file = "data/simclus.rds")
-  saveRDS(ukclus, file = "data/ukclus.rds")
+  saveRDS(simclus, file = "data/simclus2.rds")
+  saveRDS(ukclus, file = "data/ukclus2.rds")
  }
 
 # rm(dsimtree, duktree)
 
 
 ####---- read ----
-### only cluster members
-simclus <- readRDS(file = "data/simclus.rds")[[3]]
-ukclus <- readRDS(file = "data/ukclus.rds")[[3]]
+### only cluster members (based on given threshold)
+simclus <- readRDS(file = "data/simclus2.rds")[["cl"]]
+ukclus <- readRDS(file = "data/ukclus2.rds")[["cl"]]
+
+### only cluster members (based on quantiles)
+# simclus <- readRDS(file = "data/simclus.rds")[[3]]
+# ukclus <- readRDS(file = "data/ukclus.rds")[[3]]
 
 ####---- quantiles ----
 ## read saved results of UCSD clustering
-readRDS(file = "data/simclus.rds")[[1]]
-readRDS(file = "data/ukclus.rds")[[1]]
+# readRDS(file = "data/simclus.rds")[[1]]
+# readRDS(file = "data/ukclus.rds")[[1]]
 ####---- stop ----
-
-
-# ###--- bind table in one dataframe
-# # list.files(tempdir())
-# i <- 2
-# chop <- function(patrn){
-#   ## list outputs
-#   l <- list.files(getwd(), pattern = patrn)
-#   ## bind outputs
-#   cl <- list()
-#   for(i in 1:length(l)){
-#     cl[[i]] <-  read.csv( l[i] )
-#     # name threshold
-#     names(cl)[i] <- substr(l[i], 
-#                            regexpr(l[i], pattern = ".csv")[1] - 4,
-#                            regexpr(l[i], pattern = ".csv")[1] - 1)
-#   }
-#   return(cl)
-# }
-# 
-# simclus <- chop(patrn = "dsimtree")
-# ukclus <- chop(patrn = "duktree")
-# # str(simclus)
-#  str(cl)
-#  
-# ####---- cluster UPGMA ----
-# simhc <- hclust(dsimtree, method = "average") # UPGMA
-# ukhc <- hclust(duktree, method = "average")
-# 
-# ##- cut based on height
-# if (F){
-# #- function of heights
-# nheights <- 10 # number of threshold
-# up <- round(mean(dsimtree), 1) # cut up to the mean
-# # breaks <-  seq(1/nbreaks, 1-(1/nbreaks), by = 1/nbreaks)
-# simclus <- cutree(simhc, h = seq(up / nheights, up, by = up / nheights) ) # h = breaks
-# up <- round(mean(duktree),1) # cut up to the mean
-# ukclus <- cutree(ukhc,  h = seq(up / nheights, up, by = up /nheights) )
-# # rm(simx, ukx)
-# }
-# 
-# #- cut as function of k groups
-# kgroups <- c(500, 1000, 5000, 8000, 10000)
-# simclus <- cutree(simhc, k = kgroups ) # h = breaks
-# ukclus <- cutree(ukhc,  k = kgroups )
-# # colnames(simclus) <- paste("k",colnames(simclus),sep='')
-# # colnames(ukclus) <- paste("k",colnames(ukclus),sep='')
-# 
-# ###--- end UPGMA
 
 ####---- desc ----
 ##- Calculate size(=Freq) of each cluster across different threshold
@@ -265,24 +201,34 @@ demo$datediag <- date0 + demo$time
 ###--- add cluster sizes
 ####... and outdegrees
 
-###--- loop for
-## For simulations,
-##- function to calculate both numclus and sizeclus for each seqindex into a LIST
+### --- start function clust.stats --- ###
+##- calculate both numclus and sizeclus for each seqindex into a LIST
 ##- with same variable names
-##- For UCSD files, no ID if no cluster (size < 2) !!!
+##- For UCSD files, no ID if no cluster (size < 2) !
 
-## get tips labels
-sim.names <- readRDS("sim.names.rds")
-  ##- in list
+clust.stats <- function(clus = simclus, tree = simtree){
+  
+  ## get ALL tips names
+  tip.names <- data.frame("id" = tree$tip.label , 
+                          stringsAsFactors = F)
+  ## get size of clusters
+  freqClust <- lapply(clus, function(x){
+    as.data.frame(table(x$ClusterID),
+                  stringsAsFactors = FALSE)
+  })
+  
+  ## empty list
   l <- list()
-  for (i in 1:length(simclus) ) {
+  
+  ## loop over thresholds
+  for (i in 1:length(clus) ) {
   ## merge cluster number (with NA)
-   a <- merge(x = sim.names, y = simclus[[i]],
+   a <- merge(x = tip.names, y = clus[[i]],
           by.x = "id", by.y = "SequenceID",
           all.x = TRUE, sort = FALSE)
    
    ## merge cluster size (with NA)
-   b <- merge(x = a, y = simfreqClust[[i]], 
+   b <- merge(x = a, y = freqClust[[i]], 
               by.x = "ClusterID", by.y = "Var1", 
               all.x = TRUE, sort = FALSE)
    
@@ -294,7 +240,7 @@ sim.names <- readRDS("sim.names.rds")
   
   ##- pseudo ClusterID when size = 1
   ## starting from max(ClusterID+1)
-  ## important pour down-sampling
+  ## important for down-sampling
   .start <- max(b$ClusterID, na.rm = T)
   .n <- dim(b[is.na(b$ClusterID),] )[1]
    b$ClusterID[is.na(b$ClusterID)]  <- .start + 1:.n 
@@ -302,28 +248,30 @@ sim.names <- readRDS("sim.names.rds")
   #- colnames
   colnames(b)[which(colnames(b) =="Freq")] <- "size"
   l[[i]] <- b
-  names(l)[i] <- names(simfreqClust[i])
+  names(l)[i] <- names(freqClust[i])
   }
-  rm(a, b)
-# str(l)
+  return(l)
+}
+### --- end function clust.stats --- ###
 
-## test
-# b <- l[[1]]
-# table(b$ClusterID, useNA = "ifany" )
-# table(b$size, useNA = "ifany" )
-# dim(b[is.na(b$ClusterID),] )
-# dim(b)
+l_sim <-  clust.stats(clus = simclus, tree = simtree)
+l_uk <-  clust.stats(clus = ukclus, tree = uktree)
+# str(l_sim)
+# str(l_uk)
 
-##- number of different clusters by threshold
-sapply(l, function(x) dim(x)[1]) # including cluster of size 1 ?
 ####---- proportion ----
 ##-proportion in or out clusters
-sapply(l, function(x) round(prop.table(table(x$binclus)),2))
+sapply(l_sim, function(x) round(prop.table(table(x$binclus)),2))
+sapply(l_uk, function(x) round(prop.table(table(x$binclus)),2))
+
 ##- cluster sizes (by individuals having such a size !!)
-sapply(l, function(x) summary(x$size))
+## probably meaningless
+sapply(l_sim, function(x) summary(x$size))
+sapply(l_uk, function(x) summary(x$size))
 
 ####---- merge ----
-listclus <- lapply(l, function(x) 
+##- for simulated data
+listclus <- lapply(l_sim, function(x) 
 merge(x, demo, 
       by.x = "id", by.y = "patient", 
       all.x = T, sort = FALSE))
@@ -338,26 +286,41 @@ merge(x, demo,
 ###### just on low and high threshold
 simli <- listclus[c(1:length(listclus))]
 
-# lm_model_std = "size ~ age + stage + time + risk"
 lm_model_factor <- "size ~ factor(stage) + factor(risk) + factor(age)"
-lm_model_ordinal <- "size ~ stage"
-lm_model_w_time = "scale(size) ~ scale(age) + scale(stage) + scale(risk)"
-lm_model_full = "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
+lm_model_ordinal  <-  "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
+lm_model_ordinal_wo_time  <-  "scale(size) ~ scale(age) + scale(stage) + scale(risk)"
 
-lm_model <-  lm_model_w_time #  lm_model_factor
+##- standard output
+lapply(simli , function(x) summary(lm(lm_model_ordinal, data = x)))
 
-lapply(simli , function(x) summary(lm(lm_model, data = x)))
+##- return only parameters, p-values and R squared
+lm.sum <- function(ls, lm_model){
+  ## pvalue by threshold
+  pvalue <- sapply(ls , function(x){
+    coef(summary(lm(lm_model, data = x)))[,4]
+  })
+    ## coded by significance
+    pvalue.code <- as.data.frame(
+      apply(pvalue,2, function(x){
+      cut(x,
+          breaks=c(-Inf, 0.001, 0.01, 0.05, 0.1, Inf),
+          labels=c('***','**', '*', '.', ''))
+    }))
+    row.names(pvalue.code) <- row.names(pvalue)
+    ## parameter by threshold
+  param <- signif(sapply(ls , function(x){
+    coef(summary(lm(lm_model, data = x)))[,1]
+  }), 2)
+  ## R square
+  r2 <- signif(sapply(ls , function(x){
+    summary(lm(lm_model, data = x))$r.squared
+  }), 3)
+  return(list("parameter" = param, "pvalue" = pvalue.code, "r.squared" = r2))
+}
 
-##- univariate
-# summary(lm(
-#   scale(size) ~ scale(stage),
-#   data = simli[[3]]
-# ))
-# 
-# summary(lm(
-#   scale(size) ~ scale(risk),
-#   data = simli[[1]]
-# ))
+lm.sum(ls = simli, lm_model = lm_model_ordinal)
+lm.sum(ls = simli, lm_model = lm_model_factor)
+
 
 ##---- sim logistic ---- 
 ##- model: clus ~ age +  stage + time + risk
@@ -388,7 +351,8 @@ down <- lapply(simli, function(x) aggregate(x[, 5:9], list("size" = x$size), mea
 # head(simli[[1]])
 
 ##- linear regression
-lapply(down, function(x) summary(lm(lm_model, data = x)))
+# lapply(down, function(x) summary(lm(lm_model_ordinal, data = x)))
+lm.sum(ls = down, lm_model = lm_model_ordinal)
 
 ####---- lattice ----
 ##- 2. plots
@@ -504,7 +468,7 @@ dd_cat <- sapply( listclus, function(x) {
 ## ordinal variables
   dd_ord <- sapply( listclus, function(x) {
     downsample(df = x,
-               lm_model = lm_model_w_time,
+               lm_model = lm_model_ordinal,
                iter = 100)
   }
   )
@@ -517,11 +481,12 @@ dd_cat <- sapply( listclus, function(x) {
 
   ##- linear regression ordinal
   lapply(mean.down, function(x) 
-    summary(lm(lm_model_full, data = x)))
+    summary(lm(lm_model_ordinal, data = x)))
+  lm.sum(ls = mean.down, lm_model = lm_model_ordinal)
   
   ## plot
   size.vs.covar(mean.down)
-
+  dev.off()
 
 ##################################-----------# LLLLLAAAAAAAA
 ##################################
@@ -529,7 +494,7 @@ dd_cat <- sapply( listclus, function(x) {
   
   boxplot(size ~ factor(stage), 
           main = 'size by stage', 
-          data = mean.down[[2]])
+          data = simli[[4]])
   
 
 ## llllllllllllllllllaaaaaaaaaaa----------------------------> ??????
@@ -671,3 +636,54 @@ plot(x = li[[1]]$size, y = li[[1]]$sqrtcd4)
 
 ##- UCSD cluster
 ##
+
+########------ surplus
+
+
+# ###--- bind table in one dataframe
+# # list.files(tempdir())
+# i <- 2
+# chop <- function(patrn){
+#   ## list outputs
+#   l <- list.files(getwd(), pattern = patrn)
+#   ## bind outputs
+#   cl <- list()
+#   for(i in 1:length(l)){
+#     cl[[i]] <-  read.csv( l[i] )
+#     # name threshold
+#     names(cl)[i] <- substr(l[i], 
+#                            regexpr(l[i], pattern = ".csv")[1] - 4,
+#                            regexpr(l[i], pattern = ".csv")[1] - 1)
+#   }
+#   return(cl)
+# }
+# 
+# simclus <- chop(patrn = "dsimtree")
+# ukclus <- chop(patrn = "duktree")
+# # str(simclus)
+#  str(cl)
+#  
+# ####---- cluster UPGMA ----
+# simhc <- hclust(dsimtree, method = "average") # UPGMA
+# ukhc <- hclust(duktree, method = "average")
+# 
+# ##- cut based on height
+# if (F){
+# #- function of heights
+# nheights <- 10 # number of threshold
+# up <- round(mean(dsimtree), 1) # cut up to the mean
+# # breaks <-  seq(1/nbreaks, 1-(1/nbreaks), by = 1/nbreaks)
+# simclus <- cutree(simhc, h = seq(up / nheights, up, by = up / nheights) ) # h = breaks
+# up <- round(mean(duktree),1) # cut up to the mean
+# ukclus <- cutree(ukhc,  h = seq(up / nheights, up, by = up /nheights) )
+# # rm(simx, ukx)
+# }
+# 
+# #- cut as function of k groups
+# kgroups <- c(500, 1000, 5000, 8000, 10000)
+# simclus <- cutree(simhc, k = kgroups ) # h = breaks
+# ukclus <- cutree(ukhc,  k = kgroups )
+# # colnames(simclus) <- paste("k",colnames(simclus),sep='')
+# # colnames(ukclus) <- paste("k",colnames(ukclus),sep='')
+# 
+# ###--- end UPGMA

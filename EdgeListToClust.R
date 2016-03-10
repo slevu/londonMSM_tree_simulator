@@ -8,31 +8,46 @@
 ####--- pairwise distances 
 ##----------------------------##
 
+###- input: path to RDS file of edge list
 ###--- loops through distance thresholds ( = vector of threshold based on quantiles) 
 
-ucsd_hivclust <- function(el, quant = c(5e-5, 1e-4, 5e-4, 1e-3, 1e-2, 1e-1) ){
-  ## get var.name for output path
-  var.name <- "dsimtree"
+ucsd_hivclust <- function(path.el, thr = NA, quant = c(5e-5, 1e-4, 5e-4, 1e-3, 1e-2, 1e-1) ){
   
-  # choose threshold based on quantiles
-    qt <- quantile(el$distance, 
-                   probs = quant )
+  ## read RDS file
+  el <- readRDS(file = path.el)
+  
+  ## get var.name for output path (Regex !)
+  var.name <- paste("d", substr(path.el,
+                    regexpr("\\/[^\\/]*$", path.el)[[1]][1] +1,
+                    regexpr("\\_el.rds", path.el)[[1]][1] - 1 ),
+                    sep = '')
+  
+  ## Either thr given or based on quantiles
+  if(is.na(thr[1])){
     
-  ## get rid of distance > larger quantile (= median)
-  k <- round(qt[length(qt)], 2)
-  subel <- el[el$distance < k,]
-  # rm(el, m, subel, d)
-
+      # choose threshold based on quantiles (first 4 for now)
+      qt <- quantile(el$distance, 
+                   probs = quant )
+      thr <- round(qt[1:4], 2)
+    
+     ## get rid of distance > larger quantile
+#      k <- round(qt[length(qt)], 2)
+#      subel <- el[el$distance < k,]
+     
+  } else { 
+    thr <-  thr
+    qt <- "Not used"
+    }
+  
   ## write csv without rownames and get input path
   inputCSV <- paste(tempdir(), "/input.csv", sep = "")
-  write.csv(subel, file = inputCSV, row.names = FALSE )
+  write.csv(el, file = inputCSV, row.names = FALSE )
 
   ## full path needed 
   exec <- '~/Documents/softwares/hivclustering/scripts/hivnetworkcsv'
   
-####---- loop threshold (first 3 qt = 0.05, 0.1, 1, 10) t <- thr[2]
+####---- loop threshold (first 4 qt = 0.05, 0.1, 1, 10) 
 
-  thr <- round(qt[1:4], 2)
   ## empty results
  cmd <- vector( mode= "character" )
  warn <- list()
@@ -79,5 +94,5 @@ ucsd_hivclust <- function(el, quant = c(5e-5, 1e-4, 5e-4, 1e-3, 1e-2, 1e-1) ){
        }
   }
  
- return(list(qt, cmd, cl))
+ return(list(qt = qt, cmd = cmd, warn = warn, cl = cl))
 }
