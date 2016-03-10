@@ -314,6 +314,8 @@ sim.names <- readRDS("sim.names.rds")
 # dim(b[is.na(b$ClusterID),] )
 # dim(b)
 
+##- number of different clusters by threshold
+sapply(l, function(x) dim(x)[1]) # including cluster of size 1 ?
 ####---- proportion ----
 ##-proportion in or out clusters
 sapply(l, function(x) round(prop.table(table(x$binclus)),2))
@@ -337,7 +339,7 @@ merge(x, demo,
 simli <- listclus[c(1:length(listclus))]
 
 # lm_model_std = "size ~ age + stage + time + risk"
-lm_model_factor <- "size ~ factor(stage)"
+lm_model_factor <- "size ~ factor(stage) + factor(risk) + factor(age)"
 lm_model_ordinal <- "size ~ stage"
 lm_model_w_time = "scale(size) ~ scale(age) + scale(stage) + scale(risk)"
 lm_model_full = "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
@@ -411,6 +413,7 @@ size.vs.covar <- function(l, depvar = "size",
     for(r in 1:length(indepvar)){
       plot( x = l[[c]][, indepvar[r]], y = l[[c]][, depvar], 
             ylab = '', xlab = '', font.main = 1,
+            col="#00000050",
             main = paste(indepvar[r], names(down)[c]))
     }
   }
@@ -420,7 +423,7 @@ size.vs.covar <- function(l, depvar = "size",
 size.vs.covar(down)
 dev.off()
 
-size.vs.covar(listclus)
+
 ## For ggplot, unlist ...
 
 ###--- Down-sample 2
@@ -430,9 +433,9 @@ summary(listclus[[1]]$size) ## contains size = 1
 
 ###--- start function by threshold 
 
-# df <- head(listclus[[1]],10)
+# df <- head(listclus[[1]],100)
 
-downsample <- function(df, iter = 100){
+downsample <- function(df, lm_model = lm_model, iter = 2){
   ##- sampling one id per cluster k times
   k <- iter
   ## loop
@@ -449,8 +452,7 @@ downsample <- function(df, iter = 100){
   # head(down_listclus[[1]])
   # dim(down_listclus[[1]])
   
-    
-  ##- linear regression
+  ##- linear regression for each iteration
   fit <- lapply(down_listclus,
                 function(x)
                   summary(lm(lm_model, data = x))) 
@@ -479,62 +481,57 @@ downsample <- function(df, iter = 100){
     ## change structure
     bind_df <- do.call(rbind, down_listclus)
     ## mean by ClusterID
-    down.down <- aggregate(bind_df[, 5:9],
-                           list("ClusterID" = bind_df$ClusterID),                                                  mean)
+    mean.sample <- aggregate(bind_df[, 5:9],
+                           list("ClusterID" = bind_df$ClusterID, 
+                                "size" = bind_df$size),                                                  mean)
   
-  return(list(down_listclus = down_listclus,
-              fit = fit, coef_lm = coef_lm,
-              sum =  sum, down.down = down.down))
+  return(list(# down_listclus = down_listclus,
+              #fit = fit, coef_lm = coef_lm,
+              percent.signif =  sum, mean.sample = mean.sample))
 }
 
-##- over thresholds
-dd <- sapply( listclus, function(x) downsample(df = x, iter = 10))
-dd
-dd["sum",]
-str(dd["down.down",])
+###--- run down-sample over thresholds
+## categorical variables
+dd_cat <- sapply( listclus, function(x) {
+  downsample(df = x,
+             lm_model = lm_model_factor,
+             iter = 100)
+    }
+  )
+  ## percent of signif paramater
+  t(do.call(rbind, dd_cat["percent.signif", ] ))
 
-down_listclus <- unlist(dd[1,], recursive = FALSE)
-str(down_listclus)
+## ordinal variables
+  dd_ord <- sapply( listclus, function(x) {
+    downsample(df = x,
+               lm_model = lm_model_w_time,
+               iter = 100)
+  }
+  )
+  ## percent of signif paramater
+  t(do.call(rbind, dd_ord["percent.signif", ] ))
+  
+  ## mean of co-variates by cluster
+  # str(dd["mean.sample",])
+  mean.down <- dd_ord["mean.sample",]
+
+  ##- linear regression ordinal
+  lapply(mean.down, function(x) 
+    summary(lm(lm_model_full, data = x)))
+  
+  ## plot
+  size.vs.covar(mean.down)
+
+
 ##################################-----------# LLLLLAAAAAAAA
 ##################################
-dd["fit",]$`0.01`[[1]]
-dd[1,][[1]][1]
-dd[1, ][1][[1]][[1]]
-dd[1,]$`0.02`[[1]]
-class( dd[1, ][[1]][[1]] )
-
-####---- lattice ----
-##- 2. plots
-library(lattice)
-# trellis.par.set(canonical.theme(color = FALSE))
-
-##- size by stage
-for(i in 1:length(down_listclus) ){
-  
-  print(
-    histogram(~ factor(stage)|factor(size), 
-                  main = '',
-                  data = down_listclus[[i]])
-  )
-}
-
-##- size by risk
-for(i in 1:length(down_listclus) ){
-  print(
-    histogram(~ factor(risk)|factor(size), 
-            main = '',
-            data = down_listclus[[i]])
-  )
-}
-
   ##- distribution of cluster size by stage, etc.
   
   boxplot(size ~ factor(stage), 
           main = 'size by stage', 
-          data = down_listclus[[4]])
+          data = mean.down[[2]])
   
-  , main="Car Milage Data", 
-          xlab="Number of Cylinders", ylab="Miles Per Gallon")
+
 ## llllllllllllllllllaaaaaaaaaaa----------------------------> ??????
 ## make quantiles( .1, 1, 5 % of p-value)
 ## for each independant variable
