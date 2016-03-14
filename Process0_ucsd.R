@@ -3,14 +3,18 @@
 
 #### rm(list=ls())
 
+####---- include ----
+detail_knitr <- FALSE
+source("functions.R")
+
 ####---- lib ----
 library(ape)
-library(ggplot2)
 
 if(TRUE){
   ####---- load sim ----
   ## Load newest Rdata
   l <- list.files(pattern="*.Rdata") # list.files(pattern="Rdata$") list.files(pattern="out")
+  l
   load(l[length(l)])
   ls()
   simtree <- tree 
@@ -23,10 +27,11 @@ if(TRUE){
   uktree <- drop.tip(t_uk, og ) 
  }
 
-##-- Create edge list of (transformed) distances
+####---- Create edge list ----
+## of (transformed) distances
 if(FALSE){
   
-  source("TReeToEdgeList.R") # returns path to RDS file
+  # function TReeToEdgeList returns path to RDS file
   
   ##- simtree
   system.time(
@@ -43,12 +48,9 @@ if(FALSE){
     
 # Alternatively take TN93 distances
 #  dukTN93 <- readRDS(file = "../phylo-uk/source/subUKogC_noDRM_151202_ucsdTN93.rds" )
-  
 
 
 ####---- cluster UCSD ----
-# source("TreeToClust.R")
-source("EdgeListToClust.R")
 
 ## get list of quantiles, commands and list of
 ## dataframes of cluster members 
@@ -98,6 +100,7 @@ ukfreqClust <- lapply(ukclus,
                       function(x) as.data.frame(table(x$ClusterID), 
                       stringsAsFactors = FALSE))
 
+####---- desc2 ----
 ##- number of different clusters by threshold
 sapply(simfreqClust, function(x) dim(x)[1])
 sapply(ukfreqClust, function(x) dim(x)[1])
@@ -191,7 +194,6 @@ saveRDS(as.data.frame(demo), file = "demo.rds")
 }
 ####---- demo ----
 demo <- readRDS("demo.rds")
-
 ##- date of diagnosis ?
 date0 <- as.Date('1979-01-01')
 demo$datediag <- date0 + demo$time
@@ -201,6 +203,7 @@ demo$datediag <- date0 + demo$time
 ###--- add cluster sizes
 ####... and outdegrees
 
+####---- clust.stats ----
 ### --- start function clust.stats --- ###
 ##- calculate both numclus and sizeclus for each seqindex into a LIST
 ##- with same variable names
@@ -280,126 +283,51 @@ merge(x, demo,
 # table(listclus[[1]]$binclus, useNA = "ifany")
 # table(listclus[[1]]$size, useNA = "ifany")
 
-####--- sim naive regressions ---
+###########################
+### --- Regressions --- ###
+###########################
 
-####---- sim linear ----
-###### just on low and high threshold
-simli <- listclus[c(1:length(listclus))]
-
+####---- models ----
+##- linear
 lm_model_factor <- "size ~ factor(stage) + factor(risk) + factor(age)"
 lm_model_ordinal  <-  "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
 lm_model_ordinal_wo_time  <-  "scale(size) ~ scale(age) + scale(stage) + scale(risk)"
 
+##- logistic
+logit_model_ord  <-  "binclus ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
+logit_model_fact <-  "binclus ~ factor(stage) + factor(risk) + factor(age)"
+
 ##- standard output
-lapply(simli , function(x) summary(lm(lm_model_ordinal, data = x)))
+lapply(listclus , function(x) summary(lm(lm_model_ordinal, data = x)))
 
-##- return only parameters, p-values and R squared
-lm.sum <- function(ls, lm_model){
-  ## pvalue by threshold
-  pvalue <- sapply(ls , function(x){
-    coef(summary(lm(lm_model, data = x)))[,4]
-  })
-    ## coded by significance
-    pvalue.code <- as.data.frame(
-      apply(pvalue,2, function(x){
-      cut(x,
-          breaks=c(-Inf, 0.001, 0.01, 0.05, 0.1, Inf),
-          labels=c('***','**', '*', '.', ''))
-    }))
-    row.names(pvalue.code) <- row.names(pvalue)
-    ## parameter by threshold
-  param <- signif(sapply(ls , function(x){
-    coef(summary(lm(lm_model, data = x)))[,1]
-  }), 2)
-  ## R square
-  r2 <- signif(sapply(ls , function(x){
-    summary(lm(lm_model, data = x))$r.squared
-  }), 3)
-  return(list("parameter" = param, "pvalue" = pvalue.code, "r.squared" = r2))
-}
+####--- sim naive regressions ---
+####---- summary naive ----
+reg.sum(ls = listclus, reg = lm, model = lm_model_ordinal)
+reg.sum(ls = listclus, reg = lm, model = lm_model_factor)
 
-lm.sum(ls = simli, lm_model = lm_model_ordinal)
-lm.sum(ls = simli, lm_model = lm_model_factor)
-
-
-##---- sim logistic ---- 
+##- logistic
 ##- model: clus ~ age +  stage + time + risk
 ##- care = 1 for all at diagnosis
-## ex. 
-logit_model_std = "binclus ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
-lapply(simli , function(x) summary(glm(formula = logit_model_std,
-                                   data = x,
-                                   family = binomial(link = "logit"))
-))
 
-###--- Down-sample 1
-###--- sort out dependency between indivduals from same cluster
-### 1. downsample to make analysis of one cluster size
-###  explained by median or mean of each co-variate.
-###  2. plot the distribution of covariates by cluster size. 
-###  With the intuition that smaller clusters are more explained
-###  by covariates and larger ones are more random. 
-###  Do it on real data and simulation
+# logfit <- lapply(simli , function(x){
+#   summary(glm(formula = logit_model_std, 
+#               data = x, family = binomial(link = "logit")))
+#   }) 
+####---- sim logistic ---- 
+reg.sum(ls = listclus, reg = glm, model = logit_model_ord, family = binomial(link = "logit"))
 
-# For each cluster size, compute mean of all coavariates
+reg.sum(ls = listclus, reg = glm, model = logit_model_fact, family = binomial(link = "logit"))
+####---- stop ----
 
-####---- downsample ----
-##- 1. down-sample: mean of each variable
-down <- lapply(simli, function(x) aggregate(x[, 5:9], list("size" = x$size), mean))
-# str(down) 
-# head(down[[1]])
-# head(simli[[1]])
-
-##- linear regression
-# lapply(down, function(x) summary(lm(lm_model_ordinal, data = x)))
-lm.sum(ls = down, lm_model = lm_model_ordinal)
-
-####---- lattice ----
-##- 2. plots
-library(lattice)
-# trellis.par.set(canonical.theme(color = FALSE))
-for(i in 1:length(simli)){
-  print(histogram(~ stage|factor(size), 
-            main = paste("distribution of stages by cluster sizes at threshold =", names(simli[i])),
-            data = simli[[i]])
-  )
-}
-
-
-##- plot correlation
-##- df containing indepvar in a list
-size.vs.covar <- function(l, depvar = "size",
-                          indepvar = c("stage", "risk", "age", "time")){
-  
-  par(mfcol=c(length(indepvar), length(l) ), 
-      mar = c(4,3,3,2)+0.1, oma = c(0, 0, 2, 0), bty = 'n') # b,l,t,r
-  for(c in 1:length(l)){
-    for(r in 1:length(indepvar)){
-      plot( x = l[[c]][, indepvar[r]], y = l[[c]][, depvar], 
-            ylab = '', xlab = '', font.main = 1,
-            col="#00000050",
-            main = paste(indepvar[r], names(down)[c]))
-    }
-  }
-  mtext(paste(depvar, "(y) vs co-variates (x) "), outer = TRUE, cex = 1)
-}
-
-size.vs.covar(down)
-dev.off()
-
-
-## For ggplot, unlist ...
-
-###--- Down-sample 2
-### de-correlating: sample one individual by cluster. Repeat many times. Ensure much more power than downsampling with just one value per sample size.
+####---- downsample2 ----
+### De-correlating: sample one individual by cluster. Repeat many times. Ensure much more power than downsampling with just one value per sample size.
 head(listclus[[1]])
 summary(listclus[[1]]$size) ## contains size = 1
 
 ###--- start function by threshold 
+# df <- listclus[[1]]
 
-# df <- head(listclus[[1]],100)
-
-downsample <- function(df, lm_model = lm_model, iter = 2){
+downsample <- function(df, lm_model = lm_model, var = c("time", "age", "care", "stage", "risk"), iter = 2){
   ##- sampling one id per cluster k times
   k <- iter
   ## loop
@@ -444,8 +372,8 @@ downsample <- function(df, lm_model = lm_model, iter = 2){
   # head(down_listclus[[1]])
     ## change structure
     bind_df <- do.call(rbind, down_listclus)
-    ## mean by ClusterID
-    mean.sample <- aggregate(bind_df[, 5:9],
+    ## mean by ClusterID of set of variables var
+    mean.sample <- aggregate(bind_df[, var],
                            list("ClusterID" = bind_df$ClusterID, 
                                 "size" = bind_df$size),                                                  mean)
   
@@ -454,42 +382,49 @@ downsample <- function(df, lm_model = lm_model, iter = 2){
               percent.signif =  sum, mean.sample = mean.sample))
 }
 
-###--- run down-sample over thresholds
-## categorical variables
-dd_cat <- sapply( listclus, function(x) {
-  downsample(df = x,
-             lm_model = lm_model_factor,
-             iter = 100)
-    }
-  )
-  ## percent of signif paramater
-  t(do.call(rbind, dd_cat["percent.signif", ] ))
+####---- run down-sample 1 ----
+### over thresholds
 
 ## ordinal variables
   dd_ord <- sapply( listclus, function(x) {
     downsample(df = x,
                lm_model = lm_model_ordinal,
+               var = c("time", "age", "care", "stage", "risk"),
                iter = 100)
   }
   )
   ## percent of signif paramater
   t(do.call(rbind, dd_ord["percent.signif", ] ))
+ 
+## categorical variables
+  dd_cat <- sapply( listclus, function(x) {
+    downsample(df = x,
+               lm_model = lm_model_factor,
+               var = c("time", "age", "care", "stage", "risk"),
+               iter = 100)
+  }
+  )
+  ## percent of signif paramater
+  t(do.call(rbind, dd_cat["percent.signif", ] ))
+  
+####---- run down-sample 2 ----
   
   ## mean of co-variates by cluster
   # str(dd["mean.sample",])
   mean.down <- dd_ord["mean.sample",]
 
   ##- linear regression ordinal
-  lapply(mean.down, function(x) 
-    summary(lm(lm_model_ordinal, data = x)))
-  lm.sum(ls = mean.down, lm_model = lm_model_ordinal)
+#    lapply(mean.down, function(x) {
+#    summary(lm(lm_model_ordinal, data = x))})
+  reg.sum(ls = mean.down, reg = lm, model = lm_model_ordinal)
   
   ## plot
   size.vs.covar(mean.down)
-  dev.off()
+  # dev.off()
 
-##################################-----------# LLLLLAAAAAAAA
-##################################
+
+####---- STOP ----######
+
   ##- distribution of cluster size by stage, etc.
   
   boxplot(size ~ factor(stage), 
@@ -522,101 +457,66 @@ y <- df[,c("seqindex","patientindex",
 y$logvl <- log(y$vl)
 y$sqrtcd4 <- sqrt(y$cd4)
 
-#### get tips labels
-# sim.names <- data.frame("id" = labels(dsimtree), 
-#                         stringsAsFactors = F)
-# saveRDS(sim.names, file = "sim.names.rds")
-uk.names <- readRDS("uk.names.rds") 
-##- in list 
-l <- list()
-for ( i in 1:length(ukclus) ) {
-  ## merge cluster number (with NA)
-  a <- merge(x = uk.names, y = ukclus[[i]],
-             by.x = "id", by.y = "SequenceID",
-             all.x = TRUE, sort = FALSE)
-  
-  ## merge cluster size (with NA)
-  b <- merge(x = a, y = ukfreqClust[[i]], 
-             by.x = "ClusterID", by.y = "Var1", 
-             all.x = TRUE, sort = FALSE)
-  
-  #- size 1 if not into a cluster
-  b$Freq[is.na(b$Freq)] <- 1
-  
-  #- binary clustering variable
-  b$binclus <- ifelse(b$Freq > 1 & !is.na(b$Freq), 1, 0)
-  
-  #- colnames
-  colnames(b)[which(colnames(b) =="Freq")] <- "size"
-  l[[i]] <- b
-  names(l)[i] <- names(ukfreqClust[i])
-}
-rm(a, b)
-# str(l)
-
-####---- proportion UK ----
-##-proportion in or out clusters
-sapply(l, function(x) round(prop.table(table(x$binclus)),2))
-##- cluster sizes (by individuals having such a size !!)
-sapply(l, function(x) summary(x$size))
-
 ####---- merge UK ----
-listUKclus <- lapply(l, function(x) 
+listUKclus <- lapply(l_uk, function(x) 
   merge(x, y, 
         by.x = "id", by.y = "seqindex", 
         all.x = T, sort = FALSE))
+# head(listUKclus[[1]])
 
 ####--- naive regressions ---
 
 
 ####---- linear UK----
 #### just on low and high threshold (but not too high !)
-li <- listUKclus[ 1:(length(listUKclus)-1) ]
-lm_model_std = "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) +  scale(ydiag)"
-lapply(li, function(x) summary(lm(lm_model_std, data = x)))
+# li <- listUKclus[ 1:(length(listUKclus)-1) ]
+lm_model_uk = "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) +  scale(ydiag)"
+# lapply(li, function(x) summary(lm(lm_model_std, data = x)))
+reg.sum(ls = listUKclus, reg = lm, model = lm_model_uk)
 
 ##---- logistic UK ---- 
 ##- model: clus ~ age +  stage + time + risk
 ##- care = 1 for all at diagnosis
 ## ex. 
-logit_model_std = "binclus ~ scale(agediag) + scale(sqrt(cd4)) + scale(ydiag)"
-lapply(li, function(x) summary(glm(formula = logit_model_std,
-                                     data = x,
-                                     family = binomial(link = "logit"))
-                               ))
+logit_model_uk = "binclus ~ scale(agediag) + scale(sqrt(cd4)) + scale(ydiag)"
+
+reg.sum(ls = listUKclus, reg = glm, model = logit_model_uk, family = binomial(link = "logit"))
 
 
 ####---- downsample UK ----
-##- 1. down-sample: MEDIAN of each variable (with na.rm = T)
+### de-correlating: sample one individual by cluster. Repeat many times. Ensure much more power than downsampling with just one value per sample size.
+head(listUKclus[[1]])
+summary(listUKclus[[1]]$size) ## contains size = 1
 
-# head(li[[1]][, c("agediag", "sqrtcd4", "ydiag")])
-down_median <- lapply(li, function(x) 
-  aggregate(x[, c("agediag", "sqrtcd4", "ydiag", "logvl")],
-            list("size" = x$size), 
-            function(x) median(x, na.rm = TRUE)))
+####---- run down-sample UK 1 ----
+### over thresholds
 
-down_mean <- lapply(li, function(x) 
-  aggregate(x[, c("agediag", "sqrtcd4", "ydiag", "logvl")],
-            list("size" = x$size), 
-            function(x) mean(x, na.rm = TRUE)))
-# str(down_mean) 
-##- linear regression
-lm_model_std = "scale(size) ~ scale(agediag) + scale(sqrtcd4) + scale(ydiag)"
-lapply(down_median, function(x) summary(lm(lm_model_std, data = x)))
-lapply(down_mean, function(x) summary(lm(lm_model_std, data = x)))
-
-####---- lattice UK ----
-##- 2. plots
-library(lattice)
-# trellis.par.set(canonical.theme(color = FALSE))
-for(i in 1:length(li)){
-  print(histogram(~ sqrtcd4|factor(size), 
-                  main = paste("distribution of sqrt(cd4) by cluster sizes at threshold =", names(li[i])),
-                  data = li[[i]])
-  )
+## ordinal variables
+dd_ord_uk <- sapply( listUKclus, function(x) {
+  downsample(df = x,
+             lm_model = lm_model_uk,
+             var = c("agediag", "cd4", "ydiag"),
+             iter = 100)
 }
+)
+## percent of signif paramater
+t(do.call(rbind, dd_ord_uk["percent.signif", ] ))
 
-plot(x = li[[1]]$size, y = li[[1]]$sqrtcd4)
+####---- run down-sample UK 2 ----
+
+## mean of co-variates by cluster
+# str(dd["mean.sample",])
+mean.down_uk <- dd_ord_uk["mean.sample",]
+# head(mean.down_uk[[2]])
+##- linear regression ordinal
+#    lapply(mean.down, function(x) {
+#    summary(lm(lm_model_ordinal, data = x))})
+reg.sum(ls = mean.down_uk, reg = lm, model = lm_model_uk)
+
+## plot
+size.vs.covar(l = mean.down_uk, depvar = "size",
+indepvar = c("agediag", "cd4", "ydiag"))
+# dev.off()
 
 ####---- surplus ----
 

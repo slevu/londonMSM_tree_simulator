@@ -68,115 +68,639 @@
 
 \section{Intro}
 \begin{itemize}
-\item "Time-based" distances from \emph{simulated} coalescent tree are converted to substitutions per site distances with a constant rate from the litterature
-\item Then matrices of distances are converted in edge lists of pairwise distances with header ID1, ID2, distance as needed by UCSD software \texttt{hivclustering}
-\item Edge lists are inputed in the \texttt{hivnetworkcsv} function which returns lists of cluster assignements
+\item Looking for relation between cluster characteristics and heterogenous transmission rates
+
+\begin{itemize}
+\item "Time-based" distances from \emph{simulated} coalescent tree are converted to substitutions per site distances with a constant rate from the litterature ($4.3e-3/365$ from \emph{Berry et al. JVI 2007}) (see distributions in Fig. 1)
+\item Then matrices of distances are converted in edge lists of pairwise distances with header [ID1, ID2, distance] as needed by UCSD software \texttt{hivclustering}
+\item Edge lists are inputed in the \texttt{hivnetworkcsv} function which returns lists of cluster assignements for thresholds [0.015, 0.02, 0.05, 0.1] for both simulated and UK tree.
+\end{itemize}
+
 \end{itemize}
 
 
-\begin{figure}
+\begin{figure}[ht]
      \centering
      \subfloat[][Simulation]{\includegraphics[scale=0.5]{figure/simtree_dist.png}}
      \subfloat[][UK]{\includegraphics[scale=0.5]{figure/uktree_dist.png}}
      \caption{Distances (subst/site)}
 \end{figure}
 
-%' << load sim, echo = FALSE, include = T >>=
-%' 
-%' @
-%' 
-%' \section{UCSD hivclustering}
-%' Read saved results from UCSD \textsf{hivclustering}
-%' << read >>=
-%' @
-%' 
-%' 
-%' To construct clusters, threshold were determined by quantiles of distances (0.05\%, 0.1\%, 1\% and 10\%). For simulated and UK trees
-%' << quantiles >>=
-%' @
-%' 
-%' Number of clusters and stats for simulated and UK trees (cluster size 1 does not exist in these outputs)
-%' << desc >>=
-%' @
-%' 
-%' Plots of log(size) for UK and simulated clusters
-%' << plot log-log >>=
-%' @
-%' 
-%' QQ plots UK vs simulated, untransformed and log-log
-%' << QQ plot >>=
-%' @
-%' 
-%' \section{Associations}
-%' After merging with co-variates allocated from demes states contained in tree, non-clustering individuals are assigned a cluster size of 1. 
-%' << data >>=
-%' @
-%' 
-%' The proportion of individuals into clusters and stats for "size of cluster for each individuals"
-%' <<demo, echo = FALSE, include = FALSE>>=
-%' @
-%' 
-%' << proportion >>=
-%' @
-%' 
-%' << merge, echo = FALSE >>=
-%' @
-%' 
-%' \section{Naive regressions on simulation}
-%' 
-%' Linear
-%' << sim linear >>=
-%' 
-%' @
-%' 
-%' Logistic
-%' << sim logistic >>=
-%' 
-%' @
-%' 
-%' \section{Regressions on down-sampled simulation}
-%' To sort out the dependency between individuals from same cluster
-%' \begin{enumerate}
-%' \item "downsample" to make analysis of each cluster size explained by mean of each co-variate (from here, only clusters from lower and higher threshold represented)
-%' 
-%' << downsample >>=
-%' @
-%' 
-%' 
-%' \item plot the distribution of covariates by cluster size
-%' 
-%' << lattice >>=
-%' @
-%' 
-%' 
-%' \end{enumerate}
-%' 
-%' \section{On real UK data}
-%' Same process ...
-%' <<multivariate, echo=FALSE>>=
-%' @
-%' 
-%' Proportion in and out clusters
-%' << proportion UK>>=
-%' @
-%' 
-%' <<merge UK, echo=FALSE>>=
-%' 
-%' @
-%' 
-%' Naive regressions
-%' <<linear UK>>=
-%' @
-%' 
-%' <<logistic UK>>=
-%' @
-%' 
-%' Down-sampled regressions
-%' <<downsample UK>>=
-%' @
-%' 
-%' <<lattice UK>>=
-%' @
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{detail_knitr} \hlkwb{<-} \hlnum{FALSE}
+\hlkwd{source}\hlstd{(}\hlstr{"functions.R"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
+
+
+
+
+
+
+
+
+
+
+
+\section{UCSD hivclustering}
+Read saved results from UCSD \textsf{hivclustering}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{### only cluster members (based on given threshold)}
+\hlstd{simclus} \hlkwb{<-} \hlkwd{readRDS}\hlstd{(}\hlkwc{file} \hlstd{=} \hlstr{"data/simclus2.rds"}\hlstd{)[[}\hlstr{"cl"}\hlstd{]]}
+\hlstd{ukclus} \hlkwb{<-} \hlkwd{readRDS}\hlstd{(}\hlkwc{file} \hlstd{=} \hlstr{"data/ukclus2.rds"}\hlstd{)[[}\hlstr{"cl"}\hlstd{]]}
+
+\hlcom{### only cluster members (based on quantiles)}
+\hlcom{# simclus <- readRDS(file = "data/simclus.rds")[[3]]}
+\hlcom{# ukclus <- readRDS(file = "data/ukclus.rds")[[3]]}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+\begin{itemize}
+\item Now, thresholds for clustering are fixed and not determined by quantiles of distances
+\item Because of this and because of the applied substitution rate, the number of clusters and mean sizes of clusters are not identical but are of the same magnitude between simulated and real UK data
+\item Up to threshold = 5\%, distributions of cluster size seem to follow a power law for both simulated and UK data 
+\end{itemize}
+
+Number of clusters and stats for simulated and UK trees (cluster size 1 does not exist in these (UCSD) outputs)
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{##- number of different clusters by threshold}
+\hlkwd{sapply}\hlstd{(simfreqClust,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{dim}\hlstd{(x)[}\hlnum{1}\hlstd{])}
+\end{alltt}
+\begin{verbatim}
+0.015  0.02  0.05   0.1 
+ 1644  2041  2021  1637 
+\end{verbatim}
+\begin{alltt}
+\hlkwd{sapply}\hlstd{(ukfreqClust,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{dim}\hlstd{(x)[}\hlnum{1}\hlstd{])}
+\end{alltt}
+\begin{verbatim}
+0.015  0.02  0.05   0.1 
+ 1199  1374  1460   611 
+\end{verbatim}
+\begin{alltt}
+\hlcom{##- cluster size}
+\hlkwd{sapply}\hlstd{(simfreqClust,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{summary}\hlstd{(x}\hlopt{$}\hlstd{Freq))}
+\end{alltt}
+\begin{verbatim}
+        0.015   0.02   0.05    0.1
+Min.     2.00  2.000  2.000  2.000
+1st Qu.  2.00  2.000  2.000  2.000
+Median   2.00  2.000  3.000  5.000
+Mean     2.73  3.103  5.147  6.896
+3rd Qu.  3.00  3.000  6.000  9.000
+Max.    11.00 20.000 35.000 52.000
+\end{verbatim}
+\begin{alltt}
+\hlkwd{sapply}\hlstd{(ukfreqClust,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{summary}\hlstd{(x}\hlopt{$}\hlstd{Freq))}
+\end{alltt}
+\begin{verbatim}
+          0.015    0.02    0.05     0.1
+Min.      2.000   2.000   2.000    2.00
+1st Qu.   2.000   2.000   2.000    2.00
+Median    2.000   2.000   3.000    3.00
+Mean      3.188   3.531   5.442   17.84
+3rd Qu.   3.000   3.000   4.000    4.00
+Max.    101.000 121.000 166.000 7986.00
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+
+Plots of log(size) for UK and simulated clusters
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=11cm]{figure/plotplot_log-log-1} 
+
+}
+
+
+
+\end{knitrout}
+
+QQ plots UK vs simulated, untransformed and log-log
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{verbatim}
+null device 
+          1 
+\end{verbatim}
+\end{kframe}
+
+{\centering \includegraphics[width=11cm]{figure/plotQQ_plot-1} 
+
+}
+
+
+
+\end{knitrout}
+
+\section{Associations}
+After merging with co-variates allocated from demes states contained in tree, non-clustering individuals are assigned a cluster size of 1. 
+
+
+The proportion of individuals into clusters (0 = out of, 1 = in a cluster) and stats for "size of cluster for each individuals". 
+
+
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{##-proportion in or out clusters}
+\hlkwd{sapply}\hlstd{(l_sim,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{round}\hlstd{(}\hlkwd{prop.table}\hlstd{(}\hlkwd{table}\hlstd{(x}\hlopt{$}\hlstd{binclus)),}\hlnum{2}\hlstd{))}
+\end{alltt}
+\begin{verbatim}
+  0.015 0.02 0.05  0.1
+0  0.63 0.48 0.14 0.07
+1  0.37 0.52 0.86 0.93
+\end{verbatim}
+\begin{alltt}
+\hlkwd{sapply}\hlstd{(l_uk,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{round}\hlstd{(}\hlkwd{prop.table}\hlstd{(}\hlkwd{table}\hlstd{(x}\hlopt{$}\hlstd{binclus)),}\hlnum{2}\hlstd{))}
+\end{alltt}
+\begin{verbatim}
+  0.015 0.02 0.05 0.1
+0  0.69  0.6 0.35 0.1
+1  0.31  0.4 0.65 0.9
+\end{verbatim}
+\begin{alltt}
+\hlcom{##- cluster sizes (by individuals having such a size !!)}
+\hlcom{## probably meaningless}
+\hlkwd{sapply}\hlstd{(l_sim,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{summary}\hlstd{(x}\hlopt{$}\hlstd{size))}
+\end{alltt}
+\begin{verbatim}
+        0.015   0.02   0.05   0.1
+Min.     1.00  1.000  1.000  1.00
+1st Qu.  1.00  1.000  2.000  4.00
+Median   1.00  2.000  6.000 10.00
+Mean     1.85  2.695  7.914 12.15
+3rd Qu.  2.00  3.000 11.000 17.00
+Max.    11.00 20.000 35.000 52.00
+\end{verbatim}
+\begin{alltt}
+\hlkwd{sapply}\hlstd{(l_uk,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{summary}\hlstd{(x}\hlopt{$}\hlstd{size))}
+\end{alltt}
+\begin{verbatim}
+          0.015    0.02   0.05  0.1
+Min.      1.000   1.000   1.00    1
+1st Qu.   1.000   1.000   1.00   11
+Median    1.000   1.000   3.00 7986
+Mean      3.941   5.853  18.82 5247
+3rd Qu.   2.000   3.000  16.00 7986
+Max.    101.000 121.000 166.00 7986
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+
+
+\subsection{Naive regressions on simulation}
+
+Linear regression with co-variates as ordinal or categorical
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{reg.sum}\hlstd{(}\hlkwc{ls} \hlstd{= listclus,} \hlkwc{reg} \hlstd{= lm,} \hlkwc{model} \hlstd{= lm_model_ordinal)}
+\end{alltt}
+\begin{verbatim}
+$model
+[1] "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
+
+$parameter
+                0.015     0.02     0.05      0.1
+(Intercept)   3.8e-14 -2.8e-14 -9.4e-16  2.0e-15
+scale(age)   -1.3e-02 -8.5e-03 -1.4e-02 -6.5e-03
+scale(stage) -9.7e-02 -8.2e-02 -3.3e-02 -2.3e-02
+scale(time)   2.8e-01  3.0e-01  3.0e-01  2.3e-01
+scale(risk)  -8.2e-03 -9.0e-03 -3.2e-02 -2.3e-02
+
+$pvalue
+             0.015 0.02 0.05 0.1
+(Intercept)                     
+scale(age)                      
+scale(stage)   ***  ***  ***  **
+scale(time)    ***  ***  *** ***
+scale(risk)              ***  **
+
+$r.squared
+ 0.015   0.02   0.05    0.1 
+0.0948 0.1010 0.0926 0.0573 
+\end{verbatim}
+\begin{alltt}
+\hlkwd{reg.sum}\hlstd{(}\hlkwc{ls} \hlstd{= listclus,} \hlkwc{reg} \hlstd{= lm,} \hlkwc{model} \hlstd{= lm_model_factor)}
+\end{alltt}
+\begin{verbatim}
+$model
+[1] "size ~ factor(stage) + factor(risk) + factor(age)"
+
+$parameter
+                0.015   0.02  0.05   0.1
+(Intercept)     2.400  3.500  9.60 14.00
+factor(stage)2 -0.330 -0.470 -0.75 -0.96
+factor(stage)3 -0.350 -0.470 -0.49 -0.66
+factor(stage)4 -0.550 -0.770 -1.10 -1.40
+factor(stage)5 -0.620 -0.980 -1.40 -1.50
+factor(risk)2  -0.034 -0.065 -0.56 -0.59
+factor(age)2   -0.069 -0.120 -0.45 -1.00
+factor(age)3   -0.200 -0.310 -1.10 -1.70
+factor(age)4   -0.170 -0.260 -0.86 -1.20
+
+$pvalue
+               0.015 0.02 0.05 0.1
+(Intercept)      ***  ***  *** ***
+factor(stage)2   ***  ***  ***  **
+factor(stage)3   ***  ***    *   *
+factor(stage)4   ***  ***  *** ***
+factor(stage)5   ***  ***  *** ***
+factor(risk)2              ***   *
+factor(age)2                     *
+factor(age)3      **   **  *** ***
+factor(age)4      **    *   **  **
+
+$r.squared
+  0.015    0.02    0.05     0.1 
+0.01740 0.01320 0.00689 0.00429 
+\end{verbatim}
+\begin{alltt}
+\hlcom{##- logistic}
+\hlcom{##- model: clus ~ age +  stage + time + risk}
+\hlcom{##- care = 1 for all at diagnosis}
+
+\hlcom{# logfit <- lapply(simli , function(x)\{}
+\hlcom{#   summary(glm(formula = logit_model_std, }
+\hlcom{#               data = x, family = binomial(link = "logit")))}
+\hlcom{#   \}) }
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+\begin{itemize}
+\item The size of cluster of each invidividuals is always explained by overall stage and time of sampling
+\item For every threshold of clustering, stage 1 is more likely to belong to large clusters than any other stages
+\item Age 1 is more likely to belong to large clusters than age 3 or age 4
+\item Low (!) risk level is associated with larger clusters, only for higher thresholds (fewer and larger clusters on overall)
+\item Small part of the variance is explained by the variables
+\end{itemize}
+
+
+Logistic regression with ordinal and categorical variables
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{reg.sum}\hlstd{(}\hlkwc{ls} \hlstd{= listclus,} \hlkwc{reg} \hlstd{= glm,} \hlkwc{model} \hlstd{= logit_model_ord,} \hlkwc{family} \hlstd{=} \hlkwd{binomial}\hlstd{(}\hlkwc{link} \hlstd{=} \hlstr{"logit"}\hlstd{))}
+\end{alltt}
+\begin{verbatim}
+$model
+[1] "binclus ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
+
+$parameter
+              0.015   0.02   0.05   0.1
+(Intercept)  -0.600  0.086  2.100  3.00
+scale(age)   -0.059 -0.085 -0.068 -0.10
+scale(stage) -0.270 -0.240 -0.170 -0.14
+scale(time)   0.600  0.620  0.880  0.99
+scale(risk)  -0.013 -0.068 -0.130 -0.13
+
+$pvalue
+             0.015 0.02 0.05 0.1
+(Intercept)    ***  ***  *** ***
+scale(age)      **  ***    *   *
+scale(stage)   ***  ***  *** ***
+scale(time)    ***  ***  *** ***
+scale(risk)         ***  *** ***
+\end{verbatim}
+\begin{alltt}
+\hlkwd{reg.sum}\hlstd{(}\hlkwc{ls} \hlstd{= listclus,} \hlkwc{reg} \hlstd{= glm,} \hlkwc{model} \hlstd{= logit_model_fact,} \hlkwc{family} \hlstd{=} \hlkwd{binomial}\hlstd{(}\hlkwc{link} \hlstd{=} \hlstr{"logit"}\hlstd{))}
+\end{alltt}
+\begin{verbatim}
+$model
+[1] "binclus ~ factor(stage) + factor(risk) + factor(age)"
+
+$parameter
+                0.015  0.02  0.05   0.1
+(Intercept)     0.260  1.00  2.50  3.50
+factor(stage)2 -0.420 -0.44 -0.14 -0.22
+factor(stage)3 -0.500 -0.48 -0.18 -0.16
+factor(stage)4 -0.860 -0.76 -0.41 -0.45
+factor(stage)5 -0.940 -0.91 -0.63 -0.58
+factor(risk)2  -0.034 -0.16 -0.29 -0.30
+factor(age)2   -0.092 -0.21 -0.25 -0.45
+factor(age)3   -0.290 -0.39 -0.41 -0.64
+factor(age)4   -0.300 -0.43 -0.42 -0.65
+
+$pvalue
+               0.015 0.02 0.05 0.1
+(Intercept)       **  ***  *** ***
+factor(stage)2   ***  ***         
+factor(stage)3   ***  ***    .    
+factor(stage)4   ***  ***  *** ***
+factor(stage)5   ***  ***  *** ***
+factor(risk)2         ***  *** ***
+factor(age)2            *    .   *
+factor(age)3     ***  ***   **  **
+factor(age)4     ***  ***   ** ***
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+All variables are significantly associated with being into a cluster for all thresholds
+
+
+
+\subsection{Regressions on down-sampled simulation}
+
+\begin{itemize}
+  \item For each clustering threshold, 
+  \item sample one individual by cluster
+  \item re-sample 100 times
+  \item sample size equals number of clusters with each non-clustered individuals counting for one
+    \begin{enumerate}
+    \item First type of analysis
+      \begin{itemize}
+      \item apply 100 linear regressions on each sample
+      \item calculate proportion of p-values < 0.05 over the 100 iterations
+      
+    
+
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{### over thresholds}
+
+\hlcom{## ordinal variables}
+  \hlstd{dd_ord} \hlkwb{<-} \hlkwd{sapply}\hlstd{( listclus,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{) \{}
+    \hlkwd{downsample}\hlstd{(}\hlkwc{df} \hlstd{= x,}
+               \hlkwc{lm_model} \hlstd{= lm_model_ordinal,}
+               \hlkwc{var} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"time"}\hlstd{,} \hlstr{"age"}\hlstd{,} \hlstr{"care"}\hlstd{,} \hlstr{"stage"}\hlstd{,} \hlstr{"risk"}\hlstd{),}
+               \hlkwc{iter} \hlstd{=} \hlnum{100}\hlstd{)}
+  \hlstd{\}}
+  \hlstd{)}
+  \hlcom{## percent of signif paramater}
+  \hlkwd{t}\hlstd{(}\hlkwd{do.call}\hlstd{(rbind, dd_ord[}\hlstr{"percent.signif"}\hlstd{, ] ))}
+\end{alltt}
+\begin{verbatim}
+             0.015 0.02 0.05  0.1
+(Intercept)   0.00 0.00 0.00 0.00
+scale(age)    0.28 0.51 0.13 0.12
+scale(risk)   0.02 0.30 0.63 0.25
+scale(stage)  1.00 1.00 0.84 0.61
+scale(time)   1.00 1.00 1.00 1.00
+\end{verbatim}
+\begin{alltt}
+\hlcom{## categorical variables}
+  \hlstd{dd_cat} \hlkwb{<-} \hlkwd{sapply}\hlstd{( listclus,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{) \{}
+    \hlkwd{downsample}\hlstd{(}\hlkwc{df} \hlstd{= x,}
+               \hlkwc{lm_model} \hlstd{= lm_model_factor,}
+               \hlkwc{var} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"time"}\hlstd{,} \hlstr{"age"}\hlstd{,} \hlstr{"care"}\hlstd{,} \hlstr{"stage"}\hlstd{,} \hlstr{"risk"}\hlstd{),}
+               \hlkwc{iter} \hlstd{=} \hlnum{100}\hlstd{)}
+  \hlstd{\}}
+  \hlstd{)}
+  \hlcom{## percent of signif paramater}
+  \hlkwd{t}\hlstd{(}\hlkwd{do.call}\hlstd{(rbind, dd_cat[}\hlstr{"percent.signif"}\hlstd{, ] ))}
+\end{alltt}
+\begin{verbatim}
+               0.015 0.02 0.05  0.1
+(Intercept)     1.00 1.00 1.00 1.00
+factor(age)2    0.09 0.21 0.15 0.11
+factor(age)3    0.49 0.66 0.49 0.39
+factor(age)4    0.44 0.66 0.40 0.43
+factor(risk)2   0.02 0.35 0.66 0.48
+factor(stage)2  1.00 1.00 0.16 0.23
+factor(stage)3  1.00 1.00 0.22 0.22
+factor(stage)4  1.00 1.00 0.69 0.69
+factor(stage)5  1.00 1.00 0.91 0.77
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+    \item For first two threshold, first stage of infection and recent time of sampling are always (100\%) associated with cluster size
+    \item As sizes of clusters increase, young age and low-risk tend to be associated with cluster size (in maximum 47\% and 63\% of samples respectively)
+  \end{itemize}
+
+\item Second type of analysis
+      \begin{itemize}
+      \item calculate the mean of co-variates over the 100 iterations
+      \item apply one linear regression: size ~ mean(covariates)
+      \end{itemize}
+    \end{enumerate}
+\end{itemize}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+  \hlcom{## mean of co-variates by cluster}
+  \hlcom{# str(dd["mean.sample",])}
+  \hlstd{mean.down} \hlkwb{<-} \hlstd{dd_ord[}\hlstr{"mean.sample"}\hlstd{,]}
+
+  \hlcom{##- linear regression ordinal}
+\hlcom{#    lapply(mean.down, function(x) \{}
+\hlcom{#    summary(lm(lm_model_ordinal, data = x))\})}
+  \hlkwd{reg.sum}\hlstd{(}\hlkwc{ls} \hlstd{= mean.down,} \hlkwc{reg} \hlstd{= lm,} \hlkwc{model} \hlstd{= lm_model_ordinal)}
+\end{alltt}
+\begin{verbatim}
+$model
+[1] "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
+
+$parameter
+                0.015     0.02     0.05      0.1
+(Intercept)   3.9e-15  1.4e-14 -8.7e-15 -3.1e-15
+scale(age)   -1.6e-02 -2.4e-02 -1.6e-02 -1.9e-02
+scale(stage) -8.4e-02 -8.1e-02 -4.8e-02 -5.1e-02
+scale(time)   1.8e-01  2.0e-01  3.1e-01  3.4e-01
+scale(risk)  -6.4e-03 -1.9e-02 -3.8e-02 -3.1e-02
+
+$pvalue
+             0.015 0.02 0.05 0.1
+(Intercept)                     
+scale(age)            *         
+scale(stage)   ***  ***   **  **
+scale(time)    ***  ***  *** ***
+scale(risk)           .    *   .
+
+$r.squared
+ 0.015   0.02   0.05    0.1 
+0.0435 0.0523 0.1060 0.1280 
+\end{verbatim}
+\begin{alltt}
+  \hlcom{## plot}
+  \hlkwd{size.vs.covar}\hlstd{(mean.down)}
+  \hlcom{# dev.off()}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=11cm]{figure/plotrun_down-sample_2-1} 
+
+}
+
+
+
+\end{knitrout}
+ \begin{itemize}
+\item First stages of infection and recent time of sampling are always (100\%) associated with larger cluster size
+ \end{itemize}
+ 
+\subsection{On real UK data}
+Same process ...
+
+
+
+
+\subsubsection{Naive regressions for real UK data}
+Linear regression
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{#### just on low and high threshold (but not too high !)}
+\hlcom{# li <- listUKclus[ 1:(length(listUKclus)-1) ]}
+\hlstd{lm_model_uk} \hlkwb{=} \hlstr{"scale(size) ~ scale(agediag) + scale(sqrt(cd4)) +  scale(ydiag)"}
+\hlcom{# lapply(li, function(x) summary(lm(lm_model_std, data = x)))}
+\hlkwd{reg.sum}\hlstd{(}\hlkwc{ls} \hlstd{= listUKclus,} \hlkwc{reg} \hlstd{= lm,} \hlkwc{model} \hlstd{= lm_model_uk)}
+\end{alltt}
+\begin{verbatim}
+$model
+[1] "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) +  scale(ydiag)"
+
+$parameter
+                   0.015    0.02    0.05     0.1
+(Intercept)       0.0022  0.0021  0.0024  0.0013
+scale(agediag)   -0.0390 -0.0530 -0.0072  0.0970
+scale(sqrt(cd4))  0.0380  0.0490  0.0480  0.0130
+scale(ydiag)      0.1200  0.1500  0.1100 -0.2500
+
+$pvalue
+                 0.015 0.02 0.05 0.1
+(Intercept)                         
+scale(agediag)     ***  ***      ***
+scale(sqrt(cd4))   ***  ***  ***    
+scale(ydiag)       ***  ***  *** ***
+
+$r.squared
+ 0.015   0.02   0.05    0.1 
+0.0146 0.0234 0.0134 0.0583 
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+Young age, high level of CD4 and recent time of diagnosis are associated with larger cluster size
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{##- model: clus ~ age +  stage + time + risk}
+\hlcom{##- care = 1 for all at diagnosis}
+\hlcom{## ex. }
+\hlstd{logit_model_uk} \hlkwb{=} \hlstr{"binclus ~ scale(agediag) + scale(sqrt(cd4)) + scale(ydiag)"}
+
+\hlkwd{reg.sum}\hlstd{(}\hlkwc{ls} \hlstd{= listUKclus,} \hlkwc{reg} \hlstd{= glm,} \hlkwc{model} \hlstd{= logit_model_uk,} \hlkwc{family} \hlstd{=} \hlkwd{binomial}\hlstd{(}\hlkwc{link} \hlstd{=} \hlstr{"logit"}\hlstd{))}
+\end{alltt}
+\begin{verbatim}
+$model
+[1] "binclus ~ scale(agediag) + scale(sqrt(cd4)) + scale(ydiag)"
+
+$parameter
+                 0.015  0.02  0.05     0.1
+(Intercept)      -0.88 -0.47  0.71  2.2000
+scale(agediag)   -0.17 -0.19 -0.14  0.0980
+scale(sqrt(cd4))  0.22  0.22  0.25  0.2000
+scale(ydiag)      0.73  0.75  0.72 -0.0032
+
+$pvalue
+                 0.015 0.02 0.05 0.1
+(Intercept)        ***  ***  *** ***
+scale(agediag)     ***  ***  ***  **
+scale(sqrt(cd4))   ***  ***  *** ***
+scale(ydiag)       ***  ***  ***    
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+Same associations with binary cluster membership
+
+\subsubsection{Down-sampled regressions for real UK data}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{### over thresholds}
+
+\hlcom{## ordinal variables}
+\hlstd{dd_ord_uk} \hlkwb{<-} \hlkwd{sapply}\hlstd{( listUKclus,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{) \{}
+  \hlkwd{downsample}\hlstd{(}\hlkwc{df} \hlstd{= x,}
+             \hlkwc{lm_model} \hlstd{= lm_model_uk,}
+             \hlkwc{var} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"agediag"}\hlstd{,} \hlstr{"cd4"}\hlstd{,} \hlstr{"ydiag"}\hlstd{),}
+             \hlkwc{iter} \hlstd{=} \hlnum{100}\hlstd{)}
+\hlstd{\}}
+\hlstd{)}
+\hlcom{## percent of signif paramater}
+\hlkwd{t}\hlstd{(}\hlkwd{do.call}\hlstd{(rbind, dd_ord_uk[}\hlstr{"percent.signif"}\hlstd{, ] ))}
+\end{alltt}
+\begin{verbatim}
+                 0.015 0.02 0.05  0.1
+(Intercept)       0.00 0.00 0.00 0.03
+scale(agediag)    0.59 0.70 0.25 0.04
+scale(sqrt(cd4))  0.77 0.89 0.73 0.10
+scale(ydiag)      1.00 1.00 1.00 0.09
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{## mean of co-variates by cluster}
+\hlcom{# str(dd["mean.sample",])}
+\hlstd{mean.down_uk} \hlkwb{<-} \hlstd{dd_ord_uk[}\hlstr{"mean.sample"}\hlstd{,]}
+\hlcom{# head(mean.down_uk[[2]])}
+\hlcom{##- linear regression ordinal}
+\hlcom{#    lapply(mean.down, function(x) \{}
+\hlcom{#    summary(lm(lm_model_ordinal, data = x))\})}
+\hlkwd{reg.sum}\hlstd{(}\hlkwc{ls} \hlstd{= mean.down_uk,} \hlkwc{reg} \hlstd{= lm,} \hlkwc{model} \hlstd{= lm_model_uk)}
+\end{alltt}
+\begin{verbatim}
+$model
+[1] "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) +  scale(ydiag)"
+
+$parameter
+                  0.015   0.02   0.05      0.1
+(Intercept)      -0.018 -0.017 -0.043 -2.4e-02
+scale(agediag)   -0.017 -0.021 -0.011 -9.7e-06
+scale(sqrt(cd4))  0.034  0.039  0.042  1.4e-03
+scale(ydiag)      0.073  0.082  0.075  2.0e-03
+
+$pvalue
+                 0.015 0.02 0.05 0.1
+(Intercept)         **    .  *** ***
+scale(agediag)       *    *         
+scale(sqrt(cd4))   ***  ***  ***  **
+scale(ydiag)       ***  ***  *** ***
+
+$r.squared
+  0.015    0.02    0.05     0.1 
+0.01610 0.00973 0.01330 0.01390 
+\end{verbatim}
+\begin{alltt}
+\hlcom{## plot}
+\hlkwd{size.vs.covar}\hlstd{(}\hlkwc{l} \hlstd{= mean.down_uk,} \hlkwc{depvar} \hlstd{=} \hlstr{"size"}\hlstd{,}
+\hlkwc{indepvar} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"agediag"}\hlstd{,} \hlstr{"cd4"}\hlstd{,} \hlstr{"ydiag"}\hlstd{))}
+\hlcom{# dev.off()}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=11cm]{figure/plotrun_down-sample_UK_2-1} 
+
+}
+
+
+
+\end{knitrout}
+CD4 and year of diagnosis systematically associated with cluster size / membership. 
 
 \end{document}

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.12.3)  10 MAR 2016 20:03
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.12.3)  14 MAR 2016 17:24
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -432,7 +432,35 @@ LaTeX Font Info:    Try loading font information for TS1+lmr on input line 71.
 (/usr/local/texlive/2015/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-LaTeX Font Info:    Try loading font information for T1+lmtt on input line 72.
+LaTeX Font Info:    Try loading font information for OT1+lmr on input line 74.
+
+(/usr/local/texlive/2015/texmf-dist/tex/latex/lm/ot1lmr.fd
+File: ot1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Try loading font information for OML+lmm on input line 74.
+
+(/usr/local/texlive/2015/texmf-dist/tex/latex/lm/omllmm.fd
+File: omllmm.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Try loading font information for OMS+lmsy on input line 74.
+
+
+(/usr/local/texlive/2015/texmf-dist/tex/latex/lm/omslmsy.fd
+File: omslmsy.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Try loading font information for OMX+lmex on input line 74.
+
+
+(/usr/local/texlive/2015/texmf-dist/tex/latex/lm/omxlmex.fd
+File: omxlmex.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10> on input line 74.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <7> on input line 74.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <5> on input line 74.
+LaTeX Font Info:    Try loading font information for T1+lmtt on input line 75.
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
@@ -441,39 +469,107 @@ File: t1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
 File: figure/simtree_dist.png Graphic file (type png)
 
 <use figure/simtree_dist.png>
-Package pdftex.def Info: figure/simtree_dist.png used on input line 79.
+Package pdftex.def Info: figure/simtree_dist.png used on input line 84.
 (pdftex.def)             Requested size: 180.67456pt x 144.53964pt.
 
 <figure/uktree_dist.png, id=2, 361.35pt x 289.08pt>
 File: figure/uktree_dist.png Graphic file (type png)
 
 <use figure/uktree_dist.png>
-Package pdftex.def Info: figure/uktree_dist.png used on input line 80.
+Package pdftex.def Info: figure/uktree_dist.png used on input line 85.
 (pdftex.def)             Requested size: 180.67456pt x 144.53964pt.
+Package color Info: Redefining color shadecolor on input line 90.
+LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 93.
+LaTeX Font Info:    Try loading font information for T1+lmss on input line 110.
+
+
+(/usr/local/texlive/2015/texmf-dist/tex/latex/lm/t1lmss.fd
+File: t1lmss.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+Package color Info: Redefining color shadecolor on input line 112.
+Package color Info: Redefining color shadecolor on input line 134.
  [1{/usr/local/texlive/2015/texmf-var/fonts/map/pdftex/updmap/pdftex.map} <./fi
 gure/simtree_dist.png> <./figure/uktree_dist.png>]
-(./2.1_process_tree_ucsd.aux) ) 
+Package color Info: Redefining color shadecolor on input line 181.
+
+<figure/plotplot_log-log-1.pdf, id=25, 722.7pt x 433.62pt>
+File: figure/plotplot_log-log-1.pdf Graphic file (type pdf)
+
+<use figure/plotplot_log-log-1.pdf>
+Package pdftex.def Info: figure/plotplot_log-log-1.pdf used on input line 183.
+(pdftex.def)             Requested size: 312.9803pt x 187.78949pt.
+Package color Info: Redefining color shadecolor on input line 193.
+
+<figure/plotQQ_plot-1.pdf, id=26, 722.7pt x 433.62pt>
+File: figure/plotQQ_plot-1.pdf Graphic file (type pdf)
+
+<use figure/plotQQ_plot-1.pdf>
+Package pdftex.def Info: figure/plotQQ_plot-1.pdf used on input line 200.
+(pdftex.def)             Requested size: 312.9803pt x 187.78949pt.
+ [2 <./figure/plotplot_log-log-1.pdf>]
+Package color Info: Redefining color shadecolor on input line 218.
+ [3 <./figure/plotQQ_plot-1.pdf>]
+Package color Info: Redefining color shadecolor on input line 273.
+ [4]
+Package color Info: Redefining color shadecolor on input line 359.
+ [5]
+Package color Info: Redefining color shadecolor on input line 438.
+ [6]
+Package color Info: Redefining color shadecolor on input line 501.
+
+<figure/plotrun_down-sample_2-1.pdf, id=54, 722.7pt x 433.62pt>
+File: figure/plotrun_down-sample_2-1.pdf Graphic file (type pdf)
+
+<use figure/plotrun_down-sample_2-1.pdf>
+Package pdftex.def Info: figure/plotrun_down-sample_2-1.pdf used on input line 
+543.
+(pdftex.def)             Requested size: 312.9803pt x 187.78949pt.
+ [7]
+Package color Info: Redefining color shadecolor on input line 563.
+Package color Info: Redefining color shadecolor on input line 597.
+ [8 <./figure/plotrun_down-sample_2-1.pdf>]
+Package color Info: Redefining color shadecolor on input line 630.
+Package color Info: Redefining color shadecolor on input line 656.
+ [9]
+<figure/plotrun_down-sample_UK_2-1.pdf, id=74, 722.7pt x 433.62pt>
+File: figure/plotrun_down-sample_UK_2-1.pdf Graphic file (type pdf)
+
+<use figure/plotrun_down-sample_UK_2-1.pdf>
+Package pdftex.def Info: figure/plotrun_down-sample_UK_2-1.pdf used on input li
+ne 697.
+(pdftex.def)             Requested size: 312.9803pt x 187.78949pt.
+ [10 <./figure/plotrun_down-sample_UK_2-1.pdf>] (./2.1_process_tree_ucsd.aux) )
+ 
 Here is how much of TeX's memory you used:
- 5209 strings out of 493089
- 76514 string characters out of 6134842
- 138253 words of memory out of 5000000
- 8628 multiletter control sequences out of 15000+600000
- 31585 words of font info for 25 fonts, out of 8000000 for 9000
+ 5342 strings out of 493089
+ 79681 string characters out of 6134842
+ 152254 words of memory out of 5000000
+ 8728 multiletter control sequences out of 15000+600000
+ 48997 words of font info for 39 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 44i,10n,47p,326b,404s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/local/texlive/2015/texmf-dist/fonts/enc/dv
-ips/lm/lm-ec.enc}{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-ts1.
-enc}</usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/
-local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></usr/local/texli
-ve/2015/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2015/tex
-mf-dist/fonts/type1/public/lm/lmr8.pfb></usr/local/texlive/2015/texmf-dist/font
-s/type1/public/lm/lmr9.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/publ
-ic/lm/lmri10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmtt
-10.pfb>
-Output written on 2.1_process_tree_ucsd.pdf (1 page, 168285 bytes).
+ 44i,10n,47p,397b,407s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/usr/local/te
+xlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{/usr/local/texlive/2015
+/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/local/texlive/2015/texmf-dis
+t/fonts/enc/dvips/lm/lm-rm.enc}{/usr/local/texlive/2015/texmf-dist/fonts/enc/dv
+ips/lm/lm-ts1.enc}</usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmb
+x10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></
+usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></usr/local/t
+exlive/2015/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></usr/local/texlive/201
+5/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2015/texmf-dis
+t/fonts/type1/public/lm/lmr8.pfb></usr/local/texlive/2015/texmf-dist/fonts/type
+1/public/lm/lmr9.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/
+lmri10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmri9.pfb>
+</usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmss10.pfb></usr/loca
+l/texlive/2015/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/local/texlive/
+2015/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></usr/local/texlive/2015/texmf
+-dist/fonts/type1/public/lm/lmtt10.pfb></usr/local/texlive/2015/texmf-dist/font
+s/type1/public/lm/lmtti10.pfb>
+Output written on 2.1_process_tree_ucsd.pdf (10 pages, 3001251 bytes).
 PDF statistics:
- 44 PDF objects out of 1000 (max. 8388607)
- 29 compressed objects within 1 object stream
+ 138 PDF objects out of 1000 (max. 8388607)
+ 99 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 11 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 31 words of extra memory for PDF output out of 10000 (max. 10000000)
 

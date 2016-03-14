@@ -7,7 +7,7 @@
 ###--- output: returns path for dataframe (ID1, ID2, distance)
 
 ###--- Scales the time based distance by consensus mutation rate to obtain 'standard' substitution per site distances
-# tree.name <- "simtree"
+# tree.name <- "simtree" tree.name <- "uktree"
 TreeToEdgeList <- function(t, rate = 1, 
                            output = "data/", fig = "figure/" , 
                            stats = TRUE, plot = TRUE ){
@@ -48,9 +48,9 @@ TreeToEdgeList <- function(t, rate = 1,
     png(filename = plot.name, type="cairo",
         units="in", width=5, height=4, 
         pointsize=12, res=96)
-    hist(d, breaks = 50, 
+    hist(d, breaks = 50, xlim = c(0, 1),
          xlab = "distance", ylab = "frequency",
-         main = tree.name, # Tree's distances in subst/site
+         main = '', #tree.name # Tree's distances in subst/site
          col = "grey")
     dev.off()
    }
