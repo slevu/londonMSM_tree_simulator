@@ -282,6 +282,7 @@ merge(x, demo,
 # head(listclus[[3]])
 # table(listclus[[1]]$binclus, useNA = "ifany")
 # table(listclus[[1]]$size, useNA = "ifany")
+# saveRDS(listclus, file = "data/listclus_sim.rds")
 
 ###########################
 ### --- Regressions --- ###

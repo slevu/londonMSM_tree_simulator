@@ -267,3 +267,230 @@ size.vs.covar <- function(l, depvar = "size",
 ###################################
 ####---- End size.vs.covar ----####
 ###################################
+
+### From phylo-uk
+#---- functions ----#
+
+#-------------------#
+####---- EdgeList----
+#-------------------#
+## calculate edge list matrix (2 columns)
+## from cluster assignement: vector of cluster number with ID as names
+
+EdgeList <- function(x) {
+  # empty edge list
+  el <- matrix(nrow=0, ncol = 2)
+  # trnasform matrix in df
+  x <- as.data.frame(cbind(as.integer(names(x)), 
+                           as.integer(x)))
+  colnames(x) <- c("id","cluster")
+  # for each unique cluster number
+  for(clust in unique(x[,"cluster"])){
+    # all id belonging to that cluster
+    tmp <- x[x[,"cluster"] == clust, "id"]
+    # combine elements of tmp by 2, in 2 columns
+    # unless cluster size = 1 !
+    if(length(tmp) > 1) {
+      co <- t(combn(tmp , 2))
+      # add rows
+      el <-  rbind(el, co)
+    }
+  }
+  colnames(el) <- c("from","to")
+  el <- el[order( c(el[, "from"])), ]
+  return(el)
+}
+
+#-------------------#
+####---- AssortMix ----
+#-------------------#
+## function to 
+## match seqindex with patientindex from list of both
+## determine from patientID adn to patientID
+## add covariate
+## if numeric, calculate quantiles
+## calculate quantiles-quantiles matrix
+## claculate assortativity coefficient
+
+##- eventually program regression analyses
+
+## require:
+## edgelist: 3 columns matrix from, to (test or sequence index) and weight W
+## listID: dataframe with match between testindex and patientindex
+## dfvar: dataframe containing independant variable VAR by patientindex
+## var: variable
+## option: name of patientindex, name of seqindex or testindex, number of quantiles, 
+## png graph to be issued
+
+AssortMix <- function(edgelist = W, listID = df, dfvar = df, var = "dob_y", 
+                      pid = "patientindex", sid = "testindex",
+                      nqt = 10, graph = 0, trans = 0, method = "") {
+  ##- force dataframe
+  test <- as.data.frame(edgelist)
+  names(test) <- c("from", "to", "W")
+  
+  ## patientindex at position of listID where edgelist$from = listID$testindex
+  test$pid_from <- listID[, pid][match(test[,"from"], listID[, sid])]
+  test$pid_to <- listID[, pid][match(test[,"to"], listID[, sid])] 
+  
+  ##- values of VAR for from_patient and to_patient
+  test$var_from <- dfvar[, var][match(test$pid_from, dfvar[, pid])]
+  test$var_to <- dfvar[, var][match(test$pid_to, dfvar[, pid])]
+  
+  ##- if numeric (and if nqt given or quantile option activated ?), 
+  ## do quantiles
+  if(is.na(nqt)){
+    qt_from <- qt_to <- sort(unique(test$var_from))
+  } else {
+    qt_from <- qt_to <-  quantile(test$var_from, 
+                      prob = seq(1/nqt, 1, length.out = nqt),
+                      na.rm = TRUE)
+  }
+  
+  #     qt_to <- quantile(test$var_to, 
+  #                       prob = seq(1/nqt, 1, length.out = nqt),
+  #                       na.rm = TRUE) 
+  
+  ##- cut in nqt quantiles of continuous VAR
+  #   test$var_qt_from <-  cut(test$var_from, 
+  #                            qt_from,
+  #                            labels=FALSE)
+  #   test$var_qt_to <-  cut(test$var_to, 
+  #                          qt_to,
+  #                          labels=FALSE)
+  
+  var2q <- function(var) {
+    k <- 1
+    for (i in qt_from ){
+      if (!is.na(var) & var <= i) return (k)
+      k <- k + 1
+    }
+    return (min( k, nqt ))
+  } 
+  
+  test$var_qt_from <- sapply( test$var_from, var2q )
+  test$var_qt_to <- sapply( test$var_to, var2q )
+  
+  ##- empty matrix
+  mixing <- matrix(0, nrow = length(qt_from), ncol = length(qt_from))
+  
+  ##- loop
+  #- for each pair
+  for(i in 1:nrow(test)){
+    #- if both values of VAR exist
+    if (!is.na(test$var_qt_from[i]) & !is.na(test$var_qt_to[i])) {
+      #- sum weights for each pair of quantiles encountered (row=from, listIDl=to)
+      mixing[ test$var_qt_from[i], test$var_qt_to[i]] <- 
+        mixing[ test$var_qt_from[i], test$var_qt_to[i]] + test$W[i]
+    }
+  }
+  
+  ## optional graph
+  if(graph == 1){
+    date <- format(Sys.time(),"%Y%m%d_%H%M")
+    file <- paste( "figure/", var,"_mixing_", method, date, ".png", sep = "")
+    # png(paste( "figure/", var,"_mixing_", date, ".png", sep = ""))
+    
+    ##- trnasformation sqrt
+    if (trans == 0) {
+      image(qt_from, qt_to, mixing)
+    } else {
+      image(sqrt(qt_from), sqrt(qt_to), mixing)
+    }
+    
+    dev.copy(device = png, filename = file, width = 500, height = 500)
+    dev.off()
+  }
+  
+  return(mixing)
+}
+
+##- verif
+# sum(mixing)
+
+#-------------------#
+##---- AgeOfInf ----
+#-------------------#
+## age of infection in years
+## loop over iter and patient id to calculate 
+## time from intercept to cd4 according to 
+## HPA. Longitudinal ... 2011
+
+## sqrt(cd4) = beta0 + beta1_ethn + b2 * time + beta3_ethn * time + beta4 * age * time
+## time = [ sqrt(cd4) - beta0 - beta1_ethn] / [beta2 + beta3_ethn + beta4 * age]
+
+AgeOfInf <- function(df, age = "age", ethn = "ethn", 
+                     cd4 = "cd4", id = "patientindex",
+                     iter = 1){
+  
+  ##- parameter values from HPA. Longitudinal ... 2011
+  
+  ethnicity <- c( "black", "other","white")
+  
+  mu_beta0 <- 24.24
+  sd_beta0 <- (24.93 - mu_beta0)/1.96
+  mu_beta1 <- c(-1.95, -0.92, 0)
+  names(mu_beta1) <- ethnicity # e.g. beta1["black"]
+  sd_beta1 <- (c( -1.38, -0.27, 0) - mu_beta1)/1.96 
+  names(sd_beta1) <- ethnicity
+  
+  mu_beta2 <- -0.002
+  sd_beta2 <- (-0.0013 - mu_beta2)/1.96
+  
+  mu_beta3 <- c( 0.0015, 0.0005, 0)
+  names(mu_beta3) <- ethnicity
+  sd_beta3 <- (c( 0.0020, 0.0012, 0) - mu_beta3)/1.96
+  names(sd_beta3) <- ethnicity
+  
+  mu_beta4 <- -0.00006
+  sd_beta4 <- ( -0.00004 - mu_beta4)/1.96
+  
+  ##- initialize
+  # time <- vector()
+  # intercept <- vector()
+  rr <- matrix(0,  ncol = 4, 
+               nrow = length(df[, id]) * iter)
+  
+  ##- default value for age
+  mean_age <- mean(df[ , age], na.rm = TRUE)
+  
+  ##- loop1
+  for (k in 1:iter){
+    ##- loop2
+    for (i in 1:length(df[, id])){
+      
+      ##- assign default value for age and ethnicity
+      a <- if(is.na(df[ , age][i])) mean_age
+      else df[ , age][i]
+      e <- if(is.na(df[ , ethn][i])) "white"
+      else df[ , ethn][i]
+      
+      ##- draw parameters
+      beta0 <- rnorm(1, mu_beta0, sd_beta0)
+      beta1 <- rnorm(1, mu_beta1[e], sd_beta1[e])
+      beta2 <- rnorm(1, mu_beta2, sd_beta2)
+      beta3 <- rnorm(1, mu_beta3[e], sd_beta3[e])
+      beta4 <- rnorm(1, mu_beta4, sd_beta4)
+      
+      time <-  max( (sqrt(df[ , cd4][i]) - beta0 - beta1) / 
+                      (beta2 + beta3 + beta4 * a), 0) # positive values in days
+      ##- fill matrix by row number         
+      rr[(k - 1)*length(df[, id]) + i, ] <- c(k, df[, id][i], beta0^2, round(time / 365, 2))
+    }
+  }
+  # names
+  colnames(rr) <- c("iter", "id", "intercept", "aoi")
+  
+  ##- statistics by patient
+  p <- as.data.frame(
+    as.list(
+      aggregate(aoi ~ id, data = rr, 
+                FUN = function(x) c(m = round(mean(x), 2),
+                                    se = round(sd(x)/sqrt(length(x)),2),
+                                    lo = round(max(mean(x) - 1.96*sd(x)/sqrt(length(x)), 0), 2),
+                                    up = round(mean(x) + 1.96*sd(x)/sqrt(length(x)), 2))) 
+    )) # need as.data.frame(as.list()) to get df
+  
+  ##- return matrix of individual values over iter (ind) and table of summary statistics (pop)
+  return(list(ind = rr, pop = p))
+}
