@@ -16,7 +16,8 @@ age_rates <- c(agerate1 = 1/9/365
                , agerate4 = 1/40.5/365
 )
 
-6
+##- Natural history (from Cori et al. AIDS 2015 ?)
+##- Cori: 3.32, 2.70, 5.50, 5.06
 stageprog_rates <- c(    gamma1 = 1/365 # EHI
                          # shrink chronc&aids periods by 9 months, or factor of 1-.75/12  
                          # 1/ ( (1-.75/12) /(0.157 / 365 )  )
@@ -527,7 +528,7 @@ snazzy.plot <- function( desolve, agg )
   oa <- ( sapply( names( agg ), function( n ) {
     rowSums( desolve[, 1 + agg[[n]] ] )  ## NOTE desolve mat has time as first col
   }) )
-  X11() 
+  #X11() 
   matplot( times_year, oa, type = 'l' )
   legend( x = 'topleft', legend = names(agg)
           , col = 1:length(agg) #SPCOLS[1:length(agg)] 

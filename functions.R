@@ -203,7 +203,7 @@ ucsd_hivclust <- function(path.el, thr = NA, quant = c(5e-5, 1e-4, 5e-4, 1e-3, 1
 ### linear and logistic regression
 ### return only parameters, p-values and R squared
 ### input: list of df, regression function, model formula,
-### ellipsis for extre arguments, like link function
+### ellipsis for extra arguments, like link function
 
 reg.sum <- function(ls, reg, model, ...){
   ## pvalue by threshold
