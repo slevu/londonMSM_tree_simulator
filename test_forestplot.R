@@ -42,13 +42,17 @@ forestplot(tabletext, mean, low, up,
            vertices = TRUE,
            new_page = TRUE)
 
+###---
 ### naive and downsampling
-tail(mean.down[[2]])
-tail(listclus[[2]])
-
+###---
+tail(mean.down_uk[[3]])
+tail(listUKclus[[3]])
+lm_model_uk  <-  "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) +  scale(ydiag)"
 ## anonymous function
-fit1 <- (function(x) lm(lm_model_ordinal, data = x))(listclus[[2]])
-fit2 <- (function(x) lm(lm_model_ordinal, data = x))(mean.down[[2]])
+fit1 <- (function(x) lm(lm_model_uk, data = x))(listUKclus[[2]])
+fit2 <- (function(x) lm(lm_model_uk, data = x))(mean.down_uk[[2]])
+summary(fit1)
+summary(fit2)
 
 mean <- cbind(coef(fit1), coef(fit2))
 low <- cbind(confint(fit1)[,1] , confint(fit2)[,1])
@@ -59,8 +63,9 @@ tabletext <- names(coef(fit1))
 
 ## at threshold level 2 (0.02)
 forestplot(tabletext, mean, low, up, 
-           legend = c("naive", "downsample"),
+           legend = c("naive", "down-sampled"),
            #xticks = seq(-0.2, 0.4, by = 0.1),
+           #boxsize = .05,
            cex  = .5, lineheight = "auto",
            xlab = "",
            col=fpColors(box = gray(0:1/2)), 
@@ -69,3 +74,4 @@ forestplot(tabletext, mean, low, up,
            vertices = TRUE,
            new_page = TRUE)
 dev.off()
+?"forestplot"
