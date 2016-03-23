@@ -4,7 +4,7 @@
 #### rm(list=ls())
 
 ####---- include ----
-detail_knitr <- FALSE
+detail_knitr <- TRUE
 source("functions.R")
 
 ####---- lib ----
@@ -40,7 +40,7 @@ if(FALSE){
                        seqlength = 1550) 
   ) 
   
-  ##- uktree
+  ##- uktree (no transformation)
   system.time(
     path.uktree_el <- TreeToEdgeList(uktree, 
                         rate = 1) ) 
@@ -56,14 +56,15 @@ if(FALSE){
 ## get list of quantiles, commands and list of
 ## dataframes of cluster members 
 if(FALSE){
+  thresholds = c(0.015, 0.02, 0.05, 0.1)
   system.time(
-    simclus <- ucsd_hivclust(path.simtree_el, 
-                             thr = c(0.015, 0.02, 0.05, 0.1))
+    simclus <- ucsd_hivclust(path.el = path.simtree_el, 
+                             thr = thresholds) 
   )
   
   system.time(
-    ukclus <- ucsd_hivclust(path.uktree_el,
-                            c(0.015, 0.02, 0.05, 0.1))
+    ukclus <- ucsd_hivclust(path.el = path.uktree_el,
+                            thr = thresholds)
   )
   names(simclus)
   names(ukclus)
@@ -264,6 +265,10 @@ l_uk <-  clust.stats(clus = ukclus, tree = uktree)
 # str(l_uk)
 
 ####---- proportion ----
+##- number of clusters (counting size=1 cluster !)
+sapply(l_sim, function(x) length(unique(x$ClusterID)))
+sapply(l_uk, function(x) length(unique(x$ClusterID)))
+
 ##-proportion in or out clusters
 sapply(l_sim, function(x) round(prop.table(table(x$binclus)),2))
 sapply(l_uk, function(x) round(prop.table(table(x$binclus)),2))

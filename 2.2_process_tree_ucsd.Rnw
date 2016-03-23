@@ -1,0 +1,205 @@
+\documentclass[]{revtex4} %twocolumn revtex4
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{graphicx,subfig}
+
+
+\begin{document}
+
+\title{Simulated and UK tree clustered by UCSD soft. - March 2016}
+\author{S. Le Vu}
+%\affiliation{ICL}
+\date{\today}
+
+\maketitle
+
+<<external-code, echo=FALSE, cache= FALSE>>=
+library(knitr)
+read_chunk('Process0_ucsd.R')
+@
+
+<<setup, echo=FALSE>>=
+opts_chunk$set(comment="", message=FALSE, tidy.opts=list(width.cutoff=120), options(width=100), fig.align='center',fig.height=6, fig.width=10, out.width='11cm',  fig.show='hold', fig.path='figure/plot')
+@
+
+\section{Intro}
+\begin{itemize}
+\item Looking for relation between cluster characteristics and heterogenous transmission rates
+
+\begin{itemize}
+\item "Time-based" distances from \emph{simulated} coalescent tree are converted to substitutions per site distances with a constant rate from the litterature ($4.3e-3/365$ from \emph{Berry et al. JVI 2007}) (see distributions in Fig. 1)
+\item Then matrices of distances are converted in edge lists of pairwise distances with header [ID1, ID2, distance] as needed by UCSD software \texttt{hivclustering}
+\item Edge lists are inputed in the \texttt{hivnetworkcsv} function which returns lists of cluster assignements for thresholds [0.015, 0.02, 0.05, 0.1] for both simulated and UK tree.
+\end{itemize}
+
+\end{itemize}
+
+
+\begin{figure}[ht]
+     \centering
+     \subfloat[][Simulation]{\includegraphics[scale=0.5]{figure/simtree_dist.png}}
+     \subfloat[][UK]{\includegraphics[scale=0.5]{figure/uktree_dist.png}}
+     \caption{Distances (subst/site)}
+\end{figure}
+
+<< include  >>=
+@
+
+<< lib, include = detail_knitr >>=
+@
+
+<< load sim, include = detail_knitr >>=
+@
+
+<< load uk stuff, include = detail_knitr  >>=
+@
+
+<< Create edge list, include = detail_knitr  >>=
+
+@
+
+<< cluster UCSD, include = detail_knitr  >>=
+
+@
+
+
+\section{UCSD hivclustering}
+Read saved results from UCSD \textsf{hivclustering}
+<< read >>=
+@
+\begin{itemize}
+\item Now, thresholds for clustering are fixed and not determined by quantiles of distances
+\item Because of this and because of the applied substitution rate, the number of clusters and mean sizes of clusters are not identical but are of the same magnitude between simulated and real UK data
+\item Up to threshold = 5\%, distributions of cluster size seem to follow a power law for both simulated and UK data 
+\end{itemize}
+
+Number of clusters and stats for simulated and UK trees (cluster size 1 does not exist in these (UCSD) outputs)
+<< desc, include = detail_knitr >>=
+
+@
+
+<< desc2 >>=
+@
+
+
+Plots of log(size) for UK and simulated clusters
+<< plot log-log, echo = FALSE >>=
+@
+
+QQ plots UK vs simulated, untransformed and log-log
+<< QQ plot, echo = FALSE >>=
+@
+
+\section{Associations}
+After merging with co-variates allocated from demes states contained in tree, non-clustering individuals are assigned a cluster size of 1. 
+<< data , include= detail_knitr >>=
+@
+
+The proportion of individuals into clusters (0 = out of, 1 = in a cluster) and stats for "size of cluster for each individuals". 
+<< demo, include= detail_knitr >>=
+@
+
+<< clust.stats, include= detail_knitr >>=
+@
+
+<< proportion >>=
+@
+
+<< merge, include= detail_knitr >>= 
+@
+
+\subsection{Naive regressions on simulation}
+
+Linear regression with co-variates as ordinal or categorical
+<< models, include= detail_knitr >>=
+@
+
+<< summary naive >>=
+
+@
+\begin{itemize}
+\item The size of cluster of each invidividuals is always explained by overall stage and time of sampling
+\item For every threshold of clustering, stage 1 is more likely to belong to large clusters than any other stages
+\item Age 1 is more likely to belong to large clusters than age 3 or age 4
+\item Low (!) risk level is associated with larger clusters, only for higher thresholds (fewer and larger clusters on overall)
+\item Small part of the variance is explained by the variables
+\end{itemize}
+
+
+Logistic regression with ordinal and categorical variables
+<< sim logistic >>=
+
+@
+All variables are significantly associated with being into a cluster for all thresholds
+
+
+
+\subsection{Regressions on down-sampled simulation}
+
+\begin{itemize}
+  \item For each clustering threshold, 
+  \item sample one individual by cluster
+  \item re-sample 100 times
+  \item sample size equals number of clusters with each non-clustered individuals counting for one
+    \begin{enumerate}
+    \item First type of analysis
+      \begin{itemize}
+      \item apply 100 linear regressions on each sample
+      \item calculate proportion of p-values < 0.05 over the 100 iterations
+      
+    
+
+<< downsample2, include = detail_knitr >>=
+
+@
+
+<< run down-sample 1 >>=
+
+@
+
+    \item For first two threshold, first stage of infection and recent time of sampling are always (100\%) associated with cluster size
+    \item As sizes of clusters increase, young age and low-risk tend to be associated with cluster size (in maximum 47\% and 63\% of samples respectively)
+  \end{itemize}
+
+\item Second type of analysis
+      \begin{itemize}
+      \item calculate the mean of co-variates over the 100 iterations
+      \item apply one linear regression: size ~ mean(covariates)
+      \end{itemize}
+    \end{enumerate}
+\end{itemize}
+
+<< run down-sample 2 >>=
+
+@
+ \begin{itemize}
+\item First stages of infection and recent time of sampling are always (100\%) associated with larger cluster size
+ \end{itemize}
+ 
+\subsection{On real UK data}
+Same process ...
+<< multivariate, include = detail_knitr >>=
+@
+
+<< merge UK, include = detail_knitr >>=
+@
+
+\subsubsection{Naive regressions for real UK data}
+Linear regression
+<< linear UK >>=
+@
+Young age, high level of CD4 and recent time of diagnosis are associated with larger cluster size
+<< logistic UK >>=
+@
+Same associations with binary cluster membership
+
+\subsubsection{Down-sampled regressions for real UK data}
+<< run down-sample UK 1 >>=
+@
+
+<< run down-sample UK 2 >>=
+@
+CD4 and year of diagnosis systematically associated with cluster size / membership. 
+
+\end{document}

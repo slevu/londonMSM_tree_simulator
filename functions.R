@@ -125,7 +125,7 @@ ucsd_hivclust <- function(path.el, thr = NA, quant = c(5e-5, 1e-4, 5e-4, 1e-3, 1
     # choose threshold based on quantiles (first 4 for now)
     qt <- quantile(el$distance, 
                    probs = quant )
-    thr <- round(qt[1:4], 2)
+    thr <- signif(qt[1:4]*2, 1)/2 ## ensure 0.010, 0.015, etc.
     
     ## get rid of distance > larger quantile
     #      k <- round(qt[length(qt)], 2)
@@ -171,6 +171,7 @@ ucsd_hivclust <- function(path.el, thr = NA, quant = c(5e-5, 1e-4, 5e-4, 1e-3, 1
       stderr <-  system(
         paste(cmd_hivclustering, "2>&1"),
         intern = TRUE)
+      Sys.sleep(1)
     }
     # save commands and 'stderr' warnings
     cmd <- c(cmd, cmd_hivclustering)
