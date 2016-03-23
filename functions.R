@@ -14,7 +14,7 @@
 
 ###--- Scales the time based distance by consensus mutation rate to obtain 'standard' substitution per site distances
 # tree.name <- "simtree" tree.name <- "uktree"
-TreeToEdgeList <- function(t, rate = 1, 
+TreeToEdgeList <- function(t, rate = 1, seqlength = NA,
                            output = "data/", fig = "figure/" , 
                            stats = TRUE, plot = TRUE ){
   
@@ -31,19 +31,21 @@ TreeToEdgeList <- function(t, rate = 1,
     return(out_edge_list)
   } else {
     
-    ###--- get distances
+    ###--- for time-based tree,
+    ##- estimate subst along branches
+    if (rate != 1){
+      print(paste('distances scaled by rate =', rate, 'subst/site/day'))
+      t$edge.length <- rpois(length(t$edge.length), 
+                             t$edge.length * rate * seqlength ) / seqlength ## (random number of subst)/ number sites
+    }
+    
+    ###--- get distances between tips
     if (file.exists(dist.mat.path)){
       d <- readRDS( dist.mat.path )
     } else {
       d <- as.dist(cophenetic.phylo(t))
       print("Matrix of cophenetic distances was saved")
       saveRDS(d, file = dist.mat.path )
-    }
-    
-    ###--- time to rate
-    if (rate != 1){
-      print(paste('distances scaled by rate =', rate, 'subst/site/day'))
-      d <-  d * rate
     }
     
     ###--- stats

@@ -1,6 +1,9 @@
 # devtools::install_github("emvolz-phylodynamics/phydynR")
 library(phydynR)
-rm(list=ls())
+# rm(list=ls())
+# 
+source('model0_phydynr.R')
+
 ## Load newest Rdata
 l <- list.files(pattern="*.Rdata") # list.files(pattern="Rdata$") list.files(pattern="out")
 load(l[length(l)])
@@ -9,6 +12,7 @@ ls()
 names(tree)
 head(tree$heights)
 head(tree$sampleStates)
+head(tree$sampleTimes)
 ## approx incidence & prevalence  London
 prev <- 43510 / 2
 inc  <-  2500 

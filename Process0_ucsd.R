@@ -35,8 +35,9 @@ if(FALSE){
   
   ##- simtree
   system.time(
-  path.simtree_el <- TreeToEdgeList(simtree, 
-                       rate = 4.3e-3/365) # Berry et al. JVI 2007
+  path.simtree_el <- TreeToEdgeList(t = simtree, 
+                       rate = 4.3e-3/365, # Berry et al. JVI 2007
+                       seqlength = 1550) 
   ) 
   
   ##- uktree
