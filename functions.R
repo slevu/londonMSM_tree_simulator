@@ -14,12 +14,14 @@
 
 ###--- Scales the time based distance by consensus mutation rate to obtain 'standard' substitution per site distances
 # tree.name <- "simtree" tree.name <- "uktree"
-TreeToEdgeList <- function(t, rate = 1, seqlength = NA,
+TreeToEdgeList <- function(t, name.output = NA, rate = 1, seqlength = NA,
                            output = "data/", fig = "figure/" , 
                            stats = TRUE, plot = TRUE ){
   
   ###--- object names for output path
-  tree.name <- substitute(t)
+  if (!is.na(name.output)){
+    tree.name <- name.output
+  } else tree.name <- substitute(t)
   dist.mat.name <- paste(tree.name, "_dist", sep = '')
   dist.mat.path <- paste(output, dist.mat.name,".rds", sep = '')
   plot.name <- paste(fig, dist.mat.name, ".png", sep ='')
