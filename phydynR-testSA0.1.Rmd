@@ -1,0 +1,209 @@
+---
+title: "Example simulation experiment for UK MSM source attribution"
+output: 
+  html_document:
+    fig_width: 6
+    fig_height: 6
+author: "Erik Volz"
+date: "March 24, 2016"
+fontsize: 11pt
+geometry: margin=1in
+---
+
+This document demonstrates the following:
+
+* Simulating tree from UK MSM model
+* Computing infector probs
+* Some simple analyses comparing infector probabilities by stage of infection, age and risk level
+
+
+Load the libraries and model code:
+```{r}
+require(phydynR)
+source('model0.R')
+```
+
+Simulate an epidemic (ODE model)
+```{r}
+	o <- ode(y=y0, times=times_day, func=dydt, parms=list()  , method = 'adams')
+	tfgy <- .tfgy( o )
+```
+
+
+For computing the approximate infector probabilities, we will make approximation that incidence and prevalence is constant over a given period; we can base this on the model:
+```{r}
+MH <- 10 # look up to 10 years in past for infector probs 
+#~ incidence and prevalence :
+yfin <- tfgy[[4]][[length(times_day)]]
+ffin <- tfgy[[2]][[length(times_day)]]
+newinf <- sum(ffin[1:120, 1:120] ) * 365  # new infections per year 
+plwhiv <- sum( yfin[-length(yfin)] ) # people living with hiv
+```
+
+
+Gather the sample time and sample state information; this is based on the real data set:
+```{r}
+#~  sample time and states
+sampleTimes <- scan( file = 'sampleTimes' )
+ss  <- matrix( scan( file = 'sampleStates' ) , byrow=TRUE, ncol = m)
+colnames(ss) <- DEMES
+# regularise (estimates are more stable w/o zeros in sample states)
+ss <- ss + 1e-4
+ss = sampleStates <- ss / rowSums(ss)
+```
+
+
+Simulate a tree; note that I changed the time interval to weekly, so it will take longer to run (should be <5 minutes).
+```{r}
+	tree <- sim.co.tree.fgy(tfgy,  sampleTimes, sampleStates)
+```
+
+
+
+
+We need to put everything in time units of years, since that is the expectation of the SA method; rescale the branch lengths and sample times: 
+```{r}
+# rescale tree 
+sampleTimes <- days2years( tree$sampleTimes )
+tree$edge.length <- tree$edge.length / 365
+#~ bdt <- DatedTree(  tree, sampleTimes, tree$sampleStates, tol = Inf )
+bdt <- DatedTree(  tree, sampleTimes, tree$sampleStates, tol = Inf)
+n<- bdt$n
+```
+
+
+Collect the CD4 and EHI indicators for each sample; these are inputs to the SA method: 
+```{r}
+## cd4s & ehis
+	# from cori paper
+	#~ k =1: CD4>=500
+	#~ k = 2 : 350<=CD4<500. 
+	#~ k = 3: 200<=CD4<350
+	#~ k = 4 : CD4<200
+treeSampleStates <- tree$sampleStates
+cd4s <- setNames( sapply( 1:nrow(treeSampleStates), function(k){
+	deme <- DEMES[ which.max(treeSampleStates[k,] )  ]
+	stage <- strsplit( deme, '.' , fixed=T)[[1]][1]
+	stage <- as.numeric( tail( strsplit(stage, '')[[1]], 1 ) )
+	if (stage==1) return(1e3)
+	if (stage==2) return(750)
+	if (stage==3) return(400)
+	if (stage==4) return(300)
+	if (stage==5) return(100)
+}), tree$tip.label)
+ehis <-  setNames( sapply( 1:nrow( treeSampleStates), function(k){
+	deme <- DEMES[ which.max(treeSampleStates[k,] )  ]
+	stage <- strsplit( deme, '.' , fixed=T)[[1]][1]
+	stage <- as.numeric( tail( strsplit(stage, '')[[1]], 1 ) )
+	ifelse( stage==1, TRUE, FALSE) 
+}), tree$tip.label)
+sampleDemes <- setNames( sapply( 1:n, function(u) DEMES[which.max( treeSampleStates[u,])] ), tree$tip.label )
+```
+
+
+Now we can comput infector probabilities: 
+```{r}
+	W <- phylo.source.attribution.hiv( bdt
+	  , bdt$sampleTimes # must use years
+	  , cd4s = cd4s[bdt$tip.label] # named numeric vector, cd4 at time of sampling 
+	  , ehi = ehis[bdt$tip.label] # named logical vector, may be NA, TRUE if patient sampled with early HIV infection (6 mos )
+	  , numberPeopleLivingWithHIV  = plwhiv# scalar
+	  , numberNewInfectionsPerYear = newinf # scalar 
+	  , maxHeight = MH 
+	  , res = 1e3
+	  , treeErrorTol = Inf
+	)  
+```
+
+
+## Some simple comparisons of infector probabilities by stage, age, risk level
+The total number of transmission events within-sample: 
+```{r}
+wsids <- unique( W$donor )
+wvec <- W$infectorProbability
+wvec_o <- order( wvec )
+wvec <- wvec[wvec_o] # sort the inf probs
+print ('sum w')
+print(sum(wvec))
+```
+
+Compute out-degree, indegree, and compare: 
+```{r}
+## out degree & indegree 
+od <- sapply( wsids, function(sid) sum( wvec[W$donor[wvec_o]==sid]  ) )
+mod <- sapply( wsids, function(sid) max( wvec[W$donor[wvec_o]==sid]  ) )
+id <- sapply( wsids, function(sid) sum( wvec[W$recip[wvec_o]==sid]  ) )
+X11(); plot( od, id, log = 'xy' , main = 'Out degree vs in degree')
+X11(); hist( od , main = 'Histogram of out degree')
+X11(); plot( ecdf( od ), main= 'CDF of out degree') 
+```
+
+Comparison of out-degree as function of stage at diagnosis: 
+```{r}
+.cd42stage <- function(cd4)
+{
+	# from cori paper
+	#~ k =1: CD4>=500
+	#~ k = 2 : 350<=CD4<500. 
+	#~ k = 3: 200<=CD4<350
+	#~ k = 4 : CD4<200
+	if (is.na(cd4) ) return (NA) 
+	if (cd4  >= 500) return (2)
+	if (cd4 >= 350) return(3)
+	if (cd4 >= 200 ) return(4)
+	return(5)
+}
+cd4s <- cd4s[bdt$tip.label]
+ehis <- ehis[bdt$tip.label]
+stages <- sapply( cd4s, .cd42stage )
+for (i in 1:length(ehis)){
+	if (!is.na(ehis[i])){
+		if (ehis[i]) stages[i] <- 1 
+	}
+}
+od_by_stage <- lapply( 1:5, function(stage) od[names(od) %in% names(stages[stages==stage])] )
+## isotonic regression stage :
+ir_stage <- isoreg( stages[names(od)] , od )
+X11(); plot( ir_stage  )
+print( 'cor( stages[names(od)] , od  )' )
+print( cor( stages[names(od)] , od  ) )
+```
+
+
+Do a comparison of out degree by age group of the patient at diagnosis: 
+```{r}
+#~ assoc of outdegree & age 
+age_ids <- paste(sep='', 'age', 1:4)
+age_sids <- setNames( lapply( age_ids, function(ageid) grepl(  ageid, sampleDemes[names(od)] ) ) , age_ids )
+od_age <- setNames(  lapply( age_ids, function(ageid) od[ age_sids[[ageid]] ] ), age_ids )
+X11() ; boxplot(  od_age , main = 'out degree by age group') 
+print ( ( kruskal.test( od_age ) ))
+```
+
+Now compare differences in out degree by risk level: 
+```{r}
+#~ assoc of risk level & outdegree
+rl_ids <- c( 'riskLevel1', 'riskLevel2' )
+# sequence IDs in each risk level: 
+rl_sids <- setNames( lapply( rl_ids, function(rlid) grepl( rlid, sampleDemes[ names(od) ] ) ), rl_ids )
+# out degree for each risk level: 
+od_rl <- setNames( lapply( rl_ids, function(rlid) od[ rl_sids[[rlid]] ] ), rl_ids )
+
+X11() ; boxplot(  od_rl , main = 'out degree by risk level') 
+print ( ( wilcox.test( od_rl[[1]], od_rl[[2]] ) ))
+```
+And the ratio of out degree of RL2 to RL1:
+```{r}
+print(mean( od_rl[[2]]) / mean(od_rl[[1]]) )
+```
+Note that difference is detectable, but much smaller than the true difference in transmission rates; what does clustering say about it?
+
+## Summary
+
+* Out degree is increasing in age and stage, consistent with interpretation of out-degree as proportional to cumulative number of infections
+* These patterns need to be characterised in real data
+* Similar analyses need to be done using genetic-distance clustering; it will likely show opposite trends with respect to age and stage; sensitivity to detecting a difference in risk level needs to be characterised
+* Counterfactual simulations (equal rates) need to be done to assess false-positive inference of clustering and SA
+* Variation in transmission rates by stage is difficult to estimate using SA but Erik will continue to look into it
+* Similarly, also need to examine assortativity by age; this can be compared to true level of assortativity in simulations, and can characterise false positive rates for clustering & SA 
+
