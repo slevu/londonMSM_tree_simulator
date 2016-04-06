@@ -110,10 +110,16 @@ TreeToEdgeList <- function(t, name.output = NA, rate = 1, seqlength = NA,
 ###- output: cluster assignements
 ###--- loops through distance thresholds ( = vector of threshold based on quantiles) 
 
-ucsd_hivclust <- function(path.el, thr = NA, quant = c(5e-5, 1e-4, 5e-4, 1e-3, 1e-2, 1e-1) ){
+ucsd_hivclust <- function(path.el, thr = NA, k = NA, out = "", quant = c(5e-5, 1e-4, 5e-4, 1e-3, 1e-2, 1e-1) ){
   
   ## read RDS file
   el <- readRDS(file = path.el)
+  
+  ## get rid of distance > k
+  if(!is.na(k)) {
+    el <- el[el$distance < k,]
+    print(paste("restricting to distances <", k , sep = ''))
+    }
   
   ## get var.name for output path (Regex !)
   var.name <- paste("d", substr(path.el,
@@ -128,6 +134,7 @@ ucsd_hivclust <- function(path.el, thr = NA, quant = c(5e-5, 1e-4, 5e-4, 1e-3, 1
     qt <- quantile(el$distance, 
                    probs = quant )
     thr <- signif(qt[1:4]*2, 1)/2 ## ensure 0.010, 0.015, etc.
+    print("thresholds based on quantiles")
     
     ## get rid of distance > larger quantile
     #      k <- round(qt[length(qt)], 2)
@@ -154,7 +161,7 @@ ucsd_hivclust <- function(path.el, thr = NA, quant = c(5e-5, 1e-4, 5e-4, 1e-3, 1
   for ( t in thr ){
     print(paste("threshold =", t))
     ## output
-    outputCSV <- paste(var.name, "_ucsd_hivclust_output_", 
+    outputCSV <- paste(out, var.name, "_ucsd_hivclust_output_", 
                        t, ".csv", sep = '')
     
     ## parms
@@ -173,7 +180,7 @@ ucsd_hivclust <- function(path.el, thr = NA, quant = c(5e-5, 1e-4, 5e-4, 1e-3, 1
       stderr <-  system(
         paste(cmd_hivclustering, "2>&1"),
         intern = TRUE)
-      Sys.sleep(1)
+      print(paste("Writing", outputCSV ))
     }
     # save commands and 'stderr' warnings
     cmd <- c(cmd, cmd_hivclustering)
@@ -184,7 +191,7 @@ ucsd_hivclust <- function(path.el, thr = NA, quant = c(5e-5, 1e-4, 5e-4, 1e-3, 1
   cl <- list()
   for(i in 1:length(thr)){
     ## add table i
-    CSV <- paste(var.name, 
+    CSV <- paste(out, var.name, 
                  "_ucsd_hivclust_output_", thr[i],
                  ".csv", sep = '')
     if(file.exists(CSV)){

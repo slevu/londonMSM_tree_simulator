@@ -85,19 +85,4 @@ hist(tMRCA)
 # lsd -c  -i ukdrdb/ExaML_trees/ExaML_result.subUKogC_noDRM.reroot_dropOG.nwk -d ukdrdb/ExaML_trees/ExaML_result.subUKogC_noDRM.reroot_dropOG.dates   -s 1200   -v   -b  10
 # options: -c temporal constraints recommanded; -i tree file newick format; -d dates file; -s length of seq (default 1000); -v variances; -b (default 10); -r to estimate root position
 
-###--- Clustering ---###
-source("functions.R")
-i <- 1
-filename <- paste(path.trees, name.tree, num[i], sep = '')
-t <- read.tree(filename)
-t <- drop.tip(t, og)
-getwd()
-system.time(
- path001 <-  TreeToEdgeList(t = t,
-                            rate = 1,
-                            output = "data/boostrap/", 
-                            stats = FALSE,
-                            fig = FALSE)
-)
-
   
