@@ -233,18 +233,13 @@ if(FALSE){
   # table(y$ethnicityid, y$ethn)
    y <- y[, -9]
    
-  x <- l_bs_uk[[1]][[1]]
-  
-  listUKclus <- lapply(l_bs_uk[[1]], 
-    function(x) {
-      merge(x, y, 
-          by.x = "id", by.y = "seqindex", 
-          all.x = T, sort = FALSE)
-    })
+   listUKclus <- lapply(l_bs_uk, function(x){
+    lapply(x, function(x){merge(x, y, 
+                    by.x = "id", by.y = "seqindex", 
+                    all.x = T, sort = FALSE)
+      })
+  })
   # head(listUKclus[[1]])
   # str(listUKclus)
-  
-?grep
-y$logvl <- log(y$vl)
-  y$sqrtcd4 <- sqrt(y$cd4)
+saveRDS(listUKclus, file = "data/listUKclus.rds")
  
