@@ -222,7 +222,7 @@ if(FALSE){
              "status", "ethnicityid")]
   
   ### recode ethnicity as character
-  table(y$ethnicityid, useNA = "ifany")
+  # table(y$ethnicityid, useNA = "ifany")
   y$ethn <- ifelse( grepl("Black", y$ethnicityid),
                     "Black",
                         ifelse(grepl("Other", y$ethnicityid)|
@@ -232,6 +232,7 @@ if(FALSE){
   
   # table(y$ethnicityid, y$ethn)
    y <- y[, -9]
+   # table(y$CHICflag, useNA="ifany")
    
    listUKclus <- lapply(l_bs_uk, function(x){
     lapply(x, function(x){merge(x, y, 
@@ -242,4 +243,77 @@ if(FALSE){
   # head(listUKclus[[1]])
   # str(listUKclus)
 saveRDS(listUKclus, file = "data/listUKclus.rds")
- 
+listUKclus <- readRDS( file = "data/listUKclus.rds")
+
+###--- regressions
+
+
+###--- start function ---###
+###- summarize regression on bootstrap
+reg.sum.bs <- function(ls, reg, model, alpha = 0.05, ...){
+  
+  ## coef by threshold and by tree
+  coef <- lapply(ls, function(x){
+    lapply(x , function(x){
+      coef(summary(reg(formula = model, data = x, ...)))
+    })
+  })
+  # str(coef[[1]][[1]])
+  
+  ## pvalue by threshold and by tree
+  pvalue <- lapply(coef, function(x){
+    sapply(x , function(x){
+      identity(x[,4])
+    })
+  })
+  
+  ##- number of p-value < 0.05
+  sum.signif <- sapply(pvalue, function(x){
+    apply(x, 1, function(x) sum(x < alpha) / length(x))
+  }
+  )
+  
+  ## parameter by threshold
+  param <-  lapply(coef, function(x){
+    sapply(x , function(x){
+      identity(x[,1])
+    })
+  })
+  
+  ## mean of parameter
+  mean.parms <- signif(sapply(param, function(x){
+    apply(x, 1, mean)
+  }), 2)
+  
+  ## R square, only for lm()
+  if(identical(reg, lm)){
+    r2 <- lapply(ls, function(x){
+      sapply(x , function(x){
+        summary(reg(model, data = x))$r.squared
+      })
+    })
+    ## mean R2
+    mean.r2 <- signif(sapply(r2, function(x){
+      mean(x)
+    }), 3)
+    
+    return(list("model" = model, "mean parameter" = mean.parms, "signif pvalue" = sum.signif, "mean r.squared" = mean.r2)) 
+  } else {
+    
+    return(list("model" = model, "mean parameter" = mean.parms, "signif pvalue" = sum.signif))
+  }
+}
+###--- end function ---###
+
+str(listUKclus[[1]][[1]])
+lm_model_uk = "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn) + factor(CHICflag)"
+logit_model_uk = "binclus ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn) + factor(CHICflag)"
+
+## example
+coef(summary(lm(lm_model_uk, data = listUKclus[[1]][[1]])))
+
+reg.sum.bs(ls = listUKclus, reg = lm, model = lm_model_uk)
+reg.sum.bs(ls = listUKclus, reg = glm, model = logit_model_uk, family = binomial(link = "logit"))
+
+## TODO
+## revise downsampling with mean (or median) of covariates by cluster (and not cluster size)
