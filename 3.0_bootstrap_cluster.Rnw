@@ -1,0 +1,96 @@
+\documentclass[]{revtex4} %twocolumn revtex4
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{graphicx,subfig}
+
+
+\begin{document}
+
+\title{Processing ExaML boostrap trees - April 2016}
+\author{S. Le Vu}
+%\affiliation{ICL}
+\date{\today}
+
+\maketitle
+
+<<external-code, echo=FALSE, cache= FALSE>>=
+library(knitr)
+read_chunk('bootstrapped_trees.R')
+read_chunk('bootstrap_cluster.R')
+@
+
+<<setup, echo=FALSE>>=
+opts_chunk$set(comment="", message=FALSE, tidy.opts=list(width.cutoff=120), options(width=100), fig.align='center',fig.height=6, fig.width=10, out.width='11cm',  fig.show='hold', fig.path='figure/plot')
+@
+
+
+<< include  >>=
+@
+
+<< lib, include = detail_knitr >>=
+@
+\begin{itemize}
+\item Starting with 100 bootstrap trees
+\item Transformed into edge lists of distances
+\item As inputs of UCSD software at thresholds c("0.01", "0.02", "0.05")
+\item Obtain a list of 3 * 100 cluster assignements
+\end{itemize}
+
+%<< list.tree.path, include = detail_knitr >>=
+%@
+
+<< load list.hivclust,  include = detail_knitr >>=
+@
+
+<< stats1, include = FALSE>>=
+@
+
+<< n clusters >>=
+@
+Number of clusters (n > 1) increases because at larger threshold, more patients are included. See below how it changes when everybody is in.
+
+<< mean size >>=
+@
+Mean cluster size logically increases, with some variation between bootstraps 
+%<< max size >>=
+%@
+
+
+After having merged patients data with cluster assignments,  
+<< saved listUKclus >>=
+@
+
+<< n clusters 2 >>=
+@
+Now cluster number decreases
+<< membership >>=
+@
+
+<< mean size 2 >>=
+@
+
+<< individual bootstrap regressions, include = F >>=
+@
+
+Linear regressions
+<< all lm >>=
+
+@
+
+\begin{itemize}
+\item Age: negative effect - fading out as threshold increases - low R2
+\item CD4: positive effect - 100\% significant except high threshold (54\%)
+\item Ethnicity: positive effect (whites in larger clusters) only significant at high threshold
+\item CHIC: positive effect (CHIC in large clusters) - not always significant
+\item Full model: Only CD4 would show a constantly significant effect over all bootstrap trees up to a high threshold. Ethnicity and CHIC come out at high threshold. Overall small R2 
+\end{itemize}
+
+Logistic regression
+<< logistic >>=
+
+@
+Only CD4 and CHIC show a constant effect
+
+
+\end{document}

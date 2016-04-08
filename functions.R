@@ -181,10 +181,11 @@ ucsd_hivclust <- function(path.el, thr = NA, k = NA, out = "", quant = c(5e-5, 1
         paste(cmd_hivclustering, "2>&1"),
         intern = TRUE)
       print(paste("Writing", outputCSV ))
-    }
+    
     # save commands and 'stderr' warnings
     cmd <- c(cmd, cmd_hivclustering)
     warn <- c(warn, c(t, stderr))
+    } else print(paste("output already exists:", outputCSV))
   }
   
   ###--- bin table in one list

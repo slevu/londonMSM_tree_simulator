@@ -80,6 +80,7 @@ for (i in 1:100){
 }
 hist(rate)
 hist(tMRCA)
+summary(tMRCA)
 
 
 # lsd -c  -i ukdrdb/ExaML_trees/ExaML_result.subUKogC_noDRM.reroot_dropOG.nwk -d ukdrdb/ExaML_trees/ExaML_result.subUKogC_noDRM.reroot_dropOG.dates   -s 1200   -v   -b  10

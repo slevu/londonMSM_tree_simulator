@@ -1,40 +1,50 @@
 # rm(list=ls())
-library(ape)
+####---- include ----
+detail_knitr <- TRUE
 source("functions.R")
 
-## tree path
+####---- lib ----
+library(ape)
+
+####---- list.tree.path ----
+#### load list of path to Examl trees
 if(TRUE){
 path.trees <- "../HPC/phylo-msm-uk/in_HPC_20160404/"
-a <- list.files(path.trees)
-l <- a[grep("result", a)] # list of tree results
+.a <- list.files(path.trees)
+list.tree.path <- .a[grep("result", .a)] # list of tree results
 ## get rid of tree 000
-l <- l[-1]
+list.tree.path <- list.tree.path[-1]
+head(list.tree.path, 3)
 }
 
-## filenames number
-num <- sprintf("%03d", seq(1, 100))
 
-## outgroup
-og <- c( paste("Ref", 1:6, sep = ''), "HXB2" )
 
 ###--- Clustering ---###
 
-##- list of trees (minus outgroup tips)
+####---- list.of.trees ----#### 
+## (minus outgroup tips)
+
+## filenames number
+num <- sprintf("%03d", seq(1, 100))
+## outgroup
+og <- c( paste("Ref", 1:6, sep = ''), "HXB2" )
 
   first <- 1
-  last <- 1 # 100
+  last <- length(list.tree.path) # 100
   ## empty list 
   list.of.trees <- vector("list", last - first + 1)
   ## index j of list elements 
   j <- 1
   for (i in first:last){
-    t <- read.tree(file = paste(path.trees, l[i], sep = ''))
+    t <- read.tree(file = paste(path.trees, 
+                                list.tree.path[i], sep = ''))
     list.of.trees[[j]] <- drop.tip(t, og)
-    names(list.of.trees)[j] <- paste("bs_tree_", num[i], sep="")
+    names(list.of.trees)[j] <- paste("bs_tree_", 
+                                     num[i], sep="")
     j <- j + 1
   }
-  names(list.of.trees)
   
+####---- make edge lists ----####
 if(FALSE){ 
   ###--- Save edge lists ---###
   test <-  function(i){
@@ -53,15 +63,15 @@ if(FALSE){
 }
 
 
-###--- ucsd clustering ---###
+####---- ucsd clustering ----####
 # ucsd_hivclust
 
-b <- list.files("data/bootstrap/")
-lel <- b[grep("_el", b)] # list of edge list
+.b <- list.files("data/bootstrap/")
+lel <- .b[grep("_el", .b)] # list of edge list
 # lel <- lel[15:16] # test
 
 # i <- 4  # tree
-thresholds  <-  c(0.01, 0.02, 0.05) 
+thresholds  <-  c(0.005, 0.01, 0.02, 0.05, 0.1) 
 k <- max(thresholds) # limit of distance considered
 
 if(FALSE){
@@ -72,7 +82,7 @@ if(FALSE){
                                                   sep = '' ),
                              thr = thresholds, 
                              k = k, 
-                             out = "ucsd_results/")
+                             out = "data/ucsd_results/" )
     return(bs_clus)
   }
   
@@ -83,37 +93,20 @@ if(FALSE){
     bs_clus <- lapply(seq_along(lel), ucsd) 
   ) # 25 min
 }
+# i=1
 
-  ###--- bin table in one list ---###
-  getwd()
+####---- list.hivclust ----
+###  get csv of clusters assignments in one list ###
+  # getwd()
   path.csv <- "data/ucsd_results/"
   list.csv <- list.files(path.csv)
   # m <- 1
   
-  if(FALSE){
-  ## First structure trees > threshold
-  ## empty list of 100 trees
-  cl <- vector("list", 100)
-  for (m in 1:length(num) ){ # index of trees
-    ## vector of csv at different threshold for one tree
-    filenames <- list.csv[grep(num[m], list.csv)]
-    ## empty list at different threshold
-    t <- list()
-    for (n in 1:length(thresholds) ){ # index of thr
-      t[[n]] <- read.csv( paste(path.csv, filenames[n], sep = '') )
-      names(t)[n] <- thresholds[n]
-    }
-    cl[[m]] <- t
-    names(cl)[m] <- num[m]
-  }
-  
- #names(cl[[1]]) 
-  #str(cl[[1]])
-  }
-  
-  ## Second structure threshold > trees
+  ## Structure threshold > trees
+  thresholds <- c("0.01", "0.02", "0.05") ## for now !
   ## empty list of 3 thresholds
   cl2 <- vector("list", length(thresholds))
+  ## loop
   for (m in 1:length(thresholds) ){ # index of thr
     ## vector of csv at different tree for one thr
     filenames <- list.csv[grep(thresholds[m], list.csv)]
@@ -128,25 +121,62 @@ if(FALSE){
   }
   
   names(cl2[[1]]) 
-  str(cl2[[1]])
   
-#   ## Size (=Freq) of each cluster for thr 1
-#   aa <- lapply(cl2[[1]],
-#          function(x) as.data.frame(table(x$ClusterID),
-#                                    stringAsFactors = FALSE) )
-#   str(aa)
+# saveRDS(cl2, file = "data/ucsd_results/list.hivclust.rds")
+
+####---- load list.hivclust ----
+cl2 <- readRDS( file = "data/ucsd_results/list.hivclust.rds" )
+
+####---- stats1 ----
+  ###--- stats clusters without pseudo cluster size 1 ---###
   
-#   ## number of different cluster of size > 1
-#   summary(sapply(aa, function(x) dim(x)[1]))
-#   
-#   ## mean cluster size
-#   hist(sapply(aa, function(x) mean(x$Freq)))
+  ## Size (=Freq) of each cluster
+  aa <- lapply(cl2, function(x){
+    lapply(x,
+         function(x) as.data.frame(table(x$ClusterID),
+                                   stringAsFactors = FALSE) )
+  })
+  names(aa)
+
+####---- n clusters ----    
+  ## number of different cluster of size > 1
+  sapply(aa, function(x){
+    summary(sapply(x, function(x) dim(x)[1]))
+  })
   
-  ## 
+####---- mean size ----  
+  ## stats of mean size
+  sapply(aa, function(x){
+    summary(sapply(x, function(x) mean(x$Freq)))
+  })
+
+####---- max size ----   
+  ## stats of max size
+  sapply(aa, function(x){
+    summary(sapply(x, function(x) max(x$Freq)))
+  })
   
-  #### llllllaaaaa  ----------------------------------------------------------
+####---- plots size ----####
+  ## mean cluster size > 1
+  par(mfrow = c(2,3))
+  for (i in 1:length(aa) ) {
+    hist(sapply(aa[[i]], function(x) mean(x$Freq)), 
+         main = names(aa)[i], 
+         xlab = "mean cluster size" )
+  }
+  ## max cluster size > 1
+  for (i in 1:length(aa) ) {
+    hist(sapply(aa[[i]], function(x) max(x$Freq)), 
+         main = names(aa)[i], 
+         xlab = "max cluster size" )
+  }
+  dev.off()
+
+  
   
   ####---- clust.stats ----
+if(FALSE){
+ 
   ### --- start function clust.stats --- ###
   ##- calculate both numclus and sizeclus for each seqindex into a LIST
   ##- with same variable names
@@ -184,6 +214,7 @@ if(FALSE){
       
       #- binary clustering variable
       b$binclus <- ifelse(b$Freq > 1 & !is.na(b$Freq), 1, 0)
+      # b[sample(nrow(b),10),]
       
       ##- pseudo ClusterID when size = 1
       ## starting from max(ClusterID+1)
@@ -209,13 +240,12 @@ if(FALSE){
   # http://stackoverflow.com/questions/4512465/what-is-the-most-efficient-way-to-cast-a-list-as-a-data-frame
   # http://stackoverflow.com/questions/26193028/r-converting-nested-list-to-dataframe-and-get-names-of-list-levels-als-factors
   
-  
   ##- add demo outcome: stage of infection, treatment status, age group, CHIC or not
   load("../phylo-uk/data/sub.RData")
   rm(s)
   ##- selection of df covariates
   names(df)
-  
+  # table(df$worldregion_birth, useNA = "ifany")
   
   y <- df[,c("seqindex","patientindex",  
              "agediag", "cd4", "ydiag", "CHICflag", "onartflag",
@@ -223,15 +253,18 @@ if(FALSE){
   
   ### recode ethnicity as character
   # table(y$ethnicityid, useNA = "ifany")
-  y$ethn <- ifelse( grepl("Black", y$ethnicityid),
-                    "Black",
-                        ifelse(grepl("Other", y$ethnicityid)|
-                                 grepl("Indian", y$ethnicityid),
-                               "Other",
-                          as.character(y$ethnicityid)))
+#   y$ethn <- ifelse( grepl("Black", y$ethnicityid),
+#                     "Black",
+#                         ifelse(grepl("Other", y$ethnicityid)|
+#                                  grepl("Indian", y$ethnicityid),
+#                                "Other",
+#                           as.character(y$ethnicityid)))
+  y$ethn.bin <- ifelse(y$ethnicityid == "White", "white", "not white")
   
   # table(y$ethnicityid, y$ethn)
-   y <- y[, -9]
+  # head(y)
+   y <- y[, c(1:6, 10)]
+   str(y)
    # table(y$CHICflag, useNA="ifany")
    
    listUKclus <- lapply(l_bs_uk, function(x){
@@ -240,15 +273,71 @@ if(FALSE){
                     all.x = T, sort = FALSE)
       })
   })
-  # head(listUKclus[[1]])
-  # str(listUKclus)
-saveRDS(listUKclus, file = "data/listUKclus.rds")
+   
+}
+  
+####---- saved listUKclus ----
+# saveRDS(listUKclus, file = "data/listUKclus.rds")
 listUKclus <- readRDS( file = "data/listUKclus.rds")
+####---- stop ----
 
-###--- regressions
 
 
-###--- start function ---###
+
+###--- stats cluster ---###
+
+names(listUKclus)
+x <- listUKclus[[1]][[2]]
+summary(x$size)
+str(x)
+
+####---- n clusters 2 ----
+## number of different clusters (counting size 1)
+sapply(listUKclus, function(x){
+  summary(sapply(x, function(x) {
+    length(unique(x$ClusterID) )
+  }))
+})
+
+####---- membership ----
+## proportion of cluster membership
+sapply(listUKclus, function(x){
+  summary(sapply(x, function(x) sum(x$binclus) / length(x$binclus)))
+})
+
+####---- mean size 2 ----
+## stats of mean size
+sapply(listUKclus, function(x){
+  summary(sapply(x, function(x) mean(x$size)))
+})
+
+####---- median size 2 ----
+## stats of median size
+sapply(listUKclus, function(x){
+  summary(sapply(x, function(x) median(x$size)))
+})
+
+####---- dfUKclus ----####
+###--- merge bootstrap results into
+### a list of threshold times big dataframe
+if(FALSE){
+   dfUKclus <- lapply(listUKclus, function(x){
+   do.call("rbind", x)
+ })
+ names(dfUKclus)
+ str(dfUKclus)
+
+ ####---- regression altogether ----
+ ## test on regrouped bootstrap data
+
+ lapply(dfUKclus, function(x){
+   summary(lm(model0, data = x))
+ })
+
+}
+
+####---- individual bootstrap regressions ----
+###--- start function
 ###- summarize regression on bootstrap
 reg.sum.bs <- function(ls, reg, model, alpha = 0.05, ...){
   
@@ -303,17 +392,43 @@ reg.sum.bs <- function(ls, reg, model, alpha = 0.05, ...){
     return(list("model" = model, "mean parameter" = mean.parms, "signif pvalue" = sum.signif))
   }
 }
-###--- end function ---###
+###--- end function 
 
-str(listUKclus[[1]][[1]])
-lm_model_uk = "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn) + factor(CHICflag)"
-logit_model_uk = "binclus ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn) + factor(CHICflag)"
+
+# lm_model_uk = "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn) + factor(CHICflag)"
+ logit_model_uk = "binclus ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn.bin) + factor(CHICflag)"
+# ## example
+# coef(summary(lm(lm_model_uk, data = listUKclus[[1]][[1]])))
+
+model0 <- "scale(size) ~ scale(agediag)"
+model1 <- "scale(size) ~ scale(sqrt(cd4))"
+model2 <- "scale(size) ~ factor(ethn.bin)"
+model3 <- "scale(size) ~ factor(CHICflag)"
+model4 <- "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn.bin) + factor(CHICflag)"
+models <- as.list(paste0("model", 0:4))
 
 ## example
-coef(summary(lm(lm_model_uk, data = listUKclus[[1]][[1]])))
+# reg.sum.bs(ls = listUKclus, reg = lm, model = lm_model_uk)
 
-reg.sum.bs(ls = listUKclus, reg = lm, model = lm_model_uk)
+
+####---- all lm ----
+lapply(models, function(x) {reg.sum.bs(ls = listUKclus, reg = lm, model = x)
+  })
+
+####---- logistic ----
 reg.sum.bs(ls = listUKclus, reg = glm, model = logit_model_uk, family = binomial(link = "logit"))
+
+####---- stop ----
 
 ## TODO
 ## revise downsampling with mean (or median) of covariates by cluster (and not cluster size)
+## add thresholds: change ucsd function to do nothing if csv files exist at all thresholds
+## categorize CD4 and age as for SA
+## 
+
+# ADD LSD results
+# ADD SA method results
+
+##########################################
+##########---- laaaaa  ----###############
+##########################################
