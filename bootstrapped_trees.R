@@ -18,7 +18,14 @@ getwd()
  name.tree <- "ExaML_result.subUKogC_noDRM_151202.finaltree."
  ## dates
  inputDAT <-  "data/LSD/t000.dates"
-
+ 
+ ## import one tree for tip.label
+ l <- list.files(path = path.trees, pattern = "result", full.names = TRUE)
+ ## outgroup
+ og <- c( paste("Ref", 1:6, sep = ''), "HXB2" )
+ filename <- l[1]
+ t <- read.tree(filename)
+ t <- drop.tip(t, og)
 
 ##- get dates in calendar year
 res <- read.csv( '../phylo-uk/source/resistance.csv'  )
@@ -35,16 +42,12 @@ write.table( cbind( names(dates), dates), file = inputDAT, col.names=c(as.charac
 a <- seq(1, 100)
 num <- sprintf("%03d", a)
 
-## outgroup
-og <- c( paste("Ref", 1:6, sep = ''), "HXB2" )
-
 ## parms
 parms <- paste("-c -s 1200 -v -b 10")
 
 ## empty results
-
 lsd_stderr <- list()
-
+# i <- 1
 for (i in 1:length(num)){
   filename <- paste(path.trees, name.tree, num[i], sep = '')
   t <- read.tree(filename)
@@ -86,4 +89,5 @@ summary(tMRCA)
 # lsd -c  -i ukdrdb/ExaML_trees/ExaML_result.subUKogC_noDRM.reroot_dropOG.nwk -d ukdrdb/ExaML_trees/ExaML_result.subUKogC_noDRM.reroot_dropOG.dates   -s 1200   -v   -b  10
 # options: -c temporal constraints recommanded; -i tree file newick format; -d dates file; -s length of seq (default 1000); -v variances; -b (default 10); -r to estimate root position
 
+## SA with phydynr
   
