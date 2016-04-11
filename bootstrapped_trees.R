@@ -71,18 +71,26 @@ for (i in 1:length(num)){
 }
 ##- save stderr
 # saveRDS(lsd_stderr, file = "data/LSD/lsd_stderr.rds")
-# lsd_stderr <- readRDS(file = "data/LSD/lsd_stderr.rds")
+if( !("lsd_stderr" %in% ls()) ){
+  lsd_stderr <- readRDS(file = "data/LSD/lsd_stderr.rds")
+} 
 
-##- extract rate and tMRCA
+##- extract rate and tMRCA 
 b <- lsd_stderr
-rate <- tMRCA <- vector()
-for (i in 1:100){
-  string <- unlist( strsplit(b[[i]][3], "\t") )
-  rate <- c(rate, as.numeric(string[2]) )
-  tMRCA <- c(tMRCA, as.numeric(string[4]) )
+rate <- tMRCA <- log_likelihood <- vector()
+for (i in 1:length(b)){
+  string <- unlist( strsplit(b[[i]][2], ",") )
+  
+  rate <- c(rate, 
+            as.numeric(gsub(".* ([0-9.]+).*", "\\1", string[1])))
+  tMRCA <- c(tMRCA, 
+             as.numeric(gsub(".* ([0-9.]+).*", "\\1", string[2])))
+log_likelihood <- c(log_likelihood, 
+           as.numeric(gsub(".* ([0-9.]+).*", "\\1", string[3])))
 }
 hist(rate)
 hist(tMRCA)
+hist(log_likelihood)
 summary(tMRCA)
 
 

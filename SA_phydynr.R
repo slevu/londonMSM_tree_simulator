@@ -19,7 +19,7 @@ head(cd4s)
 
 ## incidence, prevalence: range of values
 ## Yin et al. 2014: 2,820 (95% CrI 1,660-4,780)
-newinf <- 2820 ## c(1660, 4780)
+newinf <- 2500 ## c(1660, 4780)
 plwhiv <- 43150 / 2 # c(43510 / 2, 43510 / 1.5) 
 
 ## sampling times
@@ -34,9 +34,24 @@ head(sampleTimes)
 # bdt <- DatedTree( tree, sampleTimes, tree$sampleStates, tol = .1 )
 # DatedTree
 
-
 st.W <- system.time(
-W <- phylo.source.attribution.hiv( t, 
+  W <- phylo.source.attribution.hiv( t, 
+                                     sampleTimes, # must use years
+                                     cd4s = cd4s, # named numeric vector, cd4 at time of sampling
+                                     ehi = NA, # named logical vector, may be NA, TRUE if patient sampl
+                                     numberPeopleLivingWithHIV = plwhiv, # scalar
+                                     numberNewInfectionsPerYear = newinf, # scalar
+                                     maxHeight = MH,
+                                     res = 1e3,
+                                     treeErrorTol = Inf)
+)
+str(W)
+# saveRDS(W, file = "W0_uk.rds")
+W <- readRDS(file = "W0_uk.rds")
+
+###--- loop over lsd tree
+sa <- function(lsd_tree){
+  W <- phylo.source.attribution.hiv( lsd_tree, 
           sampleTimes, # must use years
           cd4s = cd4s, # named numeric vector, cd4 at time of sampling
           ehi = NA, # named logical vector, may be NA, TRUE if patient sampl
@@ -45,9 +60,97 @@ W <- phylo.source.attribution.hiv( t,
           maxHeight = MH,
           res = 1e3,
           treeErrorTol = Inf)
-)
-str(W)
-saveRDS(W, file = "W0_uk.rds")
+  return(W)
+}
+
+## list of lsd trees
+list.lsd.trees <- list.files(path = "data/LSD", pattern = "result.date", full.names = TRUE)
+head(list.lsd.trees)
+
+## loop
+for (i in 1:length(list.lsd.trees)){
+ tree <- read.tree(file = list.lsd.trees[i])
+ W <- sa(lsd_tree = tree)
+ saveRDS(W, file = paste("data/phydynR/W0_uk_", i, ".rds", sep = ''))
+}
+
+####---- reprise ----####
+## First infectorprob file
+list.W0 <- list.files("data/phydynR", full.names = TRUE)
+W <- readRDS(list.W0[2])
+
+###--- analyses ---###
+## Total number of transmission within sample
+# wsids <- unique( W$donor )
+# wvec <- W$infectorProbability
+# sum(is.na(wvec))
+# str(W)
+# 25204/2
+# wvec_o <- order( wvec )
+# wvec <- wvec[wvec_o] # sort the inf probs
+# sum(wvec, na.rm = TRUE)
+# 
+# od <- sapply( wsids, function(sid) sum( wvec[W$donor[wvec_o]==sid]  ) )
+# hist(od)
+# summary(od)
+
+## other way of calculating outdgree
+out0 <- aggregate(x = list(outdegree = W$infectorProbability),
+                  by = list(patient = W$donor), FUN = sum)
+summary(out0$outdegree)
+head(out0)
+sum(out0$outdegree, na.rm = T)
+
+## add individual explanatory variates
+load("../phylo-uk/data/sub.RData")
+rm(s)
+##- selection of df covariates
+names(df)
+##- selection of df covariates
+y <- df[,c("seqindex","patientindex", "dob_y",
+           # str(y)
+           "agediag", "cd4", "vl", "onartflag",
+           "ydiag", "agediag_cut", "cd4cut",
+           "ydiag_cut", "CHICflag", "status")]
+out <- merge(out0, y,
+             by.x = "patient",
+             by.y = "seqindex",
+             all.x = T, sort = FALSE)
+
+plot(out$dob_y, out$outdegree)
+plot(out$agediag, out$outdegree)
+plot(sqrt(out$cd4), out$outdegree)
+plot(out$CHICflag, out$outdegree)
+
+source("functions.R")
+reg.sum.bs
+
+model0 <- "scale(outdegree) ~ scale(agediag)"
+model1 <- "scale(outdegree) ~ scale(sqrt(cd4))"
+model2 <- "scale(outdegree) ~ factor(ethn.bin)"
+model3 <- "scale(outdegree) ~ factor(CHICflag)"
+model4 <- "scale(outdegree) ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn.bin) + factor(CHICflag)"
+models <- as.list(paste0("model", 0:4))
+
+## example
+ reg.sum.bs(ls = list(out), reg = lm, model = model0) 
+ #### does not work for now, see function !!!!!!!!
+
+
+####---- all lm ----
+lapply(models, function(x) {reg.sum.bs(ls = listUKclus, reg = lm, model = x)
+})
+
+####---- logistic ----
+reg.sum.bs(ls = listUKclus, reg = glm, model = logit_model_uk, family = binomial(link = "logit"))
+
+
+## from simulated trees
+# ratesEqualFNS <- list.files('RData', full.names=T, path = 'simulations')
+# load(ratesEqualFNS[1])
+# head(W$donor)
+# head(W$recip)
+# head(W$infectorProbability)
 ############################################           ###########-------- la ------###############           ############################################               
                                  
 ##### from Rcolgem SA

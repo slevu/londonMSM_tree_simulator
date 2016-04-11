@@ -507,3 +507,70 @@ AgeOfInf <- function(df, age = "age", ethn = "ethn",
   ##- return matrix of individual values over iter (ind) and table of summary statistics (pop)
   return(list(ind = rr, pop = p))
 }
+#-------------------#
+##- End AgeOfInf ---
+#-------------------#
+
+#----------------------------#
+##-- regression bootstrap ---
+#----------------------------#
+
+###--- start function
+###- summarize regression on bootstrap
+reg.sum.bs <- function(ls, reg, model, alpha = 0.05, ...){
+  
+  ## coef by threshold and by tree
+  coef <- lapply(ls, function(x){
+    lapply(x , function(x){
+      coef(summary(reg(formula = model, data = x, ...)))
+    })
+  })
+  # str(coef[[1]][[1]])
+  
+  ## pvalue by threshold and by tree
+  pvalue <- lapply(coef, function(x){
+    sapply(x , function(x){
+      identity(x[,4])
+    })
+  })
+  
+  ##- number of p-value < 0.05
+  sum.signif <- sapply(pvalue, function(x){
+    apply(x, 1, function(x) sum(x < alpha) / length(x))
+  }
+  )
+  
+  ## parameter by threshold
+  param <-  lapply(coef, function(x){
+    sapply(x , function(x){
+      identity(x[,1])
+    })
+  })
+  
+  ## mean of parameter
+  mean.parms <- signif(sapply(param, function(x){
+    apply(x, 1, mean)
+  }), 2)
+  
+  ## R square, only for lm()
+  if(identical(reg, lm)){
+    r2 <- lapply(ls, function(x){
+      sapply(x , function(x){
+        summary(reg(model, data = x))$r.squared
+      })
+    })
+    ## mean R2
+    mean.r2 <- signif(sapply(r2, function(x){
+      mean(x)
+    }), 3)
+    
+    return(list("model" = model, "mean parameter" = mean.parms, "signif pvalue" = sum.signif, "mean r.squared" = mean.r2)) 
+  } else {
+    
+    return(list("model" = model, "mean parameter" = mean.parms, "signif pvalue" = sum.signif))
+  }
+}
+###--- end function 
+#--------------------------------#
+##-- end regression bootstrap ---
+#--------------------------------#
