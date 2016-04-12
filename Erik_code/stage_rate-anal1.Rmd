@@ -1,0 +1,141 @@
+---
+title: "Detecting higher transmission rates during EHI using SA"
+output: 
+  html_document:
+    fig_width: 6
+    fig_height: 6
+author: "Erik Volz"
+date: "March 31, 2016"
+---
+
+
+This is a challenging problem; as noted in earlier reports, the out degree inferred using SA is increasing with stage of infection, consistent with the idea that out-degree is proportional to the cumulative number of transmissions at time of sampling. 
+To detect higher transmission rates during EHI, we need to transform out-degree into a rate, and for that we can normalise by the average duration of each stage of infection. 
+To detect high EHI rates, we need to compare out degree among patients sampled during EHI and patients sampled later. 
+Also note that I find very strong cohort effects; you can get different results if you use all of the samples versus using only samples from a given year.  
+In order to make the comparison as simple as possible, I only include patients within 2 years of the most recent samples: 
+```{r}
+THRESHOLD_YRS <- 2 # only count donors sampled within this many years of the most recent sample (control for cohort effects)
+```
+
+Load stuff: 
+```{r}
+require(phydynR)
+source('model0.R') # contains parameter values for sims
+source('stage_rate_estimator1.R') # a couple helper functions for estimating rates by stage
+```
+
+First collect all the file names corresponding to experiments where transmission rates were equal between stages and the baseline case where transmission rates were quite different between EHI, chronic, and AIDS:
+```{r}
+ratesEqualFNS <- list.files('RData', full.names=T, path = 'model0-simulateEqualStage0')
+ratesBaselineFNS <- list.files('RData', full.names=T, path = 'model0-simulateBaseline0')
+```
+Each of these files contains the estimated infector probabilities for a distinct simulation. To extract the out degree from these data, I have the following helper function:
+```{r}
+fns2od.by.stage <- function( fns )
+{
+	o <- list()
+	for (fn in fns){
+		load(fn) # daytree, bdt, W, cd4s, sampleDemes, plwhiv, newinf, MH
+		samplesInCohort <- names(daytree$sampleTimes[daytree$sampleTimes > (max(daytree$sampleTimes)-THRESHOLD_YRS*365) ] )
+		samplesInCohort_donors <- intersect( samplesInCohort, W$donor)
+		
+		i <- which( (W$donor %in% samplesInCohort) & (W$recip %in% samplesInCohort ) )
+		WW <- list( donor = W$donor[i] , recip = W$recip[i], infectorProbability = W$infectorProbability[i] )
+		
+		system.time({
+		od <- sapply( samplesInCohort , function(u){
+			if (!(u%in% samplesInCohort_donors)) return(0)
+			i <- which(WW$donor==u)
+			sum(WW$infectorProbability[i] ) 
+		})
+		})
+				
+		rownames(daytree$sampleStates) <- daytree$tip.label
+		stages <- setNames( sapply( 1:nrow(daytree$sampleStates), function(k){
+			deme <- DEMES[ which.max(daytree$sampleStates[k,] )  ]
+			stage <- strsplit( deme, '.' , fixed=T)[[1]][1]
+			as.numeric( tail( strsplit(stage, '')[[1]], 1 ) )
+		}), daytree$tip.label)
+		
+		stages <- stages[ names(stages) %in% samplesInCohort ]
+		
+		od_by_stage <- lapply( 1:5, function(stage){
+			od[ names(stages)[which(stages==stage)] ]
+		})
+		
+		o[[fn]] <- od_by_stage
+		print(date())
+	}
+	o
+}
+```
+This function takes the simulation files from a given experiment (e.g. baseline or equal rates) and computes out degree and then stratifies out degree by stage of infection at time of sampling. 
+
+Collect the out degree information:
+```{r}
+obs_er <- fns2od.by.stage( ratesEqualFNS )# out degree by stage-- equal rate scenario
+obs_bl <- fns2od.by.stage( ratesBaselineFNS )# out degree by stage-- baseline scenario
+```
+
+One simple way to detect a rate difference is to use the Mann Whitney U test. 
+Repeat that test for each simulation: 
+```{r}
+# U test for the equal rates simulations: 
+wtest_er <- lapply( obs_er, function(obs) {
+ wilcox.test( obs[[1]] / pstage[1] # NOTE pstage[1] is propto average duration of EHI
+  , obs[[5]] / (1-pstage[1] )  #NOTE 1-pstage[1] is propto average duration of the rest of the infectious period
+  , alternative = 'greater' #NOTE this is a one-tailed test. H1: EHI rate > !EHI rate
+  )
+})
+
+# U test for the baseline simulations: 
+wtest_bl <- lapply( obs_bl, function(obs) {
+ wilcox.test( obs[[1]] / pstage[1] 
+  , obs[[5]] / (1-pstage[1] ) 
+  , alternative = 'greater'
+  )
+})
+```
+
+Now we can compute Type 1 and Type 2 error rates: 
+```{r}
+type1error <- mean( sapply( wtest_er, function(wt) wt$p.value) < .05 ) 
+type2error <- mean( sapply(wtest_bl, function(wt) wt$p.value) > .05 ) 
+print('Type 1 Error rate')
+print(type1error)
+print('Type 2 Error rate')
+print(type2error)
+```
+
+Finally, we can visualise the rate estimates for each experiment.
+This helper function estimates the rate difference between EHI and !EHI using the normal approximation to sample mean out-degree:
+```{r}
+	rd_er <- est.rd.batch( obs_er )
+	rd_br <- est.rd.batch( obs_bl )
+```
+Let's make a box plot of the rate difference for each sim:
+```{r}
+	boxplot( unname(rd_er), main = 'EHI/Late rate difference (Equal transmission rates)' )
+	abline( h = 0, col = 'red' )
+
+	boxplot( unname( rd_br ), main = 'EHI/Late rate difference (Baseline)')
+	abline( h = 0, col = 'red' )
+```
+And a quantile/quantile plot:
+```{r}
+	qqplot( sapply(rd_er, mean)
+	 , sapply(rd_br, mean)
+	 , xlab = 'Quantile EHI/Late rate difference (Equal transmission rates)' 
+	 , ylab = 'Quantile EHI/Late rate difference (Basline)'  ) 
+	abline( a = 0, b=1, col = 'red')
+```
+
+Note that the SA method actually gives a horrible estimate of the EHI rate in teh baseline case (gross underestimate), but seems to have pretty good power to detect a difference. 
+
+
+
+##Next steps
+
+* This analysis needs to be repeated using cluster sizes instead of out degree. Characterise type 1/2 error rates using cluster sizes (stephane).  
+* This analysis needs to be repeated on the UK data (stephane or erik)

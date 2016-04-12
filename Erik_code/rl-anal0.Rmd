@@ -1,0 +1,106 @@
+---
+title: "SA out degree and clustering neighborhood size versus risk level"
+output: 
+  html_document:
+    fig_width: 6
+    fig_height: 6
+author: "Erik Volz"
+date: "April 4, 2016"
+---
+
+
+This looks at baseline simulations and determines ability of SA & clustering to detect different transmissoin rates by risk level. 
+
+An important difference between this analysis and previous analyses is that there is no correlation between risk level and age of infection; this is by design in the simulation experiments. So we may expect clustering to do better, and indeed it does. 
+
+Load data
+```{r}
+# we can re-use out degree computed from teh age analysis, but we need to derive the risk level for each sample:
+load('age-anal0.0.RData')
+```
+
+Helper function for finding risk level for each sample: 
+```{r}
+deme2rl <- function(deme){as.numeric( substr(regmatches( deme , regexpr( 'riskLevel[0-9]', deme )), 10,10) ) }
+#~  ensure fns in same order as fns2agemat_tables
+ratesBaselineFNS <- list.files('RData', full.names=T, path = 'model0-simulateBaseline0')
+```
+
+Load the data tables and add risk level information
+```{r}
+odtabs <- list()
+for (itab in 1:length( fns2agemat_tables ) ) 
+{
+	fn <- ratesBaselineFNS[itab]
+	tab <- fns2agemat_tables[[itab]]$tab
+	load(fn) #sampleDemes
+	rls <- sapply( sampleDemes[ rownames(tab) ], deme2rl )
+	tab <- cbind( tab, rls )
+	odtabs[[itab]] <- tab 
+}
+```
+
+Now test if risk level has significant association with out degree and/or neighborhood size. 
+We will do this with two tests for both outcomes:
+
+* A univariate test using Mann Whitney U
+* A multivariate test using linear or non-linear regression.  This analysis adjusts for stage of infection which is the main other source of variance in transmission rates. 
+
+```{r}
+sa_univariate_ps <- c()
+sa_multivariate_ps <- c()
+cl_multivariate_ps <- c()
+cl_univariate_ps <- c()
+# helper function to get p value in multivariate models
+.lr.summary2rl.p <- function(s)
+{
+	scoef <- coef( s )
+	scoef[rownames(scoef)=='scale(rls)', ncol(scoef)]
+}
+for (tab in odtabs)
+{
+	# NOTE that find OD analyses work better if excluding zeros; performance of clustering is not affected
+	tab <- tab[ tab$od > 0 ,]
+	
+	od1 <- tab$od[ tab$rls==1]
+	od2 <- tab$od[ tab$rls==2]
+	sa_univariate_ps <- c( sa_univariate_ps, wilcox.test( od1, od2 , alternative='less')$p.value )
+	#lr_sa <- summary( lm( scale(od) ~ scale(rls) * as.factor(stage), data = tab) )
+	# I find that the log-transformed OD works better:
+	lr_sa <- summary( lm( scale(log(od)) ~ scale(rls) * as.factor(stage), data = tab) )
+	sa_multivariate_ps <- c( sa_multivariate_ps, .lr.summary2rl.p( lr_sa ))
+	
+	cs1 <- tab$nbrhoodSize[tab$rls==1] 
+	cs2 <- tab$nbrhoodSize[tab$rls==2] 
+	cl_univariate_ps <- c( cl_univariate_ps, wilcox.test( cs1, cs2 , alternative='less')$p.value )
+	lr_cl <- summary( lm( scale(nbrhoodSize) ~ scale(rls) * as.factor(stage), data = tab) )
+	cl_multivariate_ps <- c( cl_multivariate_ps, .lr.summary2rl.p( lr_cl ))
+}
+
+summary( sa_univariate_ps )
+summary( sa_multivariate_ps )
+summary( cl_univariate_ps )
+summary( cl_multivariate_ps )
+
+boxplot( sa_multivariate_ps, cl_multivariate_ps , main = 'Comparions of significance level for risk factor on OD & cluster size')
+```
+
+Proportion of univariate tests that correctly detect difference in transmission rates
+
+* SA: `r ( mean( sa_univariate_ps < .05 ) )`
+* Neighborhood size: `r ( mean( cl_univariate_ps < .05 ) )`
+
+Proportion of multivariate tests that correctly detect difference in transmission rates 
+
+* SA:  `r ( mean( sa_multivariate_ps < .05 ) )`
+* Neighborhood size: `r ( mean( cl_multivariate_ps < .05 ) )`
+
+
+# Conclusions
+
+* Clustering has slightly more power to detect effect of *risk level*
+* Both methods have high sensitivity in univariate analyses, but if adjusting for other factors like stage of infection, performance drops dramatically. 
+* The difference in out degree and cluster size comparing risk levels 1 & 2 is very small, despite a 10-fold difference in rates! 
+* Neither method can quantitavely estimates the magnitude of the rate difference 
+
+This leads to the following predictions for the real data: for variables like CHIC enrollment, we may see a larger difference with clustering than for source attribution. 
