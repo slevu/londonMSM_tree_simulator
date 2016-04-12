@@ -1,55 +1,47 @@
-### use SA method from phydynR
+#########################################################
+###--- use SA method from phydynR on UK bootstrap trees
+###--- dated with LSD
+#########################################################
+
 # rm(list=ls())
-TFN <- "data/LSD/t001.nwk.result.date.newick" ## this is the result from LSD
-t <- read.tree( TFN )
-str(t)
-STFN <- "data/LSD/t000.dates"
+library(ape)
+library(phydynR)
 
-require(phydynR)
+ ##- list of lsd trees
+ ## filename pattern from LSD changes with LSD version !
+ # list.lsd.trees <- list.files(path = "data/LSD", pattern = "result.date", full.names = TRUE) # macbook
+   list.lsd.trees <- list.files(path = "data/LSD", pattern = "result_newick_date", full.names = TRUE)
+ head(list.lsd.trees)
+ 
+ ##- read first LSD tree to name 
+ ## sampling times and CD4s with tip.labels
+ t <- read.tree( list.lsd.trees[2] )
+ str(t)
+ STFN <- "data/LSD/t000.dates"
 
-MH <- 10 # look up to 10 years in past for infector probs
-
-## CD4 values
-load("../phylo-uk/data/sub.RData")
-rm(s)
-##- selection of df covariates
-names(df)
-cd4s <- setNames(df$cd4, df$seqindex)[t$tip.label]
-head(cd4s)
-
-## incidence, prevalence: range of values
-## Yin et al. 2014: 2,820 (95% CrI 1,660-4,780)
-newinf <- 2500 ## c(1660, 4780)
-plwhiv <- 43150 / 2 # c(43510 / 2, 43510 / 1.5) 
-
-## sampling times
-dates <-( read.table(STFN, skip=1, colClasses=c('character', 'numeric') ) )
-head(dates)
-
-##- sample times
-sampleTimes <- setNames( dates[,2], dates[,1] )[t$tip.label] 
-head(sampleTimes)
-
-
-# bdt <- DatedTree( tree, sampleTimes, tree$sampleStates, tol = .1 )
-# DatedTree
-
-st.W <- system.time(
-  W <- phylo.source.attribution.hiv( t, 
-                                     sampleTimes, # must use years
-                                     cd4s = cd4s, # named numeric vector, cd4 at time of sampling
-                                     ehi = NA, # named logical vector, may be NA, TRUE if patient sampl
-                                     numberPeopleLivingWithHIV = plwhiv, # scalar
-                                     numberNewInfectionsPerYear = newinf, # scalar
-                                     maxHeight = MH,
-                                     res = 1e3,
-                                     treeErrorTol = Inf)
-)
-str(W)
-# saveRDS(W, file = "W0_uk.rds")
-W <- readRDS(file = "W0_uk.rds")
-
-###--- loop over lsd tree
+ ##- parameter phydynR
+ ##- Maximum height
+ MH <- 10 # look up to 10 years in past for infector probs
+ ##- CD4 values
+ load("../phylo-uk/data/sub.RData")
+ rm(s)
+   ## selection of df covariates
+   names(df)
+   cd4s <- setNames(df$cd4, df$seqindex)[t$tip.label]
+   head(cd4s)
+ ##- incidence, prevalence: central scenario # todo: range of values
+ ## Yin et al. 2014: 2,820 (95% CrI 1,660-4,780)
+ newinf <- 2500 # c(1660, 4780)
+ plwhiv <- 43150 / 2 # c(43510 / 2, 43510 / 1.5) 
+ ##- sampling times
+ dates <-( read.table(STFN, skip=1, 
+                      colClasses=c('character', 'numeric') ) )
+ head(dates)
+ ##- named vector
+ sampleTimes <- setNames( dates[,2], dates[,1] )[t$tip.label] 
+ head(sampleTimes)
+ 
+###--- function to apply SA over lsd tree
 sa <- function(lsd_tree){
   W <- phylo.source.attribution.hiv( lsd_tree, 
           sampleTimes, # must use years
@@ -63,10 +55,6 @@ sa <- function(lsd_tree){
   return(W)
 }
 
-## list of lsd trees
-list.lsd.trees <- list.files(path = "data/LSD", pattern = "result.date", full.names = TRUE)
-head(list.lsd.trees)
-
 ## loop
 for (i in 1:length(list.lsd.trees)){
  tree <- read.tree(file = list.lsd.trees[i])
@@ -77,51 +65,69 @@ for (i in 1:length(list.lsd.trees)){
 ####---- reprise ----####
 ## First infectorprob file
 list.W0 <- list.files("data/phydynR", full.names = TRUE)
-W <- readRDS(list.W0[2])
+## sort
+list.W0 <- list.W0[order(nchar(list.W0), list.W0)]
 
+## pick first one
+ W <- readRDS(list.W0[1])
+ 
 ###--- analyses ---###
-## Total number of transmission within sample
-# wsids <- unique( W$donor )
-# wvec <- W$infectorProbability
-# sum(is.na(wvec))
-# str(W)
-# 25204/2
-# wvec_o <- order( wvec )
-# wvec <- wvec[wvec_o] # sort the inf probs
-# sum(wvec, na.rm = TRUE)
-# 
-# od <- sapply( wsids, function(sid) sum( wvec[W$donor[wvec_o]==sid]  ) )
-# hist(od)
-# summary(od)
-
-## other way of calculating outdgree
+##- calculating outdegree
+  ## NA values
+  sum(is.na(W$infectorProbability))
 out0 <- aggregate(x = list(outdegree = W$infectorProbability),
-                  by = list(patient = W$donor), FUN = sum)
-summary(out0$outdegree)
+                  by = list(patient = W$donor), 
+                  FUN = function(x) sum(x, na.rm = T))
 head(out0)
-sum(out0$outdegree, na.rm = T)
+summary(out0$outdegree)
+hist(out0$outdegree)
 
-## add individual explanatory variates
-load("../phylo-uk/data/sub.RData")
-rm(s)
-##- selection of df covariates
-names(df)
+##- add individual explanatory variates
 ##- selection of df covariates
 y <- df[,c("seqindex","patientindex", "dob_y",
-           # str(y)
-           "agediag", "cd4", "vl", "onartflag",
-           "ydiag", "agediag_cut", "cd4cut",
-           "ydiag_cut", "CHICflag", "status")]
+            "agediag", "cd4", "ydiag", "CHICflag")]
 out <- merge(out0, y,
              by.x = "patient",
              by.y = "seqindex",
              all.x = T, sort = FALSE)
 
-plot(out$dob_y, out$outdegree)
-plot(out$agediag, out$outdegree)
+## categorize continuous variables
+str(out)
+age2quantile <- function(age){
+if (is.na(age)) return (NA)
+if (age < 27) return(1)
+if (age < 33) return(2)
+if (age < 40) return(3)
+return(4)
+}
+
+cd4toStage <- function(cd4){
+  if (is.na(cd4)) return(NA)
+  if (cd4 > 700 ) return(1) #based on .9 quantile
+  if (cd4 > 500 ) return(2)
+  if (cd4 > 350 ) return(3)
+  if (cd4 > 200 ) return(4)
+  return(5)
+}
+out$agecl <- sapply( out[ , "agediag"] , age2quantile )
+out$cd4cl <- sapply( out[ , "cd4"] , cd4toStage )
+head(out)
+
+
+?boxplot
+
+boxplot(out$outdegree ~ out$agecl)
+boxplot(out$outdegree ~ out$cd4cl)
+boxplot(out$outdegree ~ out$CHICflag)
+
 plot(sqrt(out$cd4), out$outdegree)
 plot(out$CHICflag, out$outdegree)
 
+############################################
+###########-------- la ------############### 
+############################################    
+
+        
 source("functions.R")
 reg.sum.bs
 
@@ -153,7 +159,7 @@ reg.sum.bs(ls = listUKclus, reg = glm, model = logit_model_uk, family = binomial
 # head(W$donor)
 # head(W$recip)
 # head(W$infectorProbability)
-############################################           ###########-------- la ------###############           ############################################               
+           
                                  
 ##### from Rcolgem SA
 ## approx incidence & prevalence  London
