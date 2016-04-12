@@ -136,6 +136,8 @@ models <- as.list(paste0("model", 0:4))
  reg.sum.bs(ls = list(out), reg = lm, model = model0) 
  #### does not work for now, see function !!!!!!!!
 
+ ## categorize continuous variable as sims
+ ## 
 
 ####---- all lm ----
 lapply(models, function(x) {reg.sum.bs(ls = listUKclus, reg = lm, model = x)
