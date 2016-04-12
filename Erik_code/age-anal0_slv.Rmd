@@ -32,7 +32,7 @@ lattice.options(default.theme = standard.theme(color=F))
 
 Simulation file names:
 ```{r}
-ratesBaselineFNS <- list.files('RData', full.names=T, path = 'model0-simulateBaseline0')
+ratesBaselineFNS <- list.files('RData', full.names=T, path = 'data/model0-simulateBaseline0')
 ```
 
 Helper functions to map a deme name to age and stage:
@@ -75,7 +75,7 @@ fn2ageMatrix_table <- function(fn)
 	
 	#load distance mat
 	.dfn <-  strsplit( fn, '/' )[[1]]
-	dfn <- paste( sep='/', paste(sep='-', .dfn[1], 'distances'), .dfn[2])
+	dfn <- paste( sep='/', "data", paste(sep='-', .dfn[2], 'distances'), .dfn[3])
 	load(dfn) #D
 	DD <- D
 	D1 <- daytree$tip.label[ D[1,] ]
@@ -109,7 +109,7 @@ It takes a while to compute all the mixing matrices, so we will load the results
 if (F)
 {
 	fns2agemat_tables <- lapply( ratesBaselineFNS, fn2ageMatrix_table ) 
-	save(fns2agemat_tables, file = 'age-anal0.0.RData')
+	save(fns2agemat_tables, file = 'data/age-anal0.0.RData')
 } else{
 	load('age-anal0.0.RData')
 }
