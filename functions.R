@@ -574,3 +574,13 @@ reg.sum.bs <- function(ls, reg, model, alpha = 0.05, ...){
 #--------------------------------#
 ##-- end regression bootstrap ---
 #--------------------------------#
+
+#####---- unfactor ----####
+unfactorDataFrame <- function( x ) {
+  x <- data.frame( lapply(x, as.character), stringsAsFactors = FALSE)
+  x <- data.frame( lapply(x, type.convert, as.is = TRUE),
+                   stringsAsFactors = FALSE)
+  return(x)
+}
+
+####---- end unfactor ----####

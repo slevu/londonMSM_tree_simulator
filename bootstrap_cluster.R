@@ -30,7 +30,7 @@ num <- sprintf("%03d", seq(1, 100))
 og <- c( paste("Ref", 1:6, sep = ''), "HXB2" )
 
   first <- 1
-  last <- length(list.tree.path) # 100
+  last <- 1 #length(list.tree.path) # 100
   ## empty list 
   list.of.trees <- vector("list", last - first + 1)
   ## index j of list elements 
@@ -235,6 +235,10 @@ if(FALSE){
   l_bs_uk <- lapply(cl2, function(x) clust.stats(clus = x, tree = list.of.trees[[1]] ))
   names(cl2)
   names( l_bs_uk[[1]][[1]] )
+  length(l_bs_uk[[1]])
+  ####---- saved listUKclus ----
+  # saveRDS(l_bs_uk, file = "data/listUK_ucsd_clus.rds")
+  l_bs_uk <- readRDS( file = "data/listUK_ucsd_clus.rds")
   
   ## convert to data.frame ???
   # http://stackoverflow.com/questions/4512465/what-is-the-most-efficient-way-to-cast-a-list-as-a-data-frame
