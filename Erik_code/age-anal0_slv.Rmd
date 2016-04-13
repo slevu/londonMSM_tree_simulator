@@ -13,6 +13,11 @@ In this report:
 * characterise age assortativity in baseline using SA out degree and cluster neighborhood size
 * examine out degree and cluster size by age; is there an association? 
 
+Add local path
+```{r}
+local_data <- "data/simulations/"
+```
+
 Define some parameters of the analysis 
 ```{r}
 THRESHOLD_YRS <- Inf #10 # only count donors sampled within this many years of the most recent sample (control for cohort effects) 
@@ -32,7 +37,7 @@ lattice.options(default.theme = standard.theme(color=F))
 
 Simulation file names:
 ```{r}
-ratesBaselineFNS <- list.files('RData', full.names=T, path = 'data/model0-simulateBaseline0')
+ratesBaselineFNS <- list.files('RData', full.names=T, path = paste(sep = '', local_data,'model0-simulateBaseline0'))
 ```
 
 Helper functions to map a deme name to age and stage:
@@ -108,10 +113,10 @@ It takes a while to compute all the mixing matrices, so we will load the results
 ```{r}
 if (F)
 {
-	fns2agemat_tables <- lapply( ratesBaselineFNS, fn2ageMatrix_table ) 
-	save(fns2agemat_tables, file = 'data/age-anal0.0.RData')
+	fns2agemat_tables <- lapply( ratesBaselineFNS, fn2ageMatrix_table )  
+	save(fns2agemat_tables, file = paste(sep = '', local_data, 'age-anal0.0.RData'))
 } else{
-	load('age-anal0.0.RData')
+	load(paste(sep = '', local_data,'age-anal0.0.RData'))
 }
 ```
 
