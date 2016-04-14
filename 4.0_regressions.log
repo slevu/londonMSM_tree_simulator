@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.12.3)  14 APR 2016 18:04
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.12.4)  14 APR 2016 22:56
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -188,51 +188,7 @@ Package: booktabs 2005/04/14 v1.61803 publication quality tables
 \@lastruleclass=\count97
 \@thisrulewidth=\dimen120
 )
-(/usr/local/texlive/2015/texmf-dist/tex/latex/subfig/subfig.sty
-Package: subfig 2005/06/28 ver: 1.3 subfig package
-
-(/usr/local/texlive/2015/texmf-dist/tex/latex/caption/caption.sty
-Package: caption 2013/05/02 v3.3-89 Customizing captions (AR)
-
-(/usr/local/texlive/2015/texmf-dist/tex/latex/caption/caption3.sty
-Package: caption3 2013/05/02 v1.6-88 caption3 kernel (AR)
-Package caption3 Info: TeX engine: e-TeX on input line 57.
-\captionmargin=\dimen121
-\captionmargin@=\dimen122
-\captionwidth=\dimen123
-\caption@tempdima=\dimen124
-\caption@indent=\dimen125
-\caption@parindent=\dimen126
-\caption@hangindent=\dimen127
-Package caption Info: Unknown document class (or package),
-(caption)             standard defaults will be used.
-)
-
-Package caption Warning: Unsupported document class (or package) detected,
-(caption)                usage of the caption package is not recommended.
-See the caption package documentation for explanation.
-
-Package caption Info: \@makecaption = \long macro:#1#2->\par \vskip \abovecapti
-onskip \begingroup \small \rmfamily \sbox \@tempboxa {\let \\\heading@cr #1: #2
-}\@ifdim {\wd \@tempboxa >\hsize }{\begingroup \samepage \flushing \let \footno
-te \@footnotemark@gobble #1: #2\par \endgroup }{\global \@minipagefalse \hb@xt@
- \hsize {\hfil \unhbox \@tempboxa \hfil }}\endgroup \vskip \belowcaptionskip .
-\c@ContinuedFloat=\count98
-)
-\c@KVtest=\count99
-\sf@farskip=\skip46
-\sf@captopadj=\dimen128
-\sf@capskip=\skip47
-\sf@nearskip=\skip48
-\c@subfigure=\count100
-\c@subfigure@save=\count101
-\c@lofdepth=\count102
-\c@subtable=\count103
-\c@subtable@save=\count104
-\c@lotdepth=\count105
-\sf@top=\skip49
-\sf@bottom=\skip50
-) (/usr/local/texlive/2015/texmf-dist/tex/latex/upquote/upquote.sty
+(/usr/local/texlive/2015/texmf-dist/tex/latex/upquote/upquote.sty
 Package: upquote 2012/04/19 v1.3 upright-quote and grave-accent glyphs in verba
 tim
 
@@ -351,16 +307,16 @@ Class revtex4 Info: multicol was not loaded (OK!) on input line 56.
 
 (/usr/local/texlive/2015/texmf-dist/tex/context/base/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count106
-\scratchdimen=\dimen129
+\scratchcounter=\count98
+\scratchdimen=\dimen121
 \scratchbox=\box34
-\nofMPsegments=\count107
-\nofMParguments=\count108
+\nofMPsegments=\count99
+\nofMParguments=\count100
 \everyMPshowfont=\toks17
-\MPscratchCnt=\count109
-\MPscratchDim=\dimen130
-\MPnumerator=\count110
-\makeMPintoPDFobject=\count111
+\MPscratchCnt=\count101
+\MPscratchDim=\dimen122
+\MPnumerator=\count102
+\makeMPintoPDFobject=\count103
 \everyMPtoPDFconversion=\toks18
 ) (/usr/local/texlive/2015/texmf-dist/tex/generic/oberdiek/pdftexcmds.sty
 Package: pdftexcmds 2011/11/29 v0.20 Utility functions of pdfTeX for LuaTeX (HO
@@ -410,21 +366,6 @@ G,.JBIG2,.JB2,.eps]
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-Package caption Info: Begin \AtBeginDocument code.
-Package caption Info: subfig package v1.3 is loaded.
-Package caption Info: Incompatible package detected (regarding \caption).
-(caption)             \caption = macro:->\minipagefootnote@here \ifx \@captype 
-\@undefined \@latex@error {\noexpand \caption outside float}\@ehd \expandafter 
-\@gobble \else \refstepcounter \@captype \expandafter \@firstofone \fi {\@dblar
-g {\@caption \@captype }}.
-
-
-Package caption Warning: \caption will not be redefined since it's already
-(caption)                redefined by a document class or package which is
-(caption)                unknown to the caption package.
-See the caption package documentation for explanation.
-
-Package caption Info: End \AtBeginDocument code.
 
 Class revtex4 Warning: Assuming \noaffiliation for S. Le Vu.
 
@@ -443,53 +384,75 @@ File: ts1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
 Package color Info: Redefining color shadecolor on input line 97.
 
-Overfull \hbox (37.73453pt too wide) in paragraph at lines 101--101
-[] []\T1/lmtt/m/it/10 # list.lsd.trees <- list.files(path = "data/LSD", pattern
- = "result.date", full.names = TRUE) # macbook[][] 
+Overfull \hbox (9.74849pt too wide) in paragraph at lines 104--104
+[] []\T1/lmtt/m/n/10 list.lsd.trees[] []<-[] []\T1/lmtt/b/n/10 list.files[][]\T
+1/lmtt/m/n/10 ([][]path[] []=[] []"data/LSD"[][],[] []pattern[] []=[] []"result
+_newick_date"[][],[] []full.names[] []=[] []TRUE[][])[][] 
  []
 
-
-Overfull \hbox (20.24846pt too wide) in paragraph at lines 102--102
-[]   []\T1/lmtt/m/n/10 list.lsd.trees[] []<-[] []\T1/lmtt/b/n/10 list.files[][]
-\T1/lmtt/m/n/10 ([][]path[] []=[] []"data/LSD"[][],[] []pattern[] []=[] []"resu
-lt_newick_date"[][],[] []full.names[] []=[] []TRUE[][])[][] 
- []
-
-Package color Info: Redefining color shadecolor on input line 109.
-LaTeX Font Info:    Try loading font information for TS1+lmtt on input line 132
+Package color Info: Redefining color shadecolor on input line 113.
+LaTeX Font Info:    Try loading font information for TS1+lmtt on input line 136
 .
 (/usr/local/texlive/2015/texmf-dist/tex/latex/lm/ts1lmtt.fd
 File: ts1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
-)
-Package color Info: Redefining color shadecolor on input line 146.
- [1{/usr/local/texlive/2015/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-Package color Info: Redefining color shadecolor on input line 159.
-Package color Info: Redefining color shadecolor on input line 178.
-Package color Info: Redefining color shadecolor on input line 196.
+) [1{/usr/local/texlive/2015/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
+Package color Info: Redefining color shadecolor on input line 150.
+Package color Info: Redefining color shadecolor on input line 163.
+Package color Info: Redefining color shadecolor on input line 182.
 Package color Info: Redefining color shadecolor on input line 204.
- [2] [3]
-(./4.0_regressions.aux) ) 
+Package color Info: Redefining color shadecolor on input line 216.
+ [2]
+Package color Info: Redefining color shadecolor on input line 225.
+
+Overfull \hbox (30.74843pt too wide) in paragraph at lines 236--236
+[]  []\T1/lmtt/m/n/10 WW[] []<-[] []\T1/lmtt/b/n/10 list[][]\T1/lmtt/m/n/10 ([]
+ []donor[] []= W[][]$[][]donor[i] ,[] []recip[] []= W[][]$[][]recip[i],[] []inf
+ectorProbability[] []= W[][]$[][]infectorProbability[i] )[][] 
+ []
+
+Package color Info: Redefining color shadecolor on input line 254.
+Package color Info: Redefining color shadecolor on input line 263.
+
+Overfull \hbox (16.73459pt too wide) in paragraph at lines 265--265
+[][]\T1/lmtt/m/it/10 ##- function to prune cluster according to a threshold of 
+sampling time to control for cohort effect[][] 
+ []
+
+Package color Info: Redefining color shadecolor on input line 297.
+[3]
+Package color Info: Redefining color shadecolor on input line 333.
+Package color Info: Redefining color shadecolor on input line 356.
+Package color Info: Redefining color shadecolor on input line 376.
+ [4] [5]
+Package color Info: Redefining color shadecolor on input line 444.
+Package color Info: Redefining color shadecolor on input line 460.
+Package color Info: Redefining color shadecolor on input line 497.
+ [6]
+Package color Info: Redefining color shadecolor on input line 542.
+ [7]
+Package color Info: Redefining color shadecolor on input line 581.
+ [8] [9] (./4.0_regressions.aux) ) 
 Here is how much of TeX's memory you used:
- 5230 strings out of 493089
- 76752 string characters out of 6134842
- 154253 words of memory out of 5000000
- 8649 multiletter control sequences out of 15000+600000
+ 4056 strings out of 493089
+ 55675 string characters out of 6134842
+ 141785 words of memory out of 5000000
+ 7485 multiletter control sequences out of 15000+600000
  25272 words of font info for 26 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 44i,5n,42p,295b,296s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm
-/lm-ts1.enc}{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}</
-usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/
-texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></usr/local/texlive/201
-5/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2015/texmf-dis
-t/fonts/type1/public/lm/lmr9.pfb></usr/local/texlive/2015/texmf-dist/fonts/type
-1/public/lm/lmtk10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/l
-m/lmtt10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmtti10.
-pfb>
-Output written on 4.0_regressions.pdf (3 pages, 185373 bytes).
+ 38i,5n,23p,295b,296s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/usr/local/texlive/2015/texmf-dist/fonts/enc
+/dvips/lm/lm-ts1.enc}{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-
+ec.enc}</usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></u
+sr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></usr/local/te
+xlive/2015/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2015/
+texmf-dist/fonts/type1/public/lm/lmr9.pfb></usr/local/texlive/2015/texmf-dist/f
+onts/type1/public/lm/lmtk10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1
+/public/lm/lmtt10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm
+/lmtti10.pfb>
+Output written on 4.0_regressions.pdf (9 pages, 205413 bytes).
 PDF statistics:
- 48 PDF objects out of 1000 (max. 8388607)
- 35 compressed objects within 1 object stream
+ 68 PDF objects out of 1000 (max. 8388607)
+ 49 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 

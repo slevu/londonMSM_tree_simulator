@@ -51,7 +51,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{booktabs}
-\usepackage{graphicx,subfig}
+%\usepackage{graphicx,subfig}
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 \begin{document}
 
@@ -98,8 +98,12 @@ List of dated bootstrap trees from LSD
 \begin{alltt}
  \hlcom{##- list of lsd trees}
  \hlcom{## filename pattern from LSD changes with LSD version !}
- \hlcom{# list.lsd.trees <- list.files(path = "data/LSD", pattern = "result.date", full.names = TRUE) # macbook}
-   \hlstd{list.lsd.trees} \hlkwb{<-} \hlkwd{list.files}\hlstd{(}\hlkwc{path} \hlstd{=} \hlstr{"data/LSD"}\hlstd{,} \hlkwc{pattern} \hlstd{=} \hlstr{"result_newick_date"}\hlstd{,} \hlkwc{full.names} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+ \hlkwa{if}\hlstd{(} \hlkwd{any}\hlstd{(}\hlkwd{grep}\hlstd{(}\hlstr{"MacBook"}\hlstd{,} \hlkwd{Sys.info}\hlstd{())) )\{}
+ \hlstd{list.lsd.trees} \hlkwb{<-} \hlkwd{list.files}\hlstd{(}\hlkwc{path} \hlstd{=} \hlstr{"data/LSD"}\hlstd{,} \hlkwc{pattern} \hlstd{=} \hlstr{"result.date"}\hlstd{,} \hlkwc{full.names} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+ \hlstd{\}} \hlkwa{else} \hlstd{\{}
+ \hlstd{list.lsd.trees} \hlkwb{<-} \hlkwd{list.files}\hlstd{(}\hlkwc{path} \hlstd{=} \hlstr{"data/LSD"}\hlstd{,} \hlkwc{pattern} \hlstd{=} \hlstr{"result_newick_date"}\hlstd{,} \hlkwc{full.names} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+ \hlstd{\}}
+
 \hlcom{# head(list.lsd.trees)}
 \end{alltt}
 \end{kframe}
@@ -123,8 +127,8 @@ Get CD4s and sample times
  \hlkwd{head}\hlstd{(cd4s)}
 \end{alltt}
 \begin{verbatim}
-76516 21242 50954 21837 26093  2432 
-  410   214  1140   166   178   514 
+81625 41073 80125 85494 92828 83878 
+  420   884   600   950   309   323 
 \end{verbatim}
 \begin{alltt}
  \hlcom{##- sampling times}
@@ -136,8 +140,8 @@ Get CD4s and sample times
  \hlkwd{head}\hlstd{(sampleTimes)}
 \end{alltt}
 \begin{verbatim}
-   76516    21242    50954    21837    26093     2432 
-2007.953 2003.036 2009.458 2005.786 2002.616 2013.959 
+   81625    41073    80125    85494    92828    83878 
+2003.285 2002.118 2004.951 2009.871 2011.704 2003.532 
 \end{verbatim}
 \end{kframe}
 \end{knitrout}
@@ -191,15 +195,104 @@ Save infector probability files
 
 
 
-\section*{Load and process patients variables}
+\section*{Load and process patients variables, list of W, list of clusters}
+%' << include2  >>=
+%' @
+
+Get list of infector probs
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlstd{detail_knitr} \hlkwb{<-} \hlnum{TRUE}
+\hlcom{## list of infector prob files}
+\hlstd{list.W0} \hlkwb{<-} \hlkwd{list.files}\hlstd{(}\hlstr{"data/phydynR"}\hlstd{,} \hlkwc{pattern} \hlstd{=} \hlstr{'mh20'}\hlstd{,} \hlkwc{full.names} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\hlcom{## order}
+\hlstd{list.W0} \hlkwb{<-} \hlstd{list.W0[}\hlkwd{order}\hlstd{(}\hlkwd{nchar}\hlstd{(list.W0), list.W0)]}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
 
+Set depth in time or cohort. Applied for both outdegree and cluster size determination 
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{thr_year} \hlkwb{<-} \hlnum{Inf}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+Calculate outdegrees by bootstrap
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwa{if}\hlstd{(}\hlnum{FALSE}\hlstd{)\{}
+\hlcom{#### for m bootstrap}
+\hlcom{### function: input filename of W}
+\hlstd{outdegree} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{w.fn}\hlstd{,} \hlkwc{t} \hlstd{= thr_year)\{}
+  \hlstd{W} \hlkwb{<-} \hlkwd{readRDS}\hlstd{(w.fn)}
+
+  \hlcom{## restrict to cohort sampled within thr_year years}
+  \hlstd{cohort} \hlkwb{<-} \hlkwd{names}\hlstd{(sampleTimes[sampleTimes} \hlopt{>} \hlstd{(}\hlkwd{max}\hlstd{(sampleTimes)} \hlopt{-} \hlstd{t ) ] )}
+  \hlstd{i} \hlkwb{<-} \hlkwd{which}\hlstd{( (W}\hlopt{$}\hlstd{donor} \hlopt{%in%} \hlstd{cohort)} \hlopt{&} \hlstd{(W}\hlopt{$}\hlstd{recip} \hlopt{%in%} \hlstd{cohort ) )}
+  \hlstd{WW} \hlkwb{<-} \hlkwd{list}\hlstd{(} \hlkwc{donor} \hlstd{= W}\hlopt{$}\hlstd{donor[i] ,} \hlkwc{recip} \hlstd{= W}\hlopt{$}\hlstd{recip[i],} \hlkwc{infectorProbability} \hlstd{= W}\hlopt{$}\hlstd{infectorProbability[i] )}
+
+  \hlcom{## calculate outdegrees}
+  \hlstd{out} \hlkwb{<-} \hlkwd{aggregate}\hlstd{(}
+    \hlkwc{x} \hlstd{=} \hlkwd{list}\hlstd{(}\hlkwc{outdegree} \hlstd{= WW}\hlopt{$}\hlstd{infectorProbability),}
+    \hlkwc{by} \hlstd{=} \hlkwd{list}\hlstd{(}\hlkwc{patient} \hlstd{= WW}\hlopt{$}\hlstd{donor),}
+    \hlkwc{FUN} \hlstd{=} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{sum}\hlstd{(x,} \hlkwc{na.rm} \hlstd{= T) )}
+  \hlkwd{return}\hlstd{(out)}
+\hlstd{\}}
+
+\hlstd{list.outdegree} \hlkwb{<-} \hlkwd{lapply}\hlstd{(list.W0, outdegree)}
+\hlstd{\}}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+Get cluster list
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{l_bs_uk} \hlkwb{<-} \hlkwd{readRDS}\hlstd{(} \hlkwc{file} \hlstd{=} \hlstr{"data/listUK_ucsd_clus.rds"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+Pruning: cluster size and membership are recomputed as time restriction exclude patients
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{##- function to prune cluster according to a threshold of sampling time to control for cohort effect}
+\hlcom{##- recalculate size and cluster membership}
+\hlcom{## or use ydiag ? which is different (median diff # 2.5 years)}
+\hlcom{## depends on clustering algorithm ?}
+
+\hlstd{prune.clus} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{a}\hlstd{,} \hlkwc{t} \hlstd{= thr_year)\{}
+  \hlcom{## subset df by sampling times}
+  \hlstd{cohort} \hlkwb{<-} \hlkwd{names}\hlstd{(sampleTimes[sampleTimes} \hlopt{>} \hlstd{(}\hlkwd{max}\hlstd{(sampleTimes)} \hlopt{-} \hlstd{t ) ] )}
+  \hlstd{aa} \hlkwb{<-} \hlstd{a[a[,}\hlstr{"id"}\hlstd{]} \hlopt{%in%} \hlstd{cohort,]}
+  \hlkwa{if}\hlstd{(}\hlkwd{identical}\hlstd{(aa,a))\{}
+    \hlkwd{print}\hlstd{(}\hlstr{'do nothing'}\hlstd{)}
+    \hlstd{\}} \hlkwa{else} \hlstd{\{}
+  \hlcom{## for each clusterID, re-calculate size and binclus membership}
+  \hlkwa{for} \hlstd{(i} \hlkwa{in} \hlkwd{unique}\hlstd{(aa[,}\hlstr{"ClusterID"}\hlstd{]))\{}
+    \hlstd{aa[ aa[,}\hlstr{"ClusterID"}\hlstd{]} \hlopt{==} \hlstd{i,} \hlstr{"size"} \hlstd{]} \hlkwb{<-} \hlkwd{nrow}\hlstd{(aa[ aa[,}\hlstr{"ClusterID"}\hlstd{]} \hlopt{==} \hlstd{i, ])}
+  \hlstd{\}}
+  \hlstd{aa[,}\hlstr{"binclus"}\hlstd{]} \hlkwb{<-} \hlkwd{ifelse}\hlstd{(aa[,}\hlstr{"size"}\hlstd{]} \hlopt{<} \hlnum{2}\hlstd{,} \hlnum{0}\hlstd{,} \hlnum{1} \hlstd{)}
+    \hlstd{\}}
+  \hlkwd{return}\hlstd{(aa)}
+\hlstd{\}}
+
+\hlstd{list.clus.pruned} \hlkwb{<-} \hlkwd{lapply}\hlstd{(l_bs_uk,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)\{}
+  \hlkwd{lapply}\hlstd{(x, prune.clus)}
+\hlstd{\})}
+\end{alltt}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{Error in lapply(l\_bs\_uk, function(x) \{: object 'l\_bs\_uk' not found}}\end{kframe}
+\end{knitrout}
+
+Load patients variables
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
@@ -234,4 +327,324 @@ Save infector probability files
 \end{alltt}
 \end{kframe}
 \end{knitrout}
+
+Load pre-computed list of clusters and outdegrees merged with patients variables
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{#### variables}
+\hlkwa{if}\hlstd{(}\hlnum{FALSE}\hlstd{)\{}
+\hlstd{cluster} \hlkwb{<-} \hlkwd{lapply}\hlstd{(list.clus.pruned,} \hlkwa{function}\hlstd{(}\hlkwc{u}\hlstd{)\{}
+  \hlkwd{lapply}\hlstd{(u,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{) \{}
+    \hlkwd{merge}\hlstd{(x, y,}
+        \hlkwc{by.x} \hlstd{=} \hlstr{"id"}\hlstd{,} \hlkwc{by.y} \hlstd{=} \hlstr{"seqindex"}\hlstd{,}
+        \hlkwc{all.x} \hlstd{= T,} \hlkwc{sort} \hlstd{=} \hlnum{FALSE}\hlstd{)}
+\hlstd{\})}
+  \hlstd{\})}
+
+\hlstd{od} \hlkwb{<-} \hlkwd{lapply}\hlstd{(list.outdegree,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)\{}
+  \hlkwd{merge}\hlstd{(x, y,}
+        \hlkwc{by.x} \hlstd{=} \hlstr{"patient"}\hlstd{,} \hlkwc{by.y} \hlstd{=} \hlstr{"seqindex"}\hlstd{,}
+        \hlkwc{all.x} \hlstd{= T,} \hlkwc{sort} \hlstd{=} \hlnum{FALSE}\hlstd{)}
+\hlstd{\})}
+\hlstd{\}}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{###- save and read}
+\hlcom{# saveRDS(cluster, file = "data/list_cluster_uk_bs_thr_demo.rds")}
+\hlcom{# saveRDS(od, file = "data/list_outdegree_uk_bs_demo.rds")}
+\hlstd{cluster} \hlkwb{<-} \hlkwd{readRDS}\hlstd{(}\hlkwc{file} \hlstd{=} \hlstr{"data/list_cluster_uk_bs_thr_demo.rds"}\hlstd{)}
+\hlstd{od} \hlkwb{<-} \hlkwd{readRDS}\hlstd{(}\hlkwc{file} \hlstd{=} \hlstr{"data/list_outdegree_uk_bs_demo.rds"}\hlstd{)}
+
+\hlstd{list.total} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlstr{"SA"} \hlstd{=} \hlkwd{list}\hlstd{(od),} \hlstr{"Cluster"} \hlstd{= cluster)}
+\hlkwd{names}\hlstd{(list.total)}
+\end{alltt}
+\begin{verbatim}
+[1] "SA"           "Cluster.0.01" "Cluster.0.02" "Cluster.0.05"
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+\section*{Regression models}
+
+Function to summarize regression results
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{source}\hlstd{(}\hlstr{"test_fn_compare.reg.sum.bs.R"}\hlstd{)}
+\hlstd{compare.reg.bs}
+\end{alltt}
+\begin{verbatim}
+function (ls, reg, model, alpha = 0.05, ...) 
+{
+    coef <- lapply(ls, function(x) {
+        lapply(x, function(x) {
+            if ("size" %in% names(x)) {
+                full.model <- sub("y", "scale(size)", model)
+            }
+            else if ("outdegree" %in% names(x)) {
+                full.model <- sub("y", "scale(outdegree)", model)
+            }
+            else stop("cannot find y")
+            coef(summary(reg(formula = full.model, data = x, 
+                ...)))
+        })
+    })
+    pvalue <- lapply(coef, function(x) {
+        sapply(x, function(x) {
+            identity(x[, 4])
+        })
+    })
+    sum.signif <- sapply(pvalue, function(x) {
+        apply(x, 1, function(x) sum(x < alpha)/length(x))
+    })
+    param <- lapply(coef, function(x) {
+        sapply(x, function(x) {
+            identity(x[, 1])
+        })
+    })
+    mean.parms <- signif(sapply(param, function(x) {
+        apply(x, 1, mean)
+    }), 2)
+    if (identical(reg, lm)) {
+        r2 <- lapply(ls, function(x) {
+            sapply(x, function(x) {
+                if ("size" %in% names(x)) {
+                  full.model <- sub("y", "scale(size)", model)
+                }
+                else if ("outdegree" %in% names(x)) {
+                  full.model <- sub("y", "scale(outdegree)", 
+                    model)
+                }
+                else stop("cannot find y")
+                summary(reg(full.model, data = x))$r.squared
+            })
+        })
+        mean.r2 <- signif(sapply(r2, function(x) {
+            mean(x)
+        }), 3)
+        return(list(model = model, `mean parameter` = mean.parms, 
+            `signif pvalue` = sum.signif, `mean r.squared` = mean.r2))
+    }
+    else {
+        return(list(model = model, `mean parameter` = mean.parms, 
+            `signif pvalue` = sum.signif))
+    }
+}
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+List of models
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{model1} \hlkwb{<-} \hlstr{"y ~ factor(agecl)"}
+\hlstd{model1c} \hlkwb{<-} \hlstr{"y ~ scale(agediag)"}
+\hlstd{model1i} \hlkwb{<-} \hlstr{"y ~ factor(agecl) + factor(cd4cl)"}
+\hlstd{model2} \hlkwb{<-} \hlstr{"y ~ factor(cd4cl)"}
+\hlstd{model3} \hlkwb{<-} \hlstr{"y ~ factor(ethn.bin)"}
+\hlstd{model4} \hlkwb{<-} \hlstr{"y ~ factor(CHICflag)"}
+\hlstd{model5} \hlkwb{<-} \hlstr{"y ~ factor(agecl) + factor(cd4cl) + factor(agecl)*factor(cd4cl) "}
+\hlstd{model6} \hlkwb{<-} \hlstr{"y ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn.bin) + factor(CHICflag)"}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\subsection*{Age only}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{test} \hlkwb{<-} \hlkwd{compare.reg.bs}\hlstd{(}\hlkwc{ls} \hlstd{= list.total,} \hlkwc{reg} \hlstd{= lm,} \hlkwc{model} \hlstd{= model1,} \hlkwc{alpha} \hlstd{=} \hlnum{0.05}\hlstd{)}
+\hlstd{test}
+\end{alltt}
+\begin{verbatim}
+$model
+[1] "y ~ factor(agecl)"
+
+$`mean parameter`
+                   SA Cluster.0.01 Cluster.0.02 Cluster.0.05
+(Intercept)     0.095        0.041        0.042       0.0160
+factor(agecl)2 -0.090       -0.042       -0.052      -0.0420
+factor(agecl)3 -0.076       -0.049       -0.044      -0.0079
+factor(agecl)4 -0.180       -0.068       -0.065      -0.0054
+
+$`signif pvalue`
+                 SA Cluster.0.01 Cluster.0.02 Cluster.0.05
+(Intercept)    0.10         0.61         0.69         0.10
+factor(agecl)2 0.04         0.25         0.55         0.36
+factor(agecl)3 0.03         0.42         0.29         0.07
+factor(agecl)4 0.34         0.75         0.78         0.07
+
+$`mean r.squared`
+          SA Cluster.0.01 Cluster.0.02 Cluster.0.05 
+    0.005630     0.000633     0.000581     0.000543 
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+Interpretation: 
+\begin{itemize}
+\item negative effect on both OD and cluster size (decrease with age)
+\item detected more frequently in cluster size at low thresholds
+\end{itemize}
+
+\subsection*{Adding CD4 to age}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{test2} \hlkwb{<-} \hlkwd{compare.reg.bs}\hlstd{(}\hlkwc{ls} \hlstd{= list.total,} \hlkwc{reg} \hlstd{= lm,} \hlkwc{model} \hlstd{= model1i,} \hlkwc{alpha} \hlstd{=} \hlnum{0.05}\hlstd{)}
+\hlstd{test2}
+\end{alltt}
+\begin{verbatim}
+$model
+[1] "y ~ factor(agecl) + factor(cd4cl)"
+
+$`mean parameter`
+                   SA Cluster.0.01 Cluster.0.02 Cluster.0.05
+(Intercept)     0.060       0.0630       0.0630       0.0370
+factor(agecl)2 -0.088      -0.0400      -0.0510      -0.0370
+factor(agecl)3 -0.030      -0.0410      -0.0380      -0.0012
+factor(agecl)4 -0.140      -0.0490      -0.0440       0.0067
+factor(cd4cl)2  0.110       0.0160       0.0370      -0.0030
+factor(cd4cl)3  0.063      -0.0032       0.0045      -0.0250
+factor(cd4cl)4 -0.062      -0.0200      -0.0320      -0.0490
+factor(cd4cl)5 -0.220      -0.1400      -0.1600      -0.0540
+
+$`signif pvalue`
+                 SA Cluster.0.01 Cluster.0.02 Cluster.0.05
+(Intercept)    0.02         0.58         0.62         0.16
+factor(agecl)2 0.06         0.20         0.46         0.22
+factor(agecl)3 0.01         0.26         0.12         0.05
+factor(agecl)4 0.21         0.39         0.27         0.08
+factor(cd4cl)2 0.13         0.00         0.03         0.03
+factor(cd4cl)3 0.04         0.00         0.00         0.10
+factor(cd4cl)4 0.04         0.00         0.01         0.32
+factor(cd4cl)5 0.31         1.00         1.00         0.42
+
+$`mean r.squared`
+          SA Cluster.0.01 Cluster.0.02 Cluster.0.05 
+     0.01940      0.00355      0.00470      0.00154 
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+Interpretation: 
+\begin{itemize}
+\item Again, negative effect of age on both OD and cluster size
+\item Only effect detected for CD4 < 200 vs CD4 > 700, always significant for cluster size models and 31\% of SA model
+\end{itemize}
+
+\subsection*{Results of model with continuous age and CD4 + ethnicity and CHIC}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{test6} \hlkwb{<-} \hlkwd{compare.reg.bs}\hlstd{(}\hlkwc{ls} \hlstd{= list.total,} \hlkwc{reg} \hlstd{= lm,} \hlkwc{model} \hlstd{= model6,} \hlkwc{alpha} \hlstd{=} \hlnum{0.05}\hlstd{)}
+\hlstd{test6}
+\end{alltt}
+\begin{verbatim}
+$model
+[1] "y ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn.bin) + factor(CHICflag)"
+
+$`mean parameter`
+                            SA Cluster.0.01 Cluster.0.02 Cluster.0.05
+(Intercept)            0.00025      -0.0130        0.011       -0.110
+scale(agediag)        -0.04400      -0.0150       -0.011        0.013
+scale(sqrt(cd4))       0.07400       0.0410        0.052        0.021
+factor(ethn.bin)white -0.00160       0.0045        0.008        0.062
+factor(CHICflag)1     -0.00620       0.0150       -0.017        0.079
+
+$`signif pvalue`
+                        SA Cluster.0.01 Cluster.0.02 Cluster.0.05
+(Intercept)           0.00         0.00         0.00         0.83
+scale(agediag)        0.05         0.31         0.07         0.33
+scale(sqrt(cd4))      0.65         1.00         1.00         0.54
+factor(ethn.bin)white 0.01         0.00         0.00         0.66
+factor(CHICflag)1     0.01         0.02         0.00         0.78
+
+$`mean r.squared`
+          SA Cluster.0.01 Cluster.0.02 Cluster.0.05 
+     0.01090      0.00231      0.00309      0.00307 
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+Interpretation: 
+\begin{itemize}
+\item No effect for ethnicity and CHIC, except for high cluster threshold where everything pops out ???
+\item CD4 is frequently associated with dependent variable, especially for cluster size
+\end{itemize}
+
+\subsection*{Results of model with factorized age and CD4 plus interactions}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{test5} \hlkwb{<-} \hlkwd{compare.reg.bs}\hlstd{(}\hlkwc{ls} \hlstd{= list.total,} \hlkwc{reg} \hlstd{= lm,} \hlkwc{model} \hlstd{= model5,} \hlkwc{alpha} \hlstd{=} \hlnum{0.05}\hlstd{)}
+\hlstd{test5}
+\end{alltt}
+\begin{verbatim}
+$model
+[1] "y ~ factor(agecl) + factor(cd4cl) + factor(agecl)*factor(cd4cl) "
+
+$`mean parameter`
+                                  SA Cluster.0.01 Cluster.0.02 Cluster.0.05
+(Intercept)                    0.100       0.0660       0.0590       0.0520
+factor(agecl)2                -0.120      -0.0470      -0.0520      -0.0320
+factor(agecl)3                -0.140      -0.0590      -0.0600      -0.0410
+factor(agecl)4                -0.180      -0.0330       0.0089      -0.0220
+factor(cd4cl)2                 0.140      -0.0390       0.0047      -0.0570
+factor(cd4cl)3                -0.074       0.0490       0.0560      -0.0017
+factor(cd4cl)4                -0.210      -0.0091      -0.0086      -0.0650
+factor(cd4cl)5                -0.052      -0.2100      -0.2300      -0.0950
+factor(agecl)2:factor(cd4cl)2 -0.054       0.0660       0.0240       0.0490
+factor(agecl)3:factor(cd4cl)2  0.015       0.0930       0.1000       0.1000
+factor(agecl)4:factor(cd4cl)2 -0.075       0.0460      -0.0067       0.0550
+factor(agecl)2:factor(cd4cl)3  0.120      -0.0580      -0.0350      -0.0630
+factor(agecl)3:factor(cd4cl)3  0.240      -0.0300      -0.0250       0.0150
+factor(agecl)4:factor(cd4cl)3  0.170      -0.1300      -0.1700      -0.0360
+factor(agecl)2:factor(cd4cl)4  0.200       0.0018      -0.0082       0.0049
+factor(agecl)3:factor(cd4cl)4  0.190      -0.0340      -0.0240       0.0420
+factor(agecl)4:factor(cd4cl)4  0.170      -0.0140      -0.0730       0.0200
+factor(agecl)2:factor(cd4cl)5 -0.230       0.0640       0.0710      -0.0015
+factor(agecl)3:factor(cd4cl)5 -0.031       0.0950       0.0900       0.0370
+factor(agecl)4:factor(cd4cl)5 -0.230       0.0650       0.0500       0.1000
+
+$`signif pvalue`
+                                SA Cluster.0.01 Cluster.0.02 Cluster.0.05
+(Intercept)                   0.00         0.09         0.01         0.14
+factor(agecl)2                0.00         0.00         0.00         0.06
+factor(agecl)3                0.02         0.01         0.00         0.06
+factor(agecl)4                0.02         0.01         0.00         0.05
+factor(cd4cl)2                0.08         0.03         0.00         0.15
+factor(cd4cl)3                0.00         0.03         0.00         0.04
+factor(cd4cl)4                0.00         0.00         0.00         0.14
+factor(cd4cl)5                0.00         0.93         0.99         0.27
+factor(agecl)2:factor(cd4cl)2 0.03         0.01         0.00         0.07
+factor(agecl)3:factor(cd4cl)2 0.01         0.07         0.04         0.16
+factor(agecl)4:factor(cd4cl)2 0.00         0.04         0.00         0.06
+factor(agecl)2:factor(cd4cl)3 0.00         0.03         0.00         0.11
+factor(agecl)3:factor(cd4cl)3 0.01         0.01         0.00         0.02
+factor(agecl)4:factor(cd4cl)3 0.01         0.16         0.34         0.08
+factor(agecl)2:factor(cd4cl)4 0.00         0.00         0.00         0.01
+factor(agecl)3:factor(cd4cl)4 0.02         0.00         0.00         0.03
+factor(agecl)4:factor(cd4cl)4 0.00         0.00         0.00         0.03
+factor(agecl)2:factor(cd4cl)5 0.00         0.00         0.00         0.01
+factor(agecl)3:factor(cd4cl)5 0.01         0.01         0.00         0.02
+factor(agecl)4:factor(cd4cl)5 0.02         0.00         0.00         0.10
+
+$`mean r.squared`
+          SA Cluster.0.01 Cluster.0.02 Cluster.0.05 
+     0.02920      0.00465      0.00574      0.00286 
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+Interpretation: 
+\begin{itemize}
+\item R2 increased... a little
+\item cluster still see some effect of CD4 < 200
+\end{itemize}
+
+% tests
+
 \end{document}

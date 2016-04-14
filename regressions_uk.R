@@ -5,28 +5,10 @@ source("functions.R")
 ####---- include2 ----
 detail_knitr <- TRUE
 
-####---- demo variables ----
-##- add individual explanatory variates
-##- selection of df covariates
-load("../phylo-uk/data/sub.RData")
-y <- df[,c("seqindex","patientindex", 
-           "dob_y", "agediag", "cd4", 
-           "ydiag", "CHICflag", "ethnicityid")]
-
-y$ethn.bin <- ifelse(y$ethnicityid == "White", "white", "not white")
-y$CHICflag <- ifelse(y$CHICflag == "Yes", 1, 0)
-y$ethnicityid <- NULL
-y <- unfactorDataFrame(y)
-
-## categorize continuous variables
-y$agecl <- sapply( y[ , "agediag"] , age2quantile )
-y$cd4cl <- sapply( y[ , "cd4"] , cd4toStage )
-head(y)
-rm(s, df)
 
 ####---- stop ----
 if(FALSE){
-####---- get sampleTimes ----####
+####---- get sampleTimes ----
 ##- list of lsd trees
 ## filename pattern from LSD changes with LSD version !
 # list.lsd.trees <- list.files(path = "data/LSD", pattern = "result.date", full.names = TRUE) # macbook
@@ -45,25 +27,30 @@ dates <-( read.table(STFN, skip=1,
 sampleTimes <- setNames( dates[,2], dates[,1] )[t$tip.label] 
 head(sampleTimes)
 rm(list.lsd.trees, STFN, t, dates)
+}
 
-####---- reprise ----####
+####---- reprise ----
 ###--- Do these things to outdegree and cluster sizes :
 ## restrict or not to cohort of sampling 
 ## add explanatory variables
 ## categorize age and cd4
 ## run model and tests
 
+####---- list of W ----
 ## list of infector prob files
 list.W0 <- list.files("data/phydynR", pattern = 'mh20', full.names = TRUE)
 ## order
 list.W0 <- list.W0[order(nchar(list.W0), list.W0)]
 
-###--- analyses ---###
+####---- analyses ----
 ##- calculating outdegree
 ##- but first restrict to cohort 
+####---- time restriction ----
 thr_year <- Inf
 
-### list of outdegrees for m bootstrap
+####---- list of outdegrees ----
+if(FALSE){
+#### for m bootstrap
 ### function: input filename of W
 outdegree <- function(w.fn, t = thr_year){
   W <- readRDS(w.fn)
@@ -82,7 +69,8 @@ outdegree <- function(w.fn, t = thr_year){
 } 
 
 list.outdegree <- lapply(list.W0, outdegree)
-
+}
+####---- stop ----
 #  ## nb patients
 #  summary(sapply(list.outdegree, function(x) dim(x)[1] ))
 #  ## head
@@ -92,18 +80,15 @@ list.outdegree <- lapply(list.W0, outdegree)
 
 ###--- clusters ---###
 ## get cluster size for one threshold (say 2%) in parallel with outdegree before doing regressions
+####---- get cluster list ----
 l_bs_uk <- readRDS( file = "data/listUK_ucsd_clus.rds")
-# ## thr
-# thr_clus <- "0.02"
-# ## list of m bootstrap dataframe of cluster assignements
-# list.clus <- l_bs_uk[[thr_clus]]
-# str(list.clus[[1]])
+
+####---- prune ----
 
 ##- function to prune cluster according to a threshold of sampling time to control for cohort effect
 ##- recalculate size and cluster membership
 ## or use ydiag ? which is different (median diff # 2.5 years)
 ## depends on clustering algorithm ?
-
 
 prune.clus <- function(a, t = thr_year){
   ## subset df by sampling times
@@ -125,9 +110,28 @@ list.clus.pruned <- lapply(l_bs_uk, function(x){
   lapply(x, prune.clus)
 })
 
+####---- demo variables ----
+##- add individual explanatory variates
+##- selection of df covariates
+load("../phylo-uk/data/sub.RData")
+y <- df[,c("seqindex","patientindex", 
+           "dob_y", "agediag", "cd4", 
+           "ydiag", "CHICflag", "ethnicityid")]
 
+y$ethn.bin <- ifelse(y$ethnicityid == "White", "white", "not white")
+y$CHICflag <- ifelse(y$CHICflag == "Yes", 1, 0)
+y$ethnicityid <- NULL
+y <- unfactorDataFrame(y)
 
-### add demo variables
+## categorize continuous variables
+y$agecl <- sapply( y[ , "agediag"] , age2quantile )
+y$cd4cl <- sapply( y[ , "cd4"] , cd4toStage )
+head(y)
+rm(s, df)
+
+####---- add demo ----
+#### variables
+if(FALSE){
 cluster <- lapply(list.clus.pruned, function(u){
   lapply(u, function(x) {
     merge(x, y, 
@@ -141,16 +145,18 @@ od <- lapply(list.outdegree, function(x){
         by.x = "patient", by.y = "seqindex", 
         all.x = T, sort = FALSE)
 })
-
+}
+####---- load cluster and od ----
 ###- save and read
 # saveRDS(cluster, file = "data/list_cluster_uk_bs_thr_demo.rds")
 # saveRDS(od, file = "data/list_outdegree_uk_bs_demo.rds")
-# cluster <- readRDS(file = "data/list_cluster_uk_bs_thr_demo.rds")
-# od <- readRDS(file = "data/list_outdegree_uk_bs_demo.rds")
+cluster <- readRDS(file = "data/list_cluster_uk_bs_thr_demo.rds")
+od <- readRDS(file = "data/list_outdegree_uk_bs_demo.rds")
 
 list.total <- c("SA" = list(od), "Cluster" = cluster)
 names(list.total)
 
+####---- stop ----
 ##- difference between sampling time and time of diagnosis
 # both <- 
 #   merge(a, 
@@ -179,21 +185,44 @@ names(list.total)
 
 ##- downsample ?
 
-##- fn
+####---- fn ----
 source("test_fn_compare.reg.sum.bs.R")
-##- models
+compare.reg.bs
+
+####---- models ----
 model1 <- "y ~ factor(agecl)"
+model1c <- "y ~ scale(agediag)"
+model1i <- "y ~ factor(agecl) + factor(cd4cl)"
 model2 <- "y ~ factor(cd4cl)"
 model3 <- "y ~ factor(ethn.bin)"
 model4 <- "y ~ factor(CHICflag)"
-model5 <- "y ~ factor(agecl) + factor(cd4cl) + factor(CHICflag) + factor(agecl)*factor(cd4cl) + factor(CHICflag)*factor(cd4cl)"
+model5 <- "y ~ factor(agecl) + factor(cd4cl) + factor(agecl)*factor(cd4cl) "
 model6 <- "y ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn.bin) + factor(CHICflag)"
 
-test <- compare.reg.bs(ls = list.total, reg = lm, model = model1, alpha = 0.05)
-test2 <- compare.reg.bs(ls = list.total, reg = lm, model = model2, alpha = 0.05)
-test5 <- compare.reg.bs(ls = list.total, reg = lm, model = model5, alpha = 0.05)
-test6 <- compare.reg.bs(ls = list.total, reg = lm, model = model5, alpha = 0.05)
+####---- tests ----
 
+test1c <- compare.reg.bs(ls = list.total, reg = lm, model = model1c, alpha = 0.05)
+test2 <- compare.reg.bs(ls = list.total, reg = lm, model = model2, alpha = 0.05)
+
+####---- model age ----
+test <- compare.reg.bs(ls = list.total, reg = lm, model = model1, alpha = 0.05)
+test
+
+####---- model age cd4 ----
+test2 <- compare.reg.bs(ls = list.total, reg = lm, model = model1i, alpha = 0.05)
+test2
+
+
+####---- model continuous ----
+test6 <- compare.reg.bs(ls = list.total, reg = lm, model = model6, alpha = 0.05)
+test6
+
+####---- model factor ----
+test5 <- compare.reg.bs(ls = list.total, reg = lm, model = model5, alpha = 0.05)
+test5
+
+
+####---- end ----
 model5 <- "y ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn.bin) + factor(CHICflag)"
 model6 <- "y ~ factor(agecl) + factor(cd4cl) + factor(CHICflag) + factor(agecl)*factor(cd4cl) + factor(CHICflag)*factor(cd4cl)"
 models <- as.list(paste0("model", 1:5))
@@ -246,4 +275,4 @@ full.model = paste(y, model)
 ####---- logistic ----
 reg.sum.bs(ls = list(cluster), reg = glm, model = full.model, family = binomial(link = "logit"))
 table(cluster[[1]]$binclus)
-}
+

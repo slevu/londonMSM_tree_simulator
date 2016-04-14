@@ -16,8 +16,12 @@ library(phydynR)
 ####---- list of trees ----
  ##- list of lsd trees
  ## filename pattern from LSD changes with LSD version !
- # list.lsd.trees <- list.files(path = "data/LSD", pattern = "result.date", full.names = TRUE) # macbook
-   list.lsd.trees <- list.files(path = "data/LSD", pattern = "result_newick_date", full.names = TRUE)
+ if( any(grep("MacBook", Sys.info())) ){
+ list.lsd.trees <- list.files(path = "data/LSD", pattern = "result.date", full.names = TRUE)
+ } else {
+ list.lsd.trees <- list.files(path = "data/LSD", pattern = "result_newick_date", full.names = TRUE)
+ }
+   
 # head(list.lsd.trees)
 
 ####---- tree and sampleTImes ----

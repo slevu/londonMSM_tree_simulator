@@ -2,7 +2,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{booktabs}
-\usepackage{graphicx,subfig}
+%\usepackage{graphicx,subfig}
 
 
 \begin{document}
@@ -17,6 +17,7 @@
 <<external-code, echo=FALSE, cache= FALSE>>=
 library(knitr)
 read_chunk('SA_phydynr.R')
+read_chunk('regressions_uk.R')
 @
 
 <<setup, echo=FALSE>>=
@@ -50,17 +51,91 @@ SA function
 << SA function,  include = detail_knitr >>=
 @
 Save infector probability files
-<< loop SA,  include = detail_knitr >>=
+<< loop SA, include = detail_knitr >>=
 @
 
-<<external-code2, echo=FALSE, cache= FALSE>>=
-read_chunk('regressions_uk.R')
+
+
+\section*{Load and process patients variables, list of W, list of clusters}
+%' << include2  >>=
+%' @
+
+Get list of infector probs
+<< list of W, include = T >>=
 @
 
-\section*{Load and process patients variables}
-<< include2  >>=
+Set depth in time or cohort. Applied for both outdegree and cluster size determination 
+<< time restriction, include = detail_knitr >>=
 @
 
+Calculate outdegrees by bootstrap
+<< list of outdegrees, include = detail_knitr >>=
+@
+
+Get cluster list
+<< get cluster list, eval = FALSE >>=
+@
+
+Pruning: cluster size and membership are recomputed as time restriction exclude patients
+<< prune, include = detail_knitr >>=
+@
+
+Load patients variables
 << demo variables, include = detail_knitr  >>=
 @
+
+Load pre-computed list of clusters and outdegrees merged with patients variables
+<< add demo, include = detail_knitr >>=
+@
+
+<< load cluster and od, include = detail_knitr >>=
+@
+\section*{Regression models}
+
+Function to summarize regression results
+<< fn, include = detail_knitr >>=
+@
+
+List of models
+<< models, include = detail_knitr >>=
+@
+
+\subsection*{Age only}
+<< model age, include = detail_knitr >>=
+@
+Interpretation: 
+\begin{itemize}
+\item negative effect on both OD and cluster size (decrease with age)
+\item detected more frequently in cluster size at low thresholds
+\end{itemize}
+
+\subsection*{Adding CD4 to age}
+<< model age cd4, include = detail_knitr >>=
+@
+Interpretation: 
+\begin{itemize}
+\item Again, negative effect of age on both OD and cluster size
+\item Only effect detected for CD4 < 200 vs CD4 > 700, always significant for cluster size models and 31\% of SA model
+\end{itemize}
+
+\subsection*{Results of model with continuous age and CD4 + ethnicity and CHIC}
+<< model continuous, include = detail_knitr >>=
+@
+Interpretation: 
+\begin{itemize}
+\item No effect for ethnicity and CHIC, except for high cluster threshold where everything pops out ???
+\item CD4 is frequently associated with dependent variable, especially for cluster size
+\end{itemize}
+
+\subsection*{Results of model with factorized age and CD4 plus interactions}
+<< model factor, include = detail_knitr >>=
+@
+Interpretation: 
+\begin{itemize}
+\item R2 increased... a little
+\item cluster still see some effect of CD4 < 200
+\end{itemize}
+
+% tests
+
 \end{document}
