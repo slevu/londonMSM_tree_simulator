@@ -1,0 +1,53 @@
+---
+title: "Regressions on bootstrap UK trees - comparison SA vs Cluster"
+output: 
+  html_document:
+    fig_width: 6
+    fig_height: 6
+author: "Stephane"
+date: "14/4/2016"
+fontsize: 11pt
+geometry: margin=1in
+---
+
+
+* restrict or not to cohort of sampling 
+* add explanatory variables
+* categorize age and cd4
+* run model and tests
+
+```{r echo=FALSE}
+library(knitr) 
+opts_chunk$set(echo = FALSE, cache=FALSE)
+
+read_chunk("SA_phydynr.R")
+```
+
+
+Load the libraries and model code:
+# ```{r}
+#source("regressions_uk.R")
+#source("SA_phydynr.R")
+# ```
+### Calculating phydynR 
+```{bs tree to W}
+
+```
+
+
+## Some simple comparisons of infector probabilities by stage, age, risk level
+The total number of transmission events within-sample: 
+```{r}
+
+```
+
+
+## Summary
+
+* Out degree is increasing in age and stage, consistent with interpretation of out-degree as proportional to cumulative number of infections
+* These patterns need to be characterised in real data
+* Similar analyses need to be done using genetic-distance clustering; it will likely show opposite trends with respect to age and stage; sensitivity to detecting a difference in risk level needs to be characterised
+* Counterfactual simulations (equal rates) need to be done to assess false-positive inference of clustering and SA
+* Variation in transmission rates by stage is difficult to estimate using SA but Erik will continue to look into it
+* Similarly, also need to examine assortativity by age; this can be compared to true level of assortativity in simulations, and can characterise false positive rates for clustering & SA 
+

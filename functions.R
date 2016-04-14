@@ -584,3 +584,24 @@ unfactorDataFrame <- function( x ) {
 }
 
 ####---- end unfactor ----####
+
+####---- start age2quantile ----####
+age2quantile <- function(age){
+if (is.na(age)) return (NA)
+if (age < 27) return(1)
+if (age < 33) return(2)
+if (age < 40) return(3)
+return(4)
+}
+####----end age2quantile ----####
+
+####---- start cd4toStage ----####
+cd4toStage <- function(cd4){
+  if (is.na(cd4)) return(NA)
+  if (cd4 > 700 ) return(1) #based on .9 quantile
+  if (cd4 > 500 ) return(2)
+  if (cd4 > 350 ) return(3)
+  if (cd4 > 200 ) return(4)
+  return(5)
+}
+####---- end cd4toStage ----####

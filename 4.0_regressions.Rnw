@@ -1,0 +1,66 @@
+\documentclass[]{revtex4} %twocolumn revtex4
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{graphicx,subfig}
+
+
+\begin{document}
+
+\title{Regressions on bootstrap UK trees - Comparison SA vs Cluster}
+\author{S. Le Vu}
+%\affiliation{ICL}
+\date{\today}
+
+\maketitle
+
+<<external-code, echo=FALSE, cache= FALSE>>=
+library(knitr)
+read_chunk('SA_phydynr.R')
+@
+
+<<setup, echo=FALSE>>=
+opts_chunk$set(comment="", message=FALSE, tidy.opts=list(width.cutoff=120), options(width=100), fig.align='center',fig.height=6, fig.width=10, out.width='11cm',  fig.show='hold', fig.path='figure/plot')
+@
+
+<< include  >>=
+@
+
+<< lib, include = detail_knitr, warning = FALSE>>=
+@
+
+\begin{itemize}
+\item restrict or not to cohort of sampling 
+\item add explanatory variables
+\item categorize age and cd4
+\item run model and tests
+\end{itemize}
+
+\section*{Apply source attribution}
+List of dated bootstrap trees from LSD
+<< list of trees,  include = detail_knitr >>=
+@
+Get CD4s and sample times
+<< tree and sampleTImes,  include = detail_knitr >>=
+@
+Parameter for phydynR (todo range of incidence / prevalence)
+<< params phydynR,  include = detail_knitr >>=
+@
+SA function
+<< SA function,  include = detail_knitr >>=
+@
+Save infector probability files
+<< loop SA,  include = detail_knitr >>=
+@
+
+<<external-code2, echo=FALSE, cache= FALSE>>=
+read_chunk('regressions_uk.R')
+@
+
+\section*{Load and process patients variables}
+<< include2  >>=
+@
+
+<< demo variables, include = detail_knitr  >>=
+@
+\end{document}

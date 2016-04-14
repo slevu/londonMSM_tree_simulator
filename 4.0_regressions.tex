@@ -1,0 +1,237 @@
+\documentclass[]{revtex4}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt} %twocolumn revtex4
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{graphicx,subfig}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+
+\title{Regressions on bootstrap UK trees - Comparison SA vs Cluster}
+\author{S. Le Vu}
+%\affiliation{ICL}
+\date{\today}
+
+\maketitle
+
+
+
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{detail_knitr} \hlkwb{<-} \hlnum{TRUE}
+\hlkwd{source}\hlstd{(}\hlstr{"functions.R"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(ape)}
+\hlkwd{library}\hlstd{(phydynR)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\begin{itemize}
+\item restrict or not to cohort of sampling 
+\item add explanatory variables
+\item categorize age and cd4
+\item run model and tests
+\end{itemize}
+
+\section*{Apply source attribution}
+List of dated bootstrap trees from LSD
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+ \hlcom{##- list of lsd trees}
+ \hlcom{## filename pattern from LSD changes with LSD version !}
+ \hlcom{# list.lsd.trees <- list.files(path = "data/LSD", pattern = "result.date", full.names = TRUE) # macbook}
+   \hlstd{list.lsd.trees} \hlkwb{<-} \hlkwd{list.files}\hlstd{(}\hlkwc{path} \hlstd{=} \hlstr{"data/LSD"}\hlstd{,} \hlkwc{pattern} \hlstd{=} \hlstr{"result_newick_date"}\hlstd{,} \hlkwc{full.names} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\hlcom{# head(list.lsd.trees)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+Get CD4s and sample times
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+ \hlcom{##- read first LSD tree to name }
+ \hlcom{##- sampling times and CD4s with tip.labels}
+ \hlstd{t} \hlkwb{<-} \hlkwd{read.tree}\hlstd{( list.lsd.trees[}\hlnum{2}\hlstd{] )}
+\hlcom{# str(t)}
+ \hlstd{STFN} \hlkwb{<-} \hlstr{"data/LSD/t000.dates"}
+
+ \hlcom{##- CD4 values}
+ \hlkwd{load}\hlstd{(}\hlstr{"../phylo-uk/data/sub.RData"}\hlstd{)}
+ \hlkwd{rm}\hlstd{(s)}
+ \hlcom{## selection of df covariates}
+\hlcom{# names(df)}
+ \hlstd{cd4s} \hlkwb{<-} \hlkwd{setNames}\hlstd{(df}\hlopt{$}\hlstd{cd4, df}\hlopt{$}\hlstd{seqindex)[t}\hlopt{$}\hlstd{tip.label]}
+ \hlkwd{head}\hlstd{(cd4s)}
+\end{alltt}
+\begin{verbatim}
+76516 21242 50954 21837 26093  2432 
+  410   214  1140   166   178   514 
+\end{verbatim}
+\begin{alltt}
+ \hlcom{##- sampling times}
+ \hlstd{dates} \hlkwb{<-}\hlstd{(} \hlkwd{read.table}\hlstd{(STFN,} \hlkwc{skip}\hlstd{=}\hlnum{1}\hlstd{,}
+                      \hlkwc{colClasses}\hlstd{=}\hlkwd{c}\hlstd{(}\hlstr{'character'}\hlstd{,} \hlstr{'numeric'}\hlstd{) ) )}
+\hlcom{# head(dates)}
+ \hlcom{##- named vector}
+ \hlstd{sampleTimes} \hlkwb{<-} \hlkwd{setNames}\hlstd{( dates[,}\hlnum{2}\hlstd{], dates[,}\hlnum{1}\hlstd{] )[t}\hlopt{$}\hlstd{tip.label]}
+ \hlkwd{head}\hlstd{(sampleTimes)}
+\end{alltt}
+\begin{verbatim}
+   76516    21242    50954    21837    26093     2432 
+2007.953 2003.036 2009.458 2005.786 2002.616 2013.959 
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+Parameter for phydynR (todo range of incidence / prevalence)
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+ \hlcom{##- Maximum height}
+ \hlstd{MH} \hlkwb{<-} \hlnum{20}
+ \hlcom{##- incidence, prevalence: central scenario # todo: range of values}
+ \hlcom{## Yin et al. 2014: 2,820 (95% CrI 1,660-4,780)}
+ \hlstd{newinf} \hlkwb{<-} \hlnum{2500} \hlcom{# c(1660, 4780)}
+ \hlstd{plwhiv} \hlkwb{<-} \hlnum{43150} \hlopt{/} \hlnum{2} \hlcom{# c(43510 / 2, 43510 / 1.5) }
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+SA function
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{sa} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{lsd_tree}\hlstd{)\{}
+  \hlstd{W} \hlkwb{<-} \hlkwd{phylo.source.attribution.hiv}\hlstd{( lsd_tree,}
+          \hlstd{sampleTimes,} \hlcom{# years}
+          \hlkwc{cd4s} \hlstd{= cd4s,}
+          \hlkwc{ehi} \hlstd{=} \hlnum{NA}\hlstd{,}
+          \hlkwc{numberPeopleLivingWithHIV} \hlstd{= plwhiv,}
+          \hlkwc{numberNewInfectionsPerYear} \hlstd{= newinf,}
+          \hlkwc{maxHeight} \hlstd{= MH,}
+          \hlkwc{res} \hlstd{=} \hlnum{1e3}\hlstd{,}
+          \hlkwc{treeErrorTol} \hlstd{=} \hlnum{Inf}\hlstd{)}
+  \hlkwd{return}\hlstd{(W)}
+\hlstd{\}}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+Save infector probability files
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwa{for} \hlstd{(i} \hlkwa{in} \hlnum{1}\hlopt{:}\hlkwd{length}\hlstd{(list.lsd.trees))\{}
+  \hlstd{w.fn} \hlkwb{<-} \hlkwd{paste}\hlstd{(}\hlstr{"data/phydynR/W0_uk_mh"}\hlstd{, MH,} \hlstr{"_"}\hlstd{,  i,} \hlstr{".rds"}\hlstd{,} \hlkwc{sep} \hlstd{=} \hlstr{''}\hlstd{)}
+  \hlkwa{if}\hlstd{(}\hlopt{!}\hlkwd{file.exists}\hlstd{(w.fn))\{}
+    \hlstd{tree} \hlkwb{<-} \hlkwd{read.tree}\hlstd{(}\hlkwc{file} \hlstd{= list.lsd.trees[i])}
+    \hlstd{W} \hlkwb{<-} \hlkwd{sa}\hlstd{(}\hlkwc{lsd_tree} \hlstd{= tree)}
+    \hlkwd{saveRDS}\hlstd{(W,} \hlkwc{file} \hlstd{= w.fn )}
+  \hlstd{\}}
+\hlstd{\}}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+
+\section*{Load and process patients variables}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{detail_knitr} \hlkwb{<-} \hlnum{TRUE}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{##- add individual explanatory variates}
+\hlcom{##- selection of df covariates}
+\hlkwd{load}\hlstd{(}\hlstr{"../phylo-uk/data/sub.RData"}\hlstd{)}
+\hlstd{y} \hlkwb{<-} \hlstd{df[,}\hlkwd{c}\hlstd{(}\hlstr{"seqindex"}\hlstd{,}\hlstr{"patientindex"}\hlstd{,}
+           \hlstr{"dob_y"}\hlstd{,} \hlstr{"agediag"}\hlstd{,} \hlstr{"cd4"}\hlstd{,}
+           \hlstr{"ydiag"}\hlstd{,} \hlstr{"CHICflag"}\hlstd{,} \hlstr{"ethnicityid"}\hlstd{)]}
+
+\hlstd{y}\hlopt{$}\hlstd{ethn.bin} \hlkwb{<-} \hlkwd{ifelse}\hlstd{(y}\hlopt{$}\hlstd{ethnicityid} \hlopt{==} \hlstr{"White"}\hlstd{,} \hlstr{"white"}\hlstd{,} \hlstr{"not white"}\hlstd{)}
+\hlstd{y}\hlopt{$}\hlstd{CHICflag} \hlkwb{<-} \hlkwd{ifelse}\hlstd{(y}\hlopt{$}\hlstd{CHICflag} \hlopt{==} \hlstr{"Yes"}\hlstd{,} \hlnum{1}\hlstd{,} \hlnum{0}\hlstd{)}
+\hlstd{y}\hlopt{$}\hlstd{ethnicityid} \hlkwb{<-} \hlkwa{NULL}
+\hlstd{y} \hlkwb{<-} \hlkwd{unfactorDataFrame}\hlstd{(y)}
+
+\hlcom{## categorize continuous variables}
+\hlstd{y}\hlopt{$}\hlstd{agecl} \hlkwb{<-} \hlkwd{sapply}\hlstd{( y[ ,} \hlstr{"agediag"}\hlstd{] , age2quantile )}
+\hlstd{y}\hlopt{$}\hlstd{cd4cl} \hlkwb{<-} \hlkwd{sapply}\hlstd{( y[ ,} \hlstr{"cd4"}\hlstd{] , cd4toStage )}
+\hlkwd{head}\hlstd{(y)}
+\end{alltt}
+\begin{verbatim}
+  seqindex patientindex dob_y agediag cd4 ydiag CHICflag  ethn.bin agecl cd4cl
+1    88183            1  1969      27 950  1996        1 not white     2     1
+2    56250            2  1955      NA  NA    NA        0 not white    NA    NA
+3    41484            3  1977      30 497  2007        1     white     2     3
+4    83458            4  1963      32 160  1995        0     white     2     5
+5    52521            5  1961      NA  NA    NA        0 not white    NA    NA
+6    33345            6  1958      32 256  1990        1     white     2     4
+\end{verbatim}
+\begin{alltt}
+\hlkwd{rm}\hlstd{(s, df)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+\end{document}
