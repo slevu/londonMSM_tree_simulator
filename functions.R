@@ -1,9 +1,9 @@
 ###--- Functions ---###
 ### used for LondonMSM_tree_simulator
 
-######################################
-####---- Start TreeToEdgeList ----####
-######################################
+#--------------------------------#
+###--- Start TreeToEdgeList ---###
+#--------------------------------#
 ##-----------------------------------------##
 ####---- function converting timed tree
 ####---- in edge list of pairwise distances 
@@ -91,19 +91,19 @@ TreeToEdgeList <- function(t, name.output = NA, rate = 1, seqlength = NA,
     return(out_edge_list)
   }
 } 
-####################################
-####---- End TreeToEdgeList ----####
-####################################
+#------------------------------#
+###--- End TreeToEdgeList ---###
+#------------------------------#
 
 
-#####################################
-####---- Start ucsd_hivclust ----####
-#####################################
+#-------------------------------#
+###--- Start ucsd_hivclust ---###
+#-------------------------------#
 ##----------------------------##
-####--- Apply UCSD
-####--- HIV clustering
-####--- to a dataframe of 
-####--- pairwise distances 
+###--- Apply UCSD
+###--- HIV clustering
+###--- to a dataframe of 
+###--- pairwise distances 
 ##----------------------------##
 
 ###- input: path to RDS file of edge list
@@ -204,14 +204,14 @@ ucsd_hivclust <- function(path.el, thr = NA, k = NA, out = "", quant = c(5e-5, 1
   
   return(list(qt = qt, cmd = cmd, warn = warn, cl = cl))
 }
-###################################
-####---- End ucsd_hivclust ----####
-###################################
+#-----------------------------#
+###--- End ucsd_hivclust ---###
+#-----------------------------#
 
 
-###############################
-####---- Start reg.sum ----####
-###############################
+#-------------------------#
+###--- Start reg.sum ---###
+#-------------------------#
 ###-- Summary results for both
 ### linear and logistic regression
 ### return only parameters, p-values and R squared
@@ -247,16 +247,16 @@ reg.sum <- function(ls, reg, model, ...){
     return(list("model" = model, "parameter" = param, "pvalue" = pvalue.code))
   }
 }
-#############################
-####---- End reg.sum ----####
-#############################
+#-----------------------#
+###--- End reg.sum ---###
+#-----------------------#
 
 
-#####################################
-####---- Start size.vs.covar ----####
-#####################################
+#-------------------------------#
+###--- Start size.vs.covar ---###
+#-------------------------------#
 
-####---- plot correlation ----
+###--- plot correlation ---
 #### input: list of
 #### df containing indepvar and depvar
 size.vs.covar <- function(l, depvar = "size",
@@ -277,16 +277,16 @@ size.vs.covar <- function(l, depvar = "size",
 
 # size.vs.covar(down)
 # dev.off()
-###################################
-####---- End size.vs.covar ----####
-###################################
+#-----------------------------#
+###--- End size.vs.covar ---###
+#-----------------------------#
 
 ### From phylo-uk
 #---- functions ----#
 
-#-------------------#
-####---- EdgeList----
-#-------------------#
+#------------------#
+###--- EdgeList ---
+#------------------#
 ## calculate edge list matrix (2 columns)
 ## from cluster assignement: vector of cluster number with ID as names
 
@@ -313,9 +313,12 @@ EdgeList <- function(x) {
   el <- el[order( c(el[, "from"])), ]
   return(el)
 }
+#------------------------#
+###--- End EdgeList ---###
+#------------------------#
 
 #-------------------#
-####---- AssortMix ----
+###--- AssortMix ---
 #-------------------#
 ## function to 
 ## match seqindex with patientindex from list of both
@@ -575,7 +578,7 @@ reg.sum.bs <- function(ls, reg, model, alpha = 0.05, ...){
 ##-- end regression bootstrap ---
 #--------------------------------#
 
-#####---- unfactor ----####
+###--- unfactor ---###
 unfactorDataFrame <- function( x ) {
   x <- data.frame( lapply(x, as.character), stringsAsFactors = FALSE)
   x <- data.frame( lapply(x, type.convert, as.is = TRUE),
@@ -583,9 +586,9 @@ unfactorDataFrame <- function( x ) {
   return(x)
 }
 
-####---- end unfactor ----####
+###--- end unfactor ---###
 
-####---- start age2quantile ----####
+###--- start age2quantile ---###
 age2quantile <- function(age){
 if (is.na(age)) return (NA)
 if (age < 27) return(1)
@@ -593,9 +596,9 @@ if (age < 33) return(2)
 if (age < 40) return(3)
 return(4)
 }
-####----end age2quantile ----####
+###---end age2quantile ---###
 
-####---- start cd4toStage ----####
+###--- start cd4toStage ---###
 cd4toStage <- function(cd4){
   if (is.na(cd4)) return(NA)
   if (cd4 > 700 ) return(1) #based on .9 quantile
@@ -604,4 +607,4 @@ cd4toStage <- function(cd4){
   if (cd4 > 200 ) return(4)
   return(5)
 }
-####---- end cd4toStage ----####
+###--- end cd4toStage ---###
