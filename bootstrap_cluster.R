@@ -71,7 +71,7 @@ lel <- .b[grep("_el", .b)] # list of edge list
 # lel <- lel[15:16] # test
 
 # i <- 4  # tree
-thresholds  <-  c(0.005, 0.01, 0.02, 0.05, 0.1) 
+thresholds  <-  c(0.005, 0.015) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
 k <- max(thresholds) # limit of distance considered
 
 if(FALSE){
@@ -103,7 +103,7 @@ if(FALSE){
   # m <- 1
   
   ## Structure threshold > trees
-  thresholds <- c("0.01", "0.02", "0.05") ## for now !
+  thresholds <- c("0.005", "0.015", "0.02", "0.05") # c("0.01", "0.02", "0.05") ## for now !
   ## empty list of 3 thresholds
   cl2 <- vector("list", length(thresholds))
   ## loop
@@ -120,7 +120,7 @@ if(FALSE){
     names(cl2)[m] <- thresholds[m]
   }
   
-  names(cl2[[1]]) 
+ # names(cl2[[1]]) 
   
 # saveRDS(cl2, file = "data/ucsd_results/list.hivclust.rds")
 
@@ -234,16 +234,18 @@ if(FALSE){
   
   l_bs_uk <- lapply(cl2, function(x) clust.stats(clus = x, tree = list.of.trees[[1]] ))
   names(cl2)
+  names(l_bs_uk)
   names( l_bs_uk[[1]][[1]] )
   length(l_bs_uk[[1]])
   ####---- saved listUKclus ----
   # saveRDS(l_bs_uk, file = "data/listUK_ucsd_clus.rds")
   l_bs_uk <- readRDS( file = "data/listUK_ucsd_clus.rds")
-  
+}  
   ## convert to data.frame ???
   # http://stackoverflow.com/questions/4512465/what-is-the-most-efficient-way-to-cast-a-list-as-a-data-frame
   # http://stackoverflow.com/questions/26193028/r-converting-nested-list-to-dataframe-and-get-names-of-list-levels-als-factors
   
+if(FALSE){
   ##- add demo outcome: stage of infection, treatment status, age group, CHIC or not
   load("../phylo-uk/data/sub.RData")
   rm(s)
@@ -253,7 +255,7 @@ if(FALSE){
   
   y <- df[,c("seqindex","patientindex",  
              "agediag", "cd4", "ydiag", "CHICflag", "onartflag",
-             "status", "ethnicityid")]
+             "status", "ethnicityid", "ritarecent")]
   
   ### recode ethnicity as character
   # table(y$ethnicityid, useNA = "ifany")
@@ -267,7 +269,7 @@ if(FALSE){
   
   # table(y$ethnicityid, y$ethn)
   # head(y)
-   y <- y[, c(1:6, 10)]
+  # y <- y[, c(1:6, 10)]
    str(y)
    # table(y$CHICflag, useNA="ifany")
    
@@ -277,23 +279,18 @@ if(FALSE){
                     all.x = T, sort = FALSE)
       })
   })
-   
-}
-  
+ 
+
 ####---- saved listUKclus ----
 # saveRDS(listUKclus, file = "data/listUKclus.rds")
 listUKclus <- readRDS( file = "data/listUKclus.rds")
 ####---- stop ----
-
+}
 
 
 
 ###--- stats cluster ---###
-
-names(listUKclus)
-x <- listUKclus[[1]][[2]]
-summary(x$size)
-str(x)
+# listUKclus <- l_bs_uk ## without patients data
 
 ####---- n clusters 2 ----
 ## number of different clusters (counting size 1)
@@ -399,7 +396,7 @@ reg.sum.bs <- function(ls, reg, model, alpha = 0.05, ...){
 ###--- end function 
 
 
-# lm_model_uk = "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn) + factor(CHICflag)"
+# lm_model_uk = "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn.bin) + factor(CHICflag)"
  logit_model_uk = "binclus ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn.bin) + factor(CHICflag)"
 # ## example
 # coef(summary(lm(lm_model_uk, data = listUKclus[[1]][[1]])))

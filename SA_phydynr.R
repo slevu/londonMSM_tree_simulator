@@ -1,7 +1,7 @@
-#########################################################
+#--------------------------------------------------------#
 ###--- use SA method from phydynR on UK bootstrap trees
 ###--- dated with LSD
-#########################################################
+#--------------------------------------------------------#
 
 # rm(list=ls())
 
@@ -36,8 +36,17 @@ library(phydynR)
  rm(s)
  ## selection of df covariates
 # names(df)
+ ##- CD4
  cd4s <- setNames(df$cd4, df$seqindex)[t$tip.label]
  head(cd4s)
+ 
+ ##- RITA recent as EHI
+ table(df$ritarecent)
+ rita <- setNames(ifelse(df$ritarecent == "Recent", TRUE, FALSE), 
+                  df$seqindex)[t$tip.label]
+ # head(rita) 
+ ## number of RITA recent in our sample
+ sum(rita)
  
  ##- sampling times
  dates <-( read.table(STFN, skip=1, 
@@ -60,7 +69,7 @@ sa <- function(lsd_tree){
   W <- phylo.source.attribution.hiv( lsd_tree, 
           sampleTimes, # years
           cd4s = cd4s, 
-          ehi = NA, 
+          ehi = rita, # NA, 
           numberPeopleLivingWithHIV = plwhiv, 
           numberNewInfectionsPerYear = newinf, 
           maxHeight = MH,
@@ -70,13 +79,14 @@ sa <- function(lsd_tree){
 }
 
 ####---- loop SA ----
+st <- system.time(
 for (i in 1:length(list.lsd.trees)){
-  w.fn <- paste("data/phydynR/W0_uk_mh", MH, "_",  i, ".rds", sep = '')
+  w.fn <- paste("data/phydynR/W0_uk_mh", MH, "_", "rita_",  i, ".rds", sep = '')
   if(!file.exists(w.fn)){
     tree <- read.tree(file = list.lsd.trees[i])
     W <- sa(lsd_tree = tree)
     saveRDS(W, file = w.fn )
   }
 }
-
+) # 1:47
 ####---- end ----
