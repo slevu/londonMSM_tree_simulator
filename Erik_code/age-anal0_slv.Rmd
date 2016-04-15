@@ -1,11 +1,8 @@
 ---
 title: "Characterising Age assortativity using SA and clustering"
-output: 
-  html_document:
-    fig_width: 6
-    fig_height: 6
-author: "Erik Volz"
-date: "April 4, 2016"
+output: html_document
+fig_width: 6
+fig_height: 6
 ---
 
 In this report:
@@ -80,7 +77,7 @@ fn2ageMatrix_table <- function(fn)
 	
 	#load distance mat
 	.dfn <-  strsplit( fn, '/' )[[1]]
-	dfn <- paste( sep='/', "data", paste(sep='-', .dfn[2], 'distances'), .dfn[3])
+	dfn <- paste( sep='/', .dfn[1], .dfn[2], paste(sep='-', .dfn[3], 'distances'), .dfn[4]) # local path
 	load(dfn) #D
 	DD <- D
 	D1 <- daytree$tip.label[ D[1,] ]
@@ -230,9 +227,9 @@ Finally, since many clustering studies have found an association between age and
 	print('Clustering neighborhood size R2:')
 	print(summary( nbrhood_R2 ))
 	print ('proportion of p values for SA out degree that reach significance')
-	print( mean ( sa_R2  < .05 ))
+	print( mean ( sa_age_ps  < .05 ))
 	print ('proportion of p values for clustering neighborhood size that reach significance')
-	print( mean ( nbrhood_R2  < .05 ))
+	print( mean ( nbrhood_age_ps  < .05 ))
 ```
 
 ## Conclusions
