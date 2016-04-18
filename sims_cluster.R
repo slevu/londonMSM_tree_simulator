@@ -16,23 +16,6 @@ distEqualFNS <- list.files('RData', full.names=T,
 distBaselineFNS <- list.files('RData', full.names=T,
                               path = 'data/simulations/model0-simulateBaseline0-distances')
 
-head(distBaselineFNS,3)
-load(distBaselineFNS[1])
-str(D)
-dd <- as.data.frame(t(D))
-
-names(dd) <- c('ID1', 'ID2', 'distance')
-head(dd)
-
-saveRDS(dd, file = paste(tempdir(), "/el.rds", sep = "") )
-##- ucsd hivclust
-test <- ucsd_hivclust(path.el = paste(tempdir(), "/el.rds", sep = ""),
-              thr = 0.015, 
-              k = 0.015, 
-              out = "data/sim_ucsd_results/" )
-c <- read.csv("data/sim_ucsd_results/d_ucsd_hivclust_output_0.015.csv")
-head(c)
-### llllaaaaaaa
 }
 
 
@@ -41,39 +24,46 @@ head(c)
 ####---- ucsd clustering ----####
 # ucsd_hivclust
 
-.b <- list.files("data/bootstrap/")
-lel <- .b[grep("_el", .b)] # list of edge list
-# lel <- lel[15:16] # test
-
-# i <- 4  # tree
-thresholds  <-  c(0.005, 0.015) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
-k <- max(thresholds) # limit of distance considered
+thresholds  <-  c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
+tmax <- max(thresholds) # limit of distance considered
 
 if(FALSE){
-## function  
-  ucsd <- function(i){
-    bs_clus <- ucsd_hivclust(path.el = paste( "data/bootstrap/",
-                                                  lel[i], 
-                                                  sep = '' ),
-                             thr = thresholds, 
-                             k = k, 
-                             out = "data/ucsd_results/" )
-    return(bs_clus)
-  }
+## function: input list of dist filenames
+  ucsd <- function(ldist){
+    
+    for (i in 1:length(ldist)){
+    ##- some processing
+    load(ldist[i])
+    name.sim <- substr(ldist[i], regexec(".RData", ldist[i])[[1]][1] - 5, regexec(".RData", ldist[i])[[1]][1] -1)
+    folder.sim <- substr(ldist[i], regexec("-simulate", ldist[i])[[1]][1] + 9, regexec("-distances", ldist[i])[[1]][1] -1)
+    dd <- as.data.frame(t(D))
+    names(dd) <- c('ID1', 'ID2', 'distance')
+    ##- temp el
+    temp.el.fn <- paste(tempdir(), "/", name.sim, "_el.rds", sep = '')
+    saveRDS(dd, file = temp.el.fn )
+    ##- ucsd hivclust
+    ucsd_hivclust(path.el = temp.el.fn,
+                          thr = thresholds, 
+                          k = tmax, 
+                          out = paste("data/sim_ucsd_results/", folder.sim, '/', sep = '' ) )
+    }
+  } 
   
-## empty list
-  bs_clus <- vector("list", length(lel) )
-## apply  
-  system.time(
-    bs_clus <- lapply(seq_along(lel), ucsd) 
-  ) # 25 min
+  lapply(distBaselineFNS, ucsd)
+  lapply(distEqualFNS, ucsd)
 }
-# i=1
+###--- lllllllllllaaaaa
+### ranger Baseline et Equal rate separement
 
+
+
+    c <- read.csv("data/sim_ucsd_results/d_ucsd_hivclust_output_0.015.csv")
+    head(c)
+    
 ####---- list.hivclust ----
 ###  get csv of clusters assignments in one list ###
   # getwd()
-  path.csv <- "data/ucsd_results/"
+  path.csv <- "data/sim_ucsd_results/"
   list.csv <- list.files(path.csv)
   # m <- 1
   
@@ -97,10 +87,10 @@ if(FALSE){
   
  # names(cl2[[1]]) 
   
-# saveRDS(cl2, file = "data/ucsd_results/list.hivclust.rds")
+# saveRDS(cl2, file = "data/sim_ucsd_results/list.hivclust.sim.rds")
 
 ####---- load list.hivclust ----
-cl2 <- readRDS( file = "data/ucsd_results/list.hivclust.rds" )
+cl2 <- readRDS( file = "data/sim_ucsd_results/list.hivclust.sim.rds" )
 
 ####---- stats1 ----
   ###--- stats clusters without pseudo cluster size 1 ---###
