@@ -6,35 +6,42 @@ source("functions.R")
 ####---- lib ----
 library(ape)
 
+####---- scenario ----
+scenario <- c("EqualStage0", "Baseline0")
+
+####--- list.trees ----
+list.sims <- vector("list", length(scenario))
+for (s in 1:length(scenario)){
+  list.sims[[s]] <- list.files('RData', full.names = TRUE, 
+             path = paste('data/simulations/model0-simulate', 
+                          scenario[s], sep = '') )
+  names(list.sims)[s] <- scenario[s]
+}
+str(list.sims)
+
 ####---- list.dist ----
 #### load list of dist from sims
 if(TRUE){
-
-distEqualFNS <- list.files('RData', full.names=T, 
+distEqualStage0FNS <- list.files('RData', full.names=T, 
                            path = 'data/simulations/model0-simulateEqualStage0-distances')
-                           
-distBaselineFNS <- list.files('RData', full.names=T,
+distBaseline0FNS <- list.files('RData', full.names=T,
                               path = 'data/simulations/model0-simulateBaseline0-distances')
-
 }
-
-
-
 
 ####---- ucsd clustering ----####
 # ucsd_hivclust
-
-thresholds  <-  c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
-tmax <- max(thresholds) # limit of distance considered
-
 if(FALSE){
+  thresholds  <-  c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
+  tmax <- max(thresholds) # limit of distance considered
 ## function: input list of dist filenames
   ucsd <- function(ldist){
     
     for (i in 1:length(ldist)){
     ##- some processing
     load(ldist[i])
-    name.sim <- substr(ldist[i], regexec(".RData", ldist[i])[[1]][1] - 5, regexec(".RData", ldist[i])[[1]][1] -1)
+    name.sim <- substr(ldist[i], 
+                       regexec(".RData",ldist[i])[[1]][1] - 5, 
+                       regexec(".RData", ldist[i])[[1]][1] -1)
     folder.sim <- substr(ldist[i], regexec("-simulate", ldist[i])[[1]][1] + 9, regexec("-distances", ldist[i])[[1]][1] -1)
     dd <- as.data.frame(t(D))
     names(dd) <- c('ID1', 'ID2', 'distance')
@@ -49,110 +56,92 @@ if(FALSE){
     }
   } 
   
-  lapply(distBaselineFNS, ucsd)
-  lapply(distEqualFNS, ucsd)
+  lapply(distBaseline0FNS, ucsd)
+  lapply(distEqualStage0FNS, ucsd)
 }
-###--- lllllllllllaaaaa
-### ranger Baseline et Equal rate separement
 
-
-
-    c <- read.csv("data/sim_ucsd_results/d_ucsd_hivclust_output_0.015.csv")
-    head(c)
     
 ####---- list.hivclust ----
 ###  get csv of clusters assignments in one list ###
   # getwd()
-  path.csv <- "data/sim_ucsd_results/"
-  list.csv <- list.files(path.csv)
-  # m <- 1
-  
+csvEqualStage0FNS <- list.files("csv", full.names=T, 
+                          path = 'data/sim_ucsd_results/EqualStage0')
+csvBaseline0FNS <- list.files("csv", full.names=T, 
+                          path = 'data/sim_ucsd_results/Baseline0')
+##- function n = 1; m = 1
+list.hivclust <- function(list.csv){
   ## Structure threshold > trees
-  thresholds <- c("0.005", "0.015", "0.02", "0.05") # c("0.01", "0.02", "0.05") ## for now !
-  ## empty list of 3 thresholds
+  thresholds <- c("0.005", "0.015", "0.02", "0.05") # c("0.01", "0.02", "0.05")
+  ## empty list of thresholds
   cl2 <- vector("list", length(thresholds))
   ## loop
-  for (m in 1:length(thresholds) ){ # index of thr
-    ## vector of csv at different tree for one thr
-    filenames <- list.csv[grep(thresholds[m], list.csv)]
-    ## empty list of different trees
-    t <- vector("list", length(filenames))
-    for (n in 1:length(filenames) ){ # index of trees
-      t[[n]] <- read.csv( paste(path.csv, filenames[n], sep = '') )
-      names(t)[n] <- num[n]
+    for (m in 1:length(thresholds) ){ # index of thr
+     ## vector of csv at different tree for one thr
+      filenames <- list.csv[grep(thresholds[m], list.csv)]
+      ## empty list of different trees
+      t <- vector("list", length(filenames))
+      for (n in 1:length(filenames) ){ # index of trees
+        t[[n]] <- read.csv( filenames[n] )
+        names(t)[n] <- substr(filenames[n], 
+                              regexec("/d", filenames[n])[[1]][1] + 2,
+                              regexec("_ucsd_hivclust_output", filenames[n])[[1]][1] -1)
+      }
+      cl2[[m]] <- t
+      names(cl2)[m] <- thresholds[m]
     }
-    cl2[[m]] <- t
-    names(cl2)[m] <- thresholds[m]
+return(cl2)
   }
   
- # names(cl2[[1]]) 
+  cl_Baseline0 <- list.hivclust(list.csv = csvBaseline0FNS )
+  cl_EqualStage0 <- list.hivclust(list.csv = csvEqualStage0FNS )
+ # names(cl_EqualStage0[[1]]) 
+  # str(cl_Baseline0[[1]][1])
   
-# saveRDS(cl2, file = "data/sim_ucsd_results/list.hivclust.sim.rds")
+# saveRDS(cl_Baseline0, file = "data/sim_ucsd_results/list.hivclust.sim.Baseline0.rds")
+# saveRDS(cl_EqualStage0, file = "data/sim_ucsd_results/list.hivclust.sim.EqualStage0.rds")
 
 ####---- load list.hivclust ----
-cl2 <- readRDS( file = "data/sim_ucsd_results/list.hivclust.sim.rds" )
-
-####---- stats1 ----
-  ###--- stats clusters without pseudo cluster size 1 ---###
+  cl_Baseline0 <- readRDS( file = "data/sim_ucsd_results/list.hivclust.sim.Baseline0.rds" )
+  cl_EqualStage0 <- readRDS( file = "data/sim_ucsd_results/list.hivclust.sim.EqualStage0.rds" )
   
-  ## Size (=Freq) of each cluster
-  aa <- lapply(cl2, function(x){
-    lapply(x,
-         function(x) as.data.frame(table(x$ClusterID),
-                                   stringAsFactors = FALSE) )
-  })
-  names(aa)
-
-####---- n clusters ----    
-  ## number of different cluster of size > 1
-  sapply(aa, function(x){
-    summary(sapply(x, function(x) dim(x)[1]))
-  })
-  
-####---- mean size ----  
-  ## stats of mean size
-  sapply(aa, function(x){
-    summary(sapply(x, function(x) mean(x$Freq)))
-  })
-
-####---- max size ----   
-  ## stats of max size
-  sapply(aa, function(x){
-    summary(sapply(x, function(x) max(x$Freq)))
-  })
-  
-####---- plots size ----####
-  ## mean cluster size > 1
-  par(mfrow = c(2,3))
-  for (i in 1:length(aa) ) {
-    hist(sapply(aa[[i]], function(x) mean(x$Freq)), 
-         main = names(aa)[i], 
-         xlab = "mean cluster size" )
-  }
-  ## max cluster size > 1
-  for (i in 1:length(aa) ) {
-    hist(sapply(aa[[i]], function(x) max(x$Freq)), 
-         main = names(aa)[i], 
-         xlab = "max cluster size" )
-  }
-  dev.off()
-
+####---- heleper functions ----
+  deme2age <- function(deme){ as.numeric(
+    substr(regmatches( deme , regexpr( '\\.age[0-9]', deme ) ), 5, 5) 
+  ) }
+  deme2stage <- function(deme){as.numeric( 
+    substr(regmatches( deme , regexpr( 'stage[0-9]', deme )), 6, 6)
+  ) }
+  deme2risk <- function(deme){as.numeric( 
+    substr(regmatches( deme , regexpr( 'riskLevel[0-9]', deme )), 10, 10)
+  ) }
+  deme2care <- function(deme){as.numeric( 
+    substr(regmatches( deme , regexpr( 'care[0-9]', deme )), 5, 5)
+  ) }
   
   
-  ####---- clust.stats ----
+####---- clust.stats ----
 if(FALSE){
  
   ### --- start function clust.stats --- ###
   ##- calculate both numclus and sizeclus for each seqindex into a LIST
   ##- with same variable names
+  ##- comprises demes states
   ##- For UCSD files, no ID if no cluster (size < 2) !
-# clus=cl2[[1]]; i=1; tree = list.of.trees[[1]] ; str(clus[[1]])
+# clus=cl2[[1]]; i=1; tree = load(list.trees[["Baseline0"]][1]) ; str(clus[[1]])
 
-  clust.stats <- function(clus = simclus, tree = simtree){
+  
+  clust.stats <- function(clus, sim){
     
-    ## get ALL tips names
-    tip.names <- data.frame("id" = tree$tip.label , 
-                            stringsAsFactors = F)
+    load(sim)
+    
+    ## get ALL tips names and demes
+    tip.names <- data.frame("id" = sub("simt_", "", daytree$tip.label),
+                            "stage" = sapply( sampleDemes, deme2stage ),
+                            "age" = sapply( sampleDemes, deme2age ),
+                            # "care" = sapply( sampleDemes, deme2care ),
+                            "risk" = sapply( sampleDemes, deme2risk ),
+                            stringsAsFactors = FALSE)
+    
     ## get size of clusters
     freqClust <- lapply(clus, function(x){
       as.data.frame(table(x$ClusterID),
@@ -192,66 +181,28 @@ if(FALSE){
       colnames(b)[which(colnames(b) =="Freq")] <- "size"
       ll[[i]] <- b
       names(ll)[i] <- names(freqClust[i])
+      
     }
     return(ll)
   }
   ### --- end function clust.stats --- ###
   
-  l_bs_uk <- lapply(cl2, function(x) clust.stats(clus = x, tree = list.of.trees[[1]] ))
-  names(cl2)
-  names(l_bs_uk)
-  names( l_bs_uk[[1]][[1]] )
-  length(l_bs_uk[[1]])
-  ####---- saved listUKclus ----
-  # saveRDS(l_bs_uk, file = "data/listUK_ucsd_clus.rds")
-  l_bs_uk <- readRDS( file = "data/listUK_ucsd_clus.rds")
-}  
-  ## convert to data.frame ???
-  # http://stackoverflow.com/questions/4512465/what-is-the-most-efficient-way-to-cast-a-list-as-a-data-frame
-  # http://stackoverflow.com/questions/26193028/r-converting-nested-list-to-dataframe-and-get-names-of-list-levels-als-factors
+  l_Baseline0 <- lapply(cl_Baseline0, 
+                        function(x) clust.stats(clus = x, sim = list.sims[["Baseline0"]][1] ))
+  l_EqualStage0 <- lapply(cl_EqualStage0, 
+                        function(x) clust.stats(clus = x, sim = list.sims[["EqualStage0"]][1] ))
   
-if(FALSE){
-  ##- add demo outcome: stage of infection, treatment status, age group, CHIC or not
-  load("../phylo-uk/data/sub.RData")
-  rm(s)
-  ##- selection of df covariates
-  names(df)
-  # table(df$worldregion_birth, useNA = "ifany")
+#   names(l_Baseline0)
+#   names( l_Baseline0[[1]][[1]] )
+#   length(l_Baseline0[[1]])
   
-  y <- df[,c("seqindex","patientindex",  
-             "agediag", "cd4", "ydiag", "CHICflag", "onartflag",
-             "status", "ethnicityid", "ritarecent")]
-  
-  ### recode ethnicity as character
-  # table(y$ethnicityid, useNA = "ifany")
-#   y$ethn <- ifelse( grepl("Black", y$ethnicityid),
-#                     "Black",
-#                         ifelse(grepl("Other", y$ethnicityid)|
-#                                  grepl("Indian", y$ethnicityid),
-#                                "Other",
-#                           as.character(y$ethnicityid)))
-  y$ethn.bin <- ifelse(y$ethnicityid == "White", "white", "not white")
-  
-  # table(y$ethnicityid, y$ethn)
-  # head(y)
-  # y <- y[, c(1:6, 10)]
-   str(y)
-   # table(y$CHICflag, useNA="ifany")
-   
-   listUKclus <- lapply(l_bs_uk, function(x){
-    lapply(x, function(x){merge(x, y, 
-                    by.x = "id", by.y = "seqindex", 
-                    all.x = T, sort = FALSE)
-      })
-  })
  
-
-####---- saved listUKclus ----
-# saveRDS(listUKclus, file = "data/listUKclus.rds")
-listUKclus <- readRDS( file = "data/listUKclus.rds")
-####---- stop ----
-}
-
+  ####---- saved listUKclus ----
+  # saveRDS(l_Baseline0, file = "data/sim_ucsd_results/list.sim.ucsd.Baseline0.rds" )
+  # saveRDS(l_EqualStage0, file = "data/sim_ucsd_results/list.sim.ucsd.EqualStage0.rds" )
+  l_Baseline0 <- readRDS(file = "data/sim_ucsd_results/list.sim.ucsd.Baseline0.rds" )
+  l_EqualStage0 <- readRDS(file = "data/sim_ucsd_results/list.sim.ucsd.EqualStage0.rds" )
+}  
 
 
 ###--- stats cluster ---###
@@ -259,7 +210,7 @@ listUKclus <- readRDS( file = "data/listUKclus.rds")
 
 ####---- n clusters 2 ----
 ## number of different clusters (counting size 1)
-sapply(listUKclus, function(x){
+sapply(l_Baseline0, function(x){
   summary(sapply(x, function(x) {
     length(unique(x$ClusterID) )
   }))
@@ -267,40 +218,21 @@ sapply(listUKclus, function(x){
 
 ####---- membership ----
 ## proportion of cluster membership
-sapply(listUKclus, function(x){
+sapply(l_Baseline0, function(x){
   summary(sapply(x, function(x) sum(x$binclus) / length(x$binclus)))
 })
 
 ####---- mean size 2 ----
 ## stats of mean size
-sapply(listUKclus, function(x){
+sapply(l_Baseline0, function(x){
   summary(sapply(x, function(x) mean(x$size)))
 })
 
 ####---- median size 2 ----
 ## stats of median size
-sapply(listUKclus, function(x){
+sapply(l_Baseline0, function(x){
   summary(sapply(x, function(x) median(x$size)))
 })
-
-####---- dfUKclus ----####
-###--- merge bootstrap results into
-### a list of threshold times big dataframe
-if(FALSE){
-   dfUKclus <- lapply(listUKclus, function(x){
-   do.call("rbind", x)
- })
- names(dfUKclus)
- str(dfUKclus)
-
- ####---- regression altogether ----
- ## test on regrouped bootstrap data
-
- lapply(dfUKclus, function(x){
-   summary(lm(model0, data = x))
- })
-
-}
 
 ####---- individual bootstrap regressions ----
 ###--- start function
@@ -360,26 +292,22 @@ reg.sum.bs <- function(ls, reg, model, alpha = 0.05, ...){
 }
 ###--- end function 
 
-
-# lm_model_uk = "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn.bin) + factor(CHICflag)"
- logit_model_uk = "binclus ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn.bin) + factor(CHICflag)"
-# ## example
-# coef(summary(lm(lm_model_uk, data = listUKclus[[1]][[1]])))
-
-model0 <- "scale(size) ~ scale(agediag)"
-model1 <- "scale(size) ~ scale(sqrt(cd4))"
-model2 <- "scale(size) ~ factor(ethn.bin)"
-model3 <- "scale(size) ~ factor(CHICflag)"
-model4 <- "scale(size) ~ scale(agediag) + scale(sqrt(cd4)) + factor(ethn.bin) + factor(CHICflag)"
-models <- as.list(paste0("model", 0:4))
+model1 <- "scale(size) ~ factor(stage)"
+model2 <- "scale(size) ~ factor(age)"
+model3 <- "scale(size) ~ factor(risk)"
+model4 <- "scale(size) ~ factor(age) + factor(stage) + factor(age)*factor(stage)"
+model5 <- "scale(size) ~ factor(risk) + factor(stage) + factor(risk)*factor(stage)"
+models <- as.list(paste0("model", 1:5))
 
 ## example
-# reg.sum.bs(ls = listUKclus, reg = lm, model = lm_model_uk)
+# reg.sum.bs(ls = l_Baseline0, reg = lm, model = scale(size) ~ factor(age)) 
 
 
 ####---- all lm ----
-lapply(models, function(x) {reg.sum.bs(ls = listUKclus, reg = lm, model = x)
+lapply(models, function(x) {reg.sum.bs(ls = l_Baseline0, reg = lm, model = x)
   })
+lapply(models, function(x) {reg.sum.bs(ls = l_EqualStage0, reg = lm, model = x)
+})
 
 ####---- logistic ----
 reg.sum.bs(ls = listUKclus, reg = glm, model = logit_model_uk, family = binomial(link = "logit"))
@@ -395,6 +323,53 @@ reg.sum.bs(ls = listUKclus, reg = glm, model = logit_model_uk, family = binomial
 # ADD LSD results
 # ADD SA method results
 
+names(l_Baseline0)
+test1 <- l_Baseline0[["0.015"]][[1]]
+test0 <- l_EqualStage0[["0.015"]][[1]]
+str(test1)
+
+by(test1$size, test1$risk, mean)
+by(test0$size, test0$risk, mean)
+
+boxplot(test1$size ~ test1$risk)
+boxplot(test0$size ~ test0$risk)
+
+### without downsample
+sizes_stage1 <-  test[test$stage == 1, ]$size 
+sizes_otherstages <-  test[test$stage != 1, ]$size 
+dev.off()
+plot (density(sizes_stage1))
+lines (density(sizes_otherstages))
+wilcox.test(sizes_stage1, sizes_otherstages, alternative = 'greater')
+
+## with downsample
+head(test1)
+m <- aggregate(test1[, c("stage", "age", "risk")], 
+               by = list("ClusterID" = test1$ClusterID, "size" = test1$size), 
+                    FUN = mean)
+
+str(m)
+tail(m)
+plot(m$stage, m$size)
+plot(m$age, m$size)
+plot(m$risk, m$size)
+
+# U test for the equal rates simulations: 
+wtest_er <- lapply( l_Baseline0, function(obs) {
+  wilcox.test( obs[[1]] / pstage[1] # NOTE pstage[1] is propto average duration of EHI
+               , obs[[5]] / (1-pstage[1] )  #NOTE 1-pstage[1] is propto average duration of the rest of the infectious period
+               , alternative = 'greater' #NOTE this is a one-tailed test. H1: EHI rate > !EHI rate
+  )
+})
+
+# U test for the baseline simulations: 
+wtest_bl <- lapply( obs_bl, function(obs) {
+  wilcox.test( obs[[1]] / pstage[1] 
+               , obs[[5]] / (1-pstage[1] ) 
+               , alternative = 'greater'
+  )
+})
 ##########################################
 ##########---- laaaaa  ----###############
+##########################################
 ##########################################
