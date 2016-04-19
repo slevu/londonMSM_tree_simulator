@@ -234,6 +234,76 @@ sapply(l_Baseline0, function(x){
   summary(sapply(x, function(x) median(x$size)))
 })
 
+####---- plots ----
+
+tab1 <- l_Baseline0[["0.05"]][[40]]
+str(tab1)  
+##- test cluster size 1 -> 0
+# tab1[tab1$size == 1, ]$size <- NA
+boxplot(tab1$size ~ tab1$age) 
+boxplot(tab1$size ~ tab1$risk) 
+############# test funciton downsample
+
+###- downsample in a list
+downsample <- function(df, iter = 2){
+  ##- sampling one id per cluster k times
+  k <- iter
+  ## loop
+  ## empty list
+  down_listclus <- vector("list", k)
+  ##  k selection of one id from df
+  ##   sampled by each ClusterID
+  for (i in 1:k){
+    down_listclus[[i]] <- df[df$id %in% 
+                               tapply(df$id,
+                                      df$ClusterID, 
+                                      function(x) sample(x, 1)),]
+    names(down_listclus)[i] <- i
+  }
+  return(down_listclus)
+}
+###- downsample in a df
+downsample2 <- function(df, iter = 2){
+  ##- sampling one id per cluster k times
+  k <- iter
+  ## loop
+  ## empty dataframe
+  down <- data.frame()
+  ##  k selection of one id from df
+  ##   sampled by each ClusterID
+  for (i in 1:k){
+    down <- rbind(down, df[df$id %in% 
+                               tapply(df$id,
+                                      df$ClusterID, 
+                                      function(x) sample(x, 1)),]
+    )
+  
+  }
+  return(down)
+}
+
+down_tab1 <- downsample(tab1, iter = 2)
+names(down_tab1)
+
+down_tab2 <- downsample2(tab1, iter = 30)
+boxplot( down_tab2$size ~ down_tab2$age)
+boxplot( down_tab2$size ~ down_tab2$risk)
+aggregate(down_tab2$size, by = list("age" = down_tab2$age), summary)
+aggregate(down_tab2$size, by = list("risk" = down_tab2$risk), summary)
+  # head(down_listclus[[1]])
+  # dim(down_listclus[[1]])
+ 
+####---- run down-sample 1 ----
+### over thresholds
+
+## ordinal variables
+dd_ord <- sapply( listclus, function(x) {
+  downsample(df = x, iter = 100)
+})
+
+
+###############
+    
 ####---- individual bootstrap regressions ----
 ###--- start function
 ###- summarize regression on bootstrap
