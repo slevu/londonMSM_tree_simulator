@@ -237,12 +237,14 @@ sapply(l_Baseline0, function(x){
 ####---- plots ----
 
 tab1 <- l_Baseline0[["0.05"]][[40]]
+  tab0 <- l_EqualStage0[["0.05"]][[40]]
 str(tab1)  
 ##- test cluster size 1 -> 0
 # tab1[tab1$size == 1, ]$size <- NA
 boxplot(tab1$size ~ tab1$age) 
 boxplot(tab1$size ~ tab1$risk) 
-############# test funciton downsample
+boxplot(tab1$size ~ tab1$stage)
+############# test function downsample
 
 ###- downsample in a list
 downsample <- function(df, iter = 2){
@@ -282,15 +284,36 @@ downsample2 <- function(df, iter = 2){
   return(down)
 }
 
-down_tab1 <- downsample(tab1, iter = 2)
-names(down_tab1)
+# down_tab1 <- downsample(tab1, iter = 2)
+# names(down_tab1)
 
 down_tab2 <- downsample2(tab1, iter = 30)
 boxplot( down_tab2$size ~ down_tab2$age)
 boxplot( down_tab2$size ~ down_tab2$risk)
+boxplot( down_tab2$size ~ down_tab2$stage)
 aggregate(down_tab2$size, by = list("age" = down_tab2$age), summary)
 aggregate(down_tab2$size, by = list("risk" = down_tab2$risk), summary)
-  # head(down_listclus[[1]])
+aggregate(down_tab2$size, by = list("stage" = down_tab2$stage), summary)
+
+u.test <- function(df){
+  U <- wilcox.test(df[df$risk == 2, "size"], 
+            df[df$risk == 1, "size"], 
+            alternative = "greater") # "two.sided", "less"
+  return(U$p.value)
+}
+mean(sapply(l_Baseline0[["0.015"]], u.test) < 0.05)
+mean(sapply(l_EqualStage0[["0.015"]], u.test) < 0.05)
+
+## after downsampling
+
+down_baseline <- lapply(l_Baseline0[["0.015"]], function(x) downsample(x, iter = 10))
+down_equal <- lapply(l_EqualStage0[["0.015"]], function(x) downsample(x, iter = 10))
+
+names(down_baseline[[1]])
+mean(sapply(down_baseline, function(x) sapply(x, u.test)) < 0.05)
+mean(sapply(down_equal, function(x) sapply(x, u.test)) < 0.05)
+
+# head(down_listclus[[1]])
   # dim(down_listclus[[1]])
  
 ####---- run down-sample 1 ----
@@ -370,8 +393,12 @@ model5 <- "scale(size) ~ factor(risk) + factor(stage) + factor(risk)*factor(stag
 models <- as.list(paste0("model", 1:5))
 
 ## example
-# reg.sum.bs(ls = l_Baseline0, reg = lm, model = scale(size) ~ factor(age)) 
-
+## age
+reg.sum.bs(ls = l_Baseline0, reg = lm, model = model2) 
+reg.sum.bs(ls = l_EqualStage0, reg = lm, model = model2) 
+## age and stage
+reg.sum.bs(ls = l_Baseline0, reg = lm, model = model4) 
+reg.sum.bs(ls = l_EqualStage0, reg = lm, model = model4) 
 
 ####---- all lm ----
 lapply(models, function(x) {reg.sum.bs(ls = l_Baseline0, reg = lm, model = x)
