@@ -61,6 +61,8 @@ str(list.sims)
 ###-
 obs_bl <- fns2od.by.stage( list.sims[["Baseline0"]] )
 obs_er <- fns2od.by.stage( list.sims[["EqualStage0"]] )
+# save(obs_bl, obs_er, file = 'data/od.by.stage.RData' )
+# load('data/od.by.stage.RData')
 str(obs_er[[1]])
 
 # U test for the equal rates simulations: 
@@ -117,7 +119,14 @@ mean(p.cl_er < 0.05)
 mean(p.cl_bl > 0.05)
 
 
-head(cl_er)
-dev.off()
-plot (density(sizes_stage1))
-lines (density(sizes_otherstages))
+###-
+rd_er <- est.rd.batch( obs_er )
+rd_br <- est.rd.batch( obs_bl )
+
+##- EHI/Late rate difference (Equal transmission rates)
+boxplot( unname(rd_er), main = '' )
+abline( h = 0, col = 'red' )
+
+##- EHI/Late rate difference (Baseline)
+boxplot( unname( rd_br ), main = '')
+abline( h = 0, col = 'red' )
