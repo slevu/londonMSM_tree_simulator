@@ -6,7 +6,7 @@ require(igraph)
 
 ratesBaselineFNS <- list.files('RData', full.names=T, path = paste(sep = '', local_data,'model0-simulateBaseline0'))
 
-#~ fn <- ratesBaselineFNS[1]
+#~ fn <- ratesBaselineFNS[5]
 fn2clust <- function(fn)
 {
 	load(fn)	
@@ -43,3 +43,11 @@ fn2clust <- function(fn)
 }
 
 #~ x <- fn2clust( ratesBaselineFNS[1] )
+head(x[[1]])
+class(x[[2]])
+hist(x[[1]]$csizes)
+hist(x[[1]]$nbrhoodSize)
+
+head(t(D))
+hist(t(D)[,3])
+## unrealistic distances < 0.07 ??
