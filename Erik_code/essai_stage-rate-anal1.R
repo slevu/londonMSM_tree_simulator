@@ -118,6 +118,8 @@ mean(p.cl_er < 0.05)
 ##- type2err
 mean(p.cl_bl > 0.05)
 
+qqplot(p.cl_bl, p.cl_er)
+
 
 ###-
 rd_er <- est.rd.batch( obs_er )
