@@ -1,24 +1,26 @@
-### pipeline for UK bootstrapped trees ###
-##1. import
-##2. LSD
-##3. clustering
-##4. SA
+---
+title: "LSD_bootstrap_trees"
+output: html_document
+---
 
-rm(list=ls())
-###--- LSD ---###
-
+```{r}
 library(ape)
 getwd()
+```
 
-##-- names
- ## tree path
+## Get names
+```{r}
+## tree path
  path.trees <- "../HPC/phylo-msm-uk/in_HPC_20160404/"
- list.files(path.trees)
+ head(list.files(path.trees))
  ## generic part of tree name
  name.tree <- "ExaML_result.subUKogC_noDRM_151202.finaltree."
  ## dates
  inputDAT <-  "data/LSD/t000.dates"
- 
+```
+
+## Import one tree for tip labels
+```{r}
  ## import one tree for tip.label
  l <- list.files(path = path.trees, pattern = "result", full.names = TRUE)
  ## outgroup
@@ -26,19 +28,28 @@ getwd()
  filename <- l[1]
  t <- read.tree(filename)
  t <- drop.tip(t, og)
+```
 
+## Get dates
+```{r}
 ##- get dates in calendar year
 res <- read.csv( '../phylo-uk/source/resistance.csv'  )
 origin <- as.Date('0000-01-01')
 x <- setNames( paste(sep='', '15/', res$dbsample_my ), res$testindex )
-head(x)
 x <- setNames( as.numeric(as.Date( x, format = '%d/%m/%Y' ) - origin)/365 , res$testindex )
+head(x)
 dates <- x[ t$tip.label ]
 ## "The first line must indicate the number of leaves"
-write.table( cbind( names(dates), dates), file = inputDAT, col.names=c(as.character(length(dates)), '') , quote = F, row.names=F) 
+if(0){
+  write.table( cbind( names(dates), dates), file = inputDAT, col.names=c(as.character(length(dates)), '') , quote = F, row.names=F) 
+}
+```
 
-##-- loop LSD cmd
-## filenames
+## Loop the LSD commands
+```{r}
+if(0){
+
+  ## filenames
 a <- seq(1, 100)
 num <- sprintf("%03d", a)
 
@@ -69,12 +80,16 @@ for (i in 1:length(num)){
   # name threshold
   names(lsd_stderr)[i] <- num[i]
 }
+}
 ##- save stderr
 # saveRDS(lsd_stderr, file = "data/LSD/lsd_stderr.rds")
 if( !("lsd_stderr" %in% ls()) ){
   lsd_stderr <- readRDS(file = "data/LSD/lsd_stderr.rds")
 } 
+```
 
+## Extract rates and tMRCAs
+```{r}
 ##- extract rate and tMRCA 
 b <- lsd_stderr
 ## filename pattern from LSD changes with LSD version !
@@ -107,11 +122,7 @@ for (i in 1:length(b)){
          "tMRCA" = summary(tMRCA),
          "objective_function" = summary(objective_function))
  }
+```
 
 
 
-# lsd -c  -i ukdrdb/ExaML_trees/ExaML_result.subUKogC_noDRM.reroot_dropOG.nwk -d ukdrdb/ExaML_trees/ExaML_result.subUKogC_noDRM.reroot_dropOG.dates   -s 1200   -v   -b  10
-# options: -c temporal constraints recommanded; -i tree file newick format; -d dates file; -s length of seq (default 1000); -v variances; -b (default 10); -r to estimate root position
-
-## SA with phydynr
-  
