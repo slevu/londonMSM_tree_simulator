@@ -4,7 +4,7 @@ output: html_document
 fig_width: 6
 fig_height: 6
 ---
-
+## Problem of mixing labels between distance matrices and sampleDemes !!!!!!!
 In this report:
 
 * characterise age assortativity in baseline using SA out degree and cluster neighborhood size
