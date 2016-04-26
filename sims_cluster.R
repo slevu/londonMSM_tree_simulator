@@ -62,6 +62,7 @@ if(FALSE){
 
     
 ####---- list.hivclust ----
+if(0){
 ###  get csv of clusters assignments in one list ###
   # getwd()
 csvEqualStage0FNS <- list.files("csv", full.names=T, 
@@ -99,12 +100,13 @@ return(cl2)
   
 # saveRDS(cl_Baseline0, file = "data/sim_ucsd_results/list.hivclust.sim.Baseline0.rds")
 # saveRDS(cl_EqualStage0, file = "data/sim_ucsd_results/list.hivclust.sim.EqualStage0.rds")
+}
 
 ####---- load list.hivclust ----
   cl_Baseline0 <- readRDS( file = "data/sim_ucsd_results/list.hivclust.sim.Baseline0.rds" )
   cl_EqualStage0 <- readRDS( file = "data/sim_ucsd_results/list.hivclust.sim.EqualStage0.rds" )
   
-####---- heleper functions ----
+####---- helper functions ----
   deme2age <- function(deme){ as.numeric(
     substr(regmatches( deme , regexpr( '\\.age[0-9]', deme ) ), 5, 5) 
   ) }
@@ -118,7 +120,8 @@ return(cl2)
     substr(regmatches( deme , regexpr( 'care[0-9]', deme )), 5, 5)
   ) }
   
-  
+## At this stage, list of cluster assignements have an index of tips not tip labels
+
 ####---- clust.stats ----
 if(FALSE){
  
@@ -127,20 +130,21 @@ if(FALSE){
   ##- with same variable names
   ##- comprises demes states
   ##- For UCSD files, no ID if no cluster (size < 2) !
-# clus=cl2[[1]]; i=1; tree = load(list.trees[["Baseline0"]][1]) ; str(clus[[1]])
+# clus = cl_Baseline0[[1]]; i=1; sim = list.sims[["Baseline0"]][1]; str(clus[[1]])
 
-  
+  ## need to laod sim one by one
   clust.stats <- function(clus, sim){
     
     load(sim)
     
     ## get ALL tips names and demes
-    tip.names <- data.frame("id" = sub("simt_", "", daytree$tip.label),
-                            "stage" = sapply( sampleDemes, deme2stage ),
-                            "age" = sapply( sampleDemes, deme2age ),
-                            # "care" = sapply( sampleDemes, deme2care ),
-                            "risk" = sapply( sampleDemes, deme2risk ),
-                            stringsAsFactors = FALSE)
+    tip.names <- data.frame(
+      "id" = daytree$tip.label,
+      "stage" = sapply( sampleDemes, deme2stage ),
+      "age" = sapply( sampleDemes, deme2age ),
+      "risk" = sapply( sampleDemes, deme2risk ),
+      stringsAsFactors = FALSE)
+    rownames(tip.names) <- NULL
     
     ## get size of clusters
     freqClust <- lapply(clus, function(x){
@@ -153,9 +157,13 @@ if(FALSE){
     
     ## loop over thresholds
     for (i in 1:length(clus) ) {
-      ## merge cluster number (with NA)
-      a <- merge(x = tip.names, y = clus[[i]],
-                 by.x = "id", by.y = "SequenceID",
+      ## get name instead of index in clus
+      clus[[i]]$seq.label <- daytree$tip.label[ clus[[i]]$SequenceID ]
+      # head(clus[[i]]); i = 1
+      
+      ## merge cluster number (without SequenceID)
+      a <- merge(x = tip.names, y = clus[[i]][, 2:3],
+                 by.x = "id", by.y = "seq.label",
                  all.x = TRUE, sort = FALSE)
       
       ## merge cluster size (with NA)
@@ -195,7 +203,10 @@ if(FALSE){
 #   names(l_Baseline0)
 #   names( l_Baseline0[[1]][[1]] )
 #   length(l_Baseline0[[1]])
-  
+#   test <- l_Baseline0[[1]][[1]]
+#   aggregate(test$size, by = list("stage" = test$stage), mean )
+#   aggregate(test$size, by = list("risk" = test$risk), mean )
+#   aggregate(test$size, by = list("age" = test$age), mean )
  
   ####---- saved listUKclus ----
   # saveRDS(l_Baseline0, file = "data/sim_ucsd_results/list.sim.ucsd.Baseline0.rds" )
@@ -236,8 +247,8 @@ sapply(l_Baseline0, function(x){
 
 ####---- plots ----
 
-tab1 <- l_Baseline0[["0.05"]][[40]]
-  tab0 <- l_EqualStage0[["0.05"]][[40]]
+tab1 <- l_Baseline0[["0.005"]][[40]]
+  tab0 <- l_EqualStage0[["0.015"]][[40]]
 str(tab1)  
 ##- test cluster size 1 -> 0
 # tab1[tab1$size == 1, ]$size <- NA
@@ -301,13 +312,15 @@ u.test <- function(df){
             alternative = "greater") # "two.sided", "less"
   return(U$p.value)
 }
-mean(sapply(l_Baseline0[["0.015"]], u.test) < 0.05)
-mean(sapply(l_EqualStage0[["0.015"]], u.test) < 0.05)
+## type 2
+mean(sapply(l_Baseline0[["0.005"]], u.test) > 0.05)
+## type 1
+mean(sapply(l_EqualStage0[["0.005"]], u.test) < 0.05)
 
 ## after downsampling
 
-down_baseline <- lapply(l_Baseline0[["0.015"]], function(x) downsample(x, iter = 10))
-down_equal <- lapply(l_EqualStage0[["0.015"]], function(x) downsample(x, iter = 10))
+down_baseline <- lapply(l_Baseline0[["0.005"]], function(x) downsample(x, iter = 10))
+down_equal <- lapply(l_EqualStage0[["0.005"]], function(x) downsample(x, iter = 10))
 
 names(down_baseline[[1]])
 mean(sapply(down_baseline, function(x) sapply(x, u.test)) < 0.05)
