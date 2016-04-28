@@ -20,6 +20,12 @@ for (.s in 1:length(scenario)){
 str(list.sims)
 
 ## Add names to filepaths with setNames and ...
+lapply(list.sims, function(x){
+  substr(ldist[i], 
+         regexec(".RData",ldist[i])[[1]][1] - 5, 
+         regexec(".RData", ldist[i])[[1]][1] -1)
+}
+])
 # name.sim <- substr(ldist[i], 
 # regexec(".RData",ldist[i])[[1]][1] - 5, 
 # regexec(".RData", ldist[i])[[1]][1] -1)
