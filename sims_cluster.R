@@ -11,13 +11,19 @@ scenario <- c("EqualStage0", "Baseline0")
 
 ####--- list.trees ----
 list.sims <- vector("list", length(scenario))
-for (s in 1:length(scenario)){
-  list.sims[[s]] <- list.files('RData', full.names = TRUE, 
+for (.s in 1:length(scenario)){
+  list.sims[[.s]] <- list.files('RData', full.names = TRUE, 
              path = paste('data/simulations/model0-simulate', 
-                          scenario[s], sep = '') )
-  names(list.sims)[s] <- scenario[s]
+                          scenario[.s], sep = '') )
+  names(list.sims)[.s] <- scenario[.s]
 }
 str(list.sims)
+
+## Add names to filepaths with setNames and ...
+# name.sim <- substr(ldist[i], 
+# regexec(".RData",ldist[i])[[1]][1] - 5, 
+# regexec(".RData", ldist[i])[[1]][1] -1)
+
 
 ####---- list.dist ----
 #### load list of dist from sims
@@ -65,9 +71,9 @@ if(FALSE){
 if(0){
 ###  get csv of clusters assignments in one list ###
   # getwd()
-csvEqualStage0FNS <- list.files("csv", full.names=T, 
+  csvEqualStage0FNS <- list.files("csv", full.names=T, 
                           path = 'data/sim_ucsd_results/EqualStage0')
-csvBaseline0FNS <- list.files("csv", full.names=T, 
+  csvBaseline0FNS <- list.files("csv", full.names=T, 
                           path = 'data/sim_ucsd_results/Baseline0')
 ##- function n = 1; m = 1
 list.hivclust <- function(list.csv){
@@ -85,7 +91,8 @@ list.hivclust <- function(list.csv){
         t[[n]] <- read.csv( filenames[n] )
         names(t)[n] <- substr(filenames[n], 
                               regexec("/d", filenames[n])[[1]][1] + 2,
-                              regexec("_ucsd_hivclust_output", filenames[n])[[1]][1] -1)
+                              regexec("_ucsd_hivclust_output",
+                                      filenames[n])[[1]][1] -1)
       }
       cl2[[m]] <- t
       names(cl2)[m] <- thresholds[m]
