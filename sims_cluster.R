@@ -112,10 +112,21 @@ return(cl2)
   cl_Baseline0 <- readRDS( file = "data/sim_ucsd_results/list.hivclust.sim.Baseline0.rds" )
   cl_EqualStage0 <- readRDS( file = "data/sim_ucsd_results/list.hivclust.sim.EqualStage0.rds" )
 
-  ## not the same number of simulation at threshold 4:
-  identical(names(cl_Baseline0[[1]]), names(cl_Baseline0[[4]]))
-  cl_Baseline0[[4]] <- cl_Baseline0[[4]][ names(cl_Baseline0[[1]]) ]
-  
+  ##- Keep first 100 cluster results corresponding to a simulation
+  ##- reference for names of sims
+ref_e <- names(list.sims[["EqualStage0"]])
+ref_b <- names(list.sims[["Baseline0"]])
+cl_EqualStage0 <- lapply(cl_EqualStage0, 
+                  function(a){
+                    a[names(a) %in% ref_e][1:100]
+                         })
+cl_Baseline0 <- lapply(cl_Baseline0, 
+                  function(a){
+                    a[names(a) %in% ref_b][1:100]
+                         })
+# identical(names(cl_EqualStage0[[1]]), names(cl_EqualStage0[[2]]) )
+# sims at threshold 4 EqualStage0 are different
+
 ####---- helper functions ----
   deme2age <- function(deme){ as.numeric(
     substr(regmatches( deme , regexpr( '\\.age[0-9]', deme ) ), 5, 5) 
@@ -134,7 +145,7 @@ return(cl2)
 ####---- clus.stat ----
 if(1){
   ###- check if sim.name = clus.name
-  # sim = list.sims[["Baseline0"]] ; clus = cl_Baseline0; # i = 1
+  # sim = list.sims[["Baseline0"]] ; clus = cl_Baseline0; i = 50 ; thr = 4
 clus.stat <- function(clus, sim){
   ##- empty list of n thresholds
   ll <- vector("list", length(clus))
@@ -143,12 +154,14 @@ clus.stat <- function(clus, sim){
     ##- loop sims
     for (i in 1:length(clus[[thr]]) ){
       ##- check same sim and clus
-      if (!identical(names(sim[i]), names(clus[[thr]][i]) )) {
-          stop(paste("not the same sims", names(sim[i]), names(clus[[thr]][i]) ))
-      } else {
-        print(paste( names(clus)[thr], i))
+        print(paste( 
+          names(clus[[thr]])[i], # name cluster
+          names(sim[ names(clus[[thr]])[i] ]), # name sim
+          names(clus)[thr], # threshold
+          i # num sim
+          ))
         
-        load(sim[i])
+        load(sim[ names(clus[[thr]])[i] ])
         
         ## get ALL tips names and demes
         tip.names <- data.frame(
@@ -194,7 +207,6 @@ clus.stat <- function(clus, sim){
         colnames(b)[which(colnames(b) =="Freq")] <- "size"
         ll[[thr]][[i]] <- b
         names(ll[[thr]])[i] <- names(clus[[thr]][i])
-      }
     } 
     names(ll)[thr] <- names(clus)[[thr]]
   }
@@ -203,17 +215,18 @@ clus.stat <- function(clus, sim){
 ####---- fin clus.stat ----####
 }
 
-system.time(
-l_Baseline0 <- clus.stat(clus = cl_Baseline0, 
-                         sim = list.sims[["Baseline0"]])
-) # 459
-system.time(
-l_EqualStage0 <- clus.stat(clus = cl_EqualStage0,
-                           sim = list.sims[["EqualStage0"]])
-) 
-#  [1] "0.05 85"
-#  Error in clus.stat(clus = cl_EqualStage0, sim = list.sims[["EqualStage0"]]) : 
-#  not the same sims 24308 24339 
+if(0){
+  system.time(
+    l_Baseline0 <- clus.stat(clus = cl_Baseline0, 
+                             sim = list.sims[["Baseline0"]])
+  ) # 550
+  system.time(
+    l_EqualStage0 <- clus.stat(clus = cl_EqualStage0,
+                               sim = list.sims[["EqualStage0"]])
+  ) # 600
+  
+}
+
 
 
 # lapply(l_Baseline0, function(x) lapply(x, function(df) aggregate(df$size, by = list("stage" = df$stage), mean )))
@@ -228,8 +241,8 @@ l_EqualStage0 <- clus.stat(clus = cl_EqualStage0,
 #   aggregate(test$size, by = list("age" = test$age), mean )
  
   ####---- saved listUKclus ----
-  # saveRDS(l_Baseline0, file = "data/sim_ucsd_results/list.sim.ucsd.Baseline0.rds" )
-  # saveRDS(l_EqualStage0, file = "data/sim_ucsd_results/list.sim.ucsd.EqualStage0.rds" )
+ # saveRDS(l_Baseline0, file = "data/sim_ucsd_results/list.sim.ucsd.Baseline0.rds" )
+ # saveRDS(l_EqualStage0, file = "data/sim_ucsd_results/list.sim.ucsd.EqualStage0.rds" )
 
   l_Baseline0 <- readRDS(file = "data/sim_ucsd_results/list.sim.ucsd.Baseline0.rds" )
   l_EqualStage0 <- readRDS(file = "data/sim_ucsd_results/list.sim.ucsd.EqualStage0.rds" )
