@@ -4,11 +4,11 @@
 
 #~ require(rcolgem)
 require(phydynR) # replaces rcolgem
-#~ source('treeSimulatorCpp2.R') # debug 
 require(deSolve)
 require(Rcpp)
 sourceCpp( 'model0.cpp' )
 
+<<<<<<< HEAD
 ####---- "fixed" parameters ----####
 ##- Age progression (by quantiles)
 # age quantiles, age rates
@@ -25,10 +25,15 @@ sourceCpp( 'model0.cpp' )
 #~   7 
 #~ 100% 
 #~ 40.5 
+=======
+
+## parameters 
+>>>>>>> upstream/master
 age_rates <- c(agerate1 = 1/9/365
 	, agerate2 = 1/6/365
 	, agerate3 = 1/7/365
 	, agerate4 = 1/40.5/365
+<<<<<<< HEAD
 )
 
 ##- Natural history (from Cori et al. AIDS 2015 ?)
@@ -49,6 +54,20 @@ pstarts <- c(
 	, pstartstage3 = 0.16
 	, pstartstage4 = 0.03
 	, pstartstage5 = 0.0
+=======
+) 
+
+stage_prog_yrs <- c( .5, 3.32, 2.7, 5.50, 5.06 ) #cori AIDS
+stageprog_rates <- setNames( 1 / (stage_prog_yrs  * 365 ) 
+ , c('gamma1', 'gamma2', 'gamma3', 'gamma4', 'gamma5')  )
+
+
+pstarts <- c( pstartstage1 = 0 #NA
+ , pstartstage2 = 0.76
+ , pstartstage3 = 0.19
+ , pstartstage4 = 0.05
+ , pstartstage5 = 0
+>>>>>>> upstream/master
 )
 
 theta <- c( age_assort_factor = .5 # power of age difference
@@ -159,6 +178,7 @@ for ( nh in NH_COMPS ){
 DEMES <- c( DEMES, 'src' )
 m <- length(DEMES)
 
+<<<<<<< HEAD
 ##- Could have done with expand.grid ?
 #   DEMES <- as.vector(
 #    apply( 
@@ -170,6 +190,9 @@ m <- length(DEMES)
 #    )
 
 # level indicators for each deme; not C-indexing (start at 0)
+=======
+# indicators for each deme; note C-indexing
+>>>>>>> upstream/master
 NH = rep(NA, m)
 AGE = rep(NA, m)
 CARE = rep(NA, m )
@@ -216,8 +239,13 @@ colnames(prRecipMat) = rownames(prRecipMat) <- DEMES
 	 ##- risk level
 	wrisk <- ifelse( colrisk == 1, theta['pRiskLevel1'], 1 - theta['pRiskLevel1'] )
 #~ 	browser()
+<<<<<<< HEAD
 	wrisk * wcare * pstarts[colpss] * theta['age_assort_factor']^abs( rowage - colage )
 	## P(a -> a’) ∝ coef^|a - a’|
+=======
+	if (colpss != 1) return(0)
+	wrisk * wcare  * theta['age_assort_factor']^abs( rowage - colage )
+>>>>>>> upstream/master
 }
 ##- matrix of transmission weights
 for (i in 1:(m-1)) for (j in 1:(m-1)){
@@ -229,7 +257,36 @@ prRecipMat <- prRecipMat / rowSums( prRecipMat )
 prRecipMat[m,] <- 0 # from src
 prRecipMat[m,m] <- 1 # src to src
 
+<<<<<<< HEAD
 ####---- Migration matrix ----####
+=======
+prStageRecipMat <- matrix( 0, nrow = m, ncol = m ); 
+colnames(prStageRecipMat) = rownames(prStageRecipMat) <- DEMES
+.stagemweight <- function(rowdeme, coldeme){
+	if (rowdeme=='src') return (0)
+	if (coldeme=='src') return (0)
+	rowage <-  as.numeric( regmatches( rowdeme, regexec( "\\.age([0-9])", rowdeme) )[[1]][2] )
+	colage <-  as.numeric( regmatches( coldeme, regexec( "\\.age([0-9])", coldeme) )[[1]][2] )
+	rowstage <- as.numeric( regmatches( rowdeme, regexec( "stage([0-9])", coldeme) )[[1]][2] )
+	colstage <- as.numeric( regmatches( coldeme, regexec( "stage([0-9])", coldeme) )[[1]][2] )
+	rowcare <- as.numeric( regmatches( rowdeme, regexec( "care([0-9])", coldeme) )[[1]][2] )
+	colcare <- as.numeric( regmatches( coldeme, regexec( "care([0-9])", coldeme) )[[1]][2] )
+	rowrisk <- as.numeric( regmatches( rowdeme, regexec( "riskLevel([0-9])", coldeme) )[[1]][2] )
+	colrisk <- as.numeric( regmatches( coldeme, regexec( "riskLevel([0-9])", coldeme) )[[1]][2] )
+	if ( rowstage != 1 ) return(0)
+	if (colage != rowage) return(0)
+	if (colcare != rowcare ) return (0)
+	if (colrisk!= rowrisk) return(0)
+	return( pstarts[ colstage] )
+}
+for (i in 1:(m-1)) for (j in 1:(m-1)){
+	prStageRecipMat[i,j] <- .stagemweight( DEMES[i], DEMES[j] )
+}
+prStageRecipMat <- prStageRecipMat/rowSums( prStageRecipMat )
+prStageRecipMat[is.na(prStageRecipMat)] <- 0
+
+
+>>>>>>> upstream/master
 ## mig mat
 # NOTE uses R indices 
 ##- To which deme index goes a deme with one increment of age, care or stage
@@ -332,15 +389,18 @@ dydt <- function(t,y, parms, ... ){
 	y <- pmax(y, 0 )
 	incidence <- inc.t( t, theta )
 	care_rates <- c( diag.t( t, theta), tr.t( t) )
+<<<<<<< HEAD
 	
 	##- (birth) matrix F: gamma = (nh_wtransm(nh) * age_wtransm(age) * care_wtransm(care) * risk_wtransm (risk ))
 	## transm = gamma * I
 	## F = transm * prRecipMat
 	## (death rate for src population is in cpp function F_matrix)
 	
+=======
+>>>>>>> upstream/master
 	FF <- F_matrix( incidence
 	  , y
-	  , theta
+	  , as.list(theta)
 	  , DEMES
 	  , NH # length m indicators for each deme 
 	  , AGE
@@ -355,7 +415,7 @@ dydt <- function(t,y, parms, ... ){
 	
 	## migration matrix
 	GG <- G_matrix( y
-	  , theta
+	  , as.list(theta)
 	  , DEMES
 	  , NH # length m indicators for each deme
 	  , AGE
@@ -366,7 +426,12 @@ dydt <- function(t,y, parms, ... ){
 	  , CARE_RECIP
 	  , stageprog_rates # rates for each deme
 	  , age_rates
+<<<<<<< HEAD
 	  , care_rates # note these depend on time (as of 1996)
+=======
+	  , care_rates
+	  , prStageRecipMat
+>>>>>>> upstream/master
 	)
 	GGns <- GG
 	GGns[m, ] = GG[, m ] <- 0
@@ -405,7 +470,7 @@ dydt <- function(t,y, parms, ... ){
 		incidence <- inc.t( t, theta )
 		FF <- F_matrix( incidence
 		  , y
-		  , theta
+		  , as.list(theta)
 		  , DEMES
 		  , NH
 		  , AGE
@@ -426,7 +491,7 @@ dydt <- function(t,y, parms, ... ){
 		t <- desolve[i, 1]
 		care_rates <- c( diag.t( t, theta), tr.t( t) )
 		GG <- G_matrix( y
-		  , theta
+		  , as.list(theta)
 		  , DEMES
 		  , NH
 		  , AGE
@@ -438,6 +503,7 @@ dydt <- function(t,y, parms, ... ){
 		  , stageprog_rates
 		  , age_rates
 		  , care_rates
+		  , prStageRecipMat
 		)
 		rownames(GG) = colnames(GG) <- DEMES
 		GG
@@ -461,8 +527,8 @@ t <- 1e4
 	care_rates <- c( diag.t( t, theta), tr.t( t) )
 	
 	FF <- F_matrix( incidence
-	  , y0
-	  , theta
+	  , rep(1, m )#y0
+	  , as.list(theta)
 	  , DEMES
 	  , NH
 	  , AGE
@@ -477,6 +543,8 @@ t <- 1e4
 	rownames(FF) = colnames(FF) <- DEMES 
 }
 
+
+
 if (F)
 {
 	tr <- sapply( times_day, function(t) diag.t( t, theta ) )
@@ -490,11 +558,10 @@ if (F)
 if (F)
 {
 t <- 1e4 
-	incidence <- inc.t( t, theta )
 	care_rates <- c( diag.t( t, theta), tr.t( t) )
 	
 	GG <- G_matrix( rep( 1, m ) 
-	  , theta
+	  , as.list(theta)
 	  , DEMES
 	  , NH
 	  , AGE
@@ -506,9 +573,53 @@ t <- 1e4
 	  , stageprog_rates
 	  , age_rates
 	  , care_rates
+	  , prStageRecipMat
 	)
+	
 	rownames(GG) = colnames(GG) <- DEMES
+	
+	if (F)
+	{
+		# NOTE this test does not work correctly...
+		for (x in rownames(GG)){
+			print(x )
+			print(names( GG[x,which(GG[x,]  > 0)] ) )
+			cat('\n\n\n' )
+		}
+		
+		rowSums(GG)[ rowSums( GG )==0 ]
+		
+		for (k in 1:m){
+			x <- ifelse( STAGEPROG_RECIP[k]>-1,  DEMES[STAGEPROG_RECIP[k]], NA)
+			print( c( DEMES[k],x ) )
+		}
+		
+		x <- AGE_RECIP
+		x[ AGE_RECIP < 0] <- NA
+		cbind( DEMES, DEMES[x] ) 
+		
+		x <- CARE_RECIP
+		x[ CARE_RECIP < 1 ] <- NA
+		cbind( DEMES, DEMES[x] )
+		
+		x <- STAGEPROG_RECIP
+		x[ STAGEPROG_RECIP < 1 ] <- NA
+		cbind( DEMES, DEMES[x] )
+	}
 }
+
+#~ care 3 do not age 
+#~ care 3 do not stage prog
+#~ "stage3.age4.care3.riskLevel2" - no stage prog
+#~ "stage5.age2.care3.riskLevel2" - no age
+#~ > rowSums(GG)[ rowSums( GG )==0 ]
+#~ stage2.age4.care2.riskLevel1 stage2.age4.care2.riskLevel2 
+#~                            0                            0 
+#~ stage2.age4.care3.riskLevel1 stage2.age4.care3.riskLevel2 
+#~                            0                            0 
+#~ stage5.age4.care3.riskLevel1 stage5.age4.care3.riskLevel2 
+#~                            0                            0 
+#~ > 
 
 
 ## plots
@@ -528,8 +639,10 @@ snazzy.plot <- function( desolve, agg )
 
 
 ## debug: 
+#~ o <- ode(y=y0, times=times_day, func=dydt, parms=list()  , method = 'euler')
 if (F)
 {
+#~ 	dydt( 0, y0, list() )
 	st.o <- system.time( {
 	#~ o <- ode(y=y0, times=times_day, func=dydt, parms=list()  , method = 'adams')
 	o <- ode(y=y0, times=times_day, func=dydt, parms=list()  , method = 'euler')
@@ -537,7 +650,7 @@ if (F)
 	})
 	
 	if (F){
-		snazzy.plot(  o, CARE_COORDS ) 
+		X11(); snazzy.plot(  o, CARE_COORDS ) 
 		snazzy.plot(  o, AGE_COORDS ) 
 		snazzy.plot(  o, RISK_COORDS ) 
 		snazzy.plot(  o, NH_COORDS ) 
@@ -546,7 +659,6 @@ if (F)
 	if (T)
 	{
 		tfgy <- .tfgy( o )
-		
 		
 		if (F){
 			n <- 12e3 #1000 #2e2
@@ -558,7 +670,7 @@ if (F)
 			colnames( sampleStates ) <- DEMES
 		}
 		
-		if (F)
+		if (T)
 		{
 			sampleTimes <- scan( file = 'sampleTimes' )
 			ss  <- matrix( scan( file = 'sampleStates' ) , byrow=TRUE, ncol = m)
@@ -577,14 +689,7 @@ if (F)
 			plot(tree , 'fan', show.tip.label=F, no.margin=T, edge.width=.1, direction='downwards')
 		}
 		
-		st.tree <- system.time( {
-			tree <- sim.co.tree.fgy(tfgy,  sampleTimes, sampleStates
-			  #, res = 1e3 #1e2#1e3
-			  , step_size_multiplier= NA)
-		})
 		
-		#plot(tree , 'phylogram', show.tip.label=F, no.margin=T, edge.width=.1, direction='downwards')
-		plot(tree , 'fan', show.tip.label=F, no.margin=T, edge.width=.1, direction='downwards')
 		if (F)
 		{
 			plot(tree , 'radial', show.tip.label=F, no.margin=T)
@@ -623,8 +728,11 @@ if (F)
 }
 
 
+<<<<<<< HEAD
 ##- Output o and tree and inputs
 parms <- c(theta, nh_wtransm, age_wtransm, care_wtransm, risk_wtransm)
 date <- format(Sys.time(),"%Y%m%d_%H%M")
 nameout <- paste( "out_treesim_", date, ".Rdata", sep = "")
 save(parms, o, tree, file = nameout)
+=======
+>>>>>>> upstream/master
