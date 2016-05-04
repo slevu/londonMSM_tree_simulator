@@ -86,5 +86,5 @@ sampleDemes <- setNames( sapply( 1:n, function(u) DEMES[which.max( treeSampleSta
 	)  
 	
 	save( daytree, bdt, W, cd4s, sampleDemes, plwhiv, newinf, MH
-	 , file = paste('model0-simulateBaseline0/', PID, '.RData', sep=''))
+	 , file = paste('data/simulations2/model0-simulateBaseline0/', PID, '.RData', sep=''))
 }
