@@ -96,17 +96,17 @@ u.test <- function(df){
   return(U$p.value)
 }
 ## type 2
-mean(sapply(l_Baseline0[["0.005"]], u.test) > 0.05)
+mean(sapply(l_Baseline0[["0.015"]], u.test) > 0.05)
 ## type 1
-mean(sapply(l_EqualStage0[["0.005"]], u.test) < 0.05)
+mean(sapply(l_EqualStage0[["0.015"]], u.test) < 0.05)
 
 ## after downsampling
 
-down_baseline <- lapply(l_Baseline0[["0.005"]], function(x) downsample(x, iter = 10))
-down_equal <- lapply(l_EqualStage0[["0.005"]], function(x) downsample(x, iter = 10))
+down_baseline <- lapply(l_Baseline0[["0.015"]], function(x) downsample(x, iter = 10))
+down_equal <- lapply(l_EqualStage0[["0.015"]], function(x) downsample(x, iter = 10))
 
 names(down_baseline[[1]])
-mean(sapply(down_baseline, function(x) sapply(x, u.test)) < 0.05)
+mean(sapply(down_baseline, function(x) sapply(x, u.test)) > 0.05)
 mean(sapply(down_equal, function(x) sapply(x, u.test)) < 0.05)
 
 # head(down_listclus[[1]])
