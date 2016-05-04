@@ -8,53 +8,12 @@ require(deSolve)
 require(Rcpp)
 sourceCpp( 'model0.cpp' )
 
-<<<<<<< HEAD
-####---- "fixed" parameters ----####
-##- Age progression (by quantiles)
-# age quantiles, age rates
-#~ > print(qs)
-#~       25%  50%  75% 100% 
-#~ 18.0 27.0 33.0 40.0 80.5 
-#~ > for ( i in 2:length(qs) )
-#~ + print( qs[i] - qs[i-1] )
-#~ 25% 
-#~   9 
-#~ 50% 
-#~   6 
-#~ 75% 
-#~   7 
-#~ 100% 
-#~ 40.5 
-=======
 
-## parameters 
->>>>>>> upstream/master
+## parameters
 age_rates <- c(agerate1 = 1/9/365
 	, agerate2 = 1/6/365
 	, agerate3 = 1/7/365
 	, agerate4 = 1/40.5/365
-<<<<<<< HEAD
-)
-
-##- Natural history (from Cori et al. AIDS 2015 ?)
-##- Cori: 3.32, 2.70, 5.50, 5.06
-stageprog_rates <- c(    gamma1 = 1/365 # EHI
-	 # shrink chronc&aids periods by 9 months, or factor of 1-.75/12  
-	 # 1/ ( (1-.75/12) /(0.157 / 365 )  )
-	, gamma2 = 1/ ( (1-.75/12) /(0.157 / 365 )  )
-	, gamma3 = 1/ ( (1-.75/12) /(0.350 / 365 )  )
-	, gamma4 = 1/ ( (1-.75/12) /(0.282 / 365 )  )
-	, gamma5 = 1/ ( (1-.75/12) /(.434 / 365 )  ) #aids 
-) 
-#~ care_rates <- # dynamic
-##- Cori: 0.76, 0.19, 0.05, 0.00
-pstarts <- c(
-	pstartstage1 = 0.58
-	, pstartstage2 = 0.23  #reg4 combine these 
-	, pstartstage3 = 0.16
-	, pstartstage4 = 0.03
-	, pstartstage5 = 0.0
-=======
 ) 
 
 stage_prog_yrs <- c( .5, 3.32, 2.7, 5.50, 5.06 ) #cori AIDS
@@ -67,7 +26,6 @@ pstarts <- c( pstartstage1 = 0 #NA
  , pstartstage3 = 0.19
  , pstartstage4 = 0.05
  , pstartstage5 = 0
->>>>>>> upstream/master
 )
 
 theta <- c( age_assort_factor = .5 # power of age difference
@@ -178,21 +136,9 @@ for ( nh in NH_COMPS ){
 DEMES <- c( DEMES, 'src' )
 m <- length(DEMES)
 
-<<<<<<< HEAD
-##- Could have done with expand.grid ?
-#   DEMES <- as.vector(
-#    apply( 
-#      expand.grid(NH_COMPS, 
-#                   AGE_COMPS, 
-#                   CARE_COMPS, 
-#                   RISK_COMPS), 1, paste, collapse = "." 
-#      )
-#    )
 
-# level indicators for each deme; not C-indexing (start at 0)
-=======
 # indicators for each deme; note C-indexing
->>>>>>> upstream/master
+
 NH = rep(NA, m)
 AGE = rep(NA, m)
 CARE = rep(NA, m )
@@ -239,13 +185,10 @@ colnames(prRecipMat) = rownames(prRecipMat) <- DEMES
 	 ##- risk level
 	wrisk <- ifelse( colrisk == 1, theta['pRiskLevel1'], 1 - theta['pRiskLevel1'] )
 #~ 	browser()
-<<<<<<< HEAD
-	wrisk * wcare * pstarts[colpss] * theta['age_assort_factor']^abs( rowage - colage )
-	## P(a -> a’) ∝ coef^|a - a’|
-=======
+
 	if (colpss != 1) return(0)
 	wrisk * wcare  * theta['age_assort_factor']^abs( rowage - colage )
->>>>>>> upstream/master
+
 }
 ##- matrix of transmission weights
 for (i in 1:(m-1)) for (j in 1:(m-1)){
@@ -257,9 +200,7 @@ prRecipMat <- prRecipMat / rowSums( prRecipMat )
 prRecipMat[m,] <- 0 # from src
 prRecipMat[m,m] <- 1 # src to src
 
-<<<<<<< HEAD
-####---- Migration matrix ----####
-=======
+
 prStageRecipMat <- matrix( 0, nrow = m, ncol = m ); 
 colnames(prStageRecipMat) = rownames(prStageRecipMat) <- DEMES
 .stagemweight <- function(rowdeme, coldeme){
@@ -286,7 +227,6 @@ prStageRecipMat <- prStageRecipMat/rowSums( prStageRecipMat )
 prStageRecipMat[is.na(prStageRecipMat)] <- 0
 
 
->>>>>>> upstream/master
 ## mig mat
 # NOTE uses R indices 
 ##- To which deme index goes a deme with one increment of age, care or stage
@@ -389,15 +329,8 @@ dydt <- function(t,y, parms, ... ){
 	y <- pmax(y, 0 )
 	incidence <- inc.t( t, theta )
 	care_rates <- c( diag.t( t, theta), tr.t( t) )
-<<<<<<< HEAD
-	
-	##- (birth) matrix F: gamma = (nh_wtransm(nh) * age_wtransm(age) * care_wtransm(care) * risk_wtransm (risk ))
-	## transm = gamma * I
-	## F = transm * prRecipMat
-	## (death rate for src population is in cpp function F_matrix)
-	
-=======
->>>>>>> upstream/master
+
+
 	FF <- F_matrix( incidence
 	  , y
 	  , as.list(theta)
@@ -426,12 +359,9 @@ dydt <- function(t,y, parms, ... ){
 	  , CARE_RECIP
 	  , stageprog_rates # rates for each deme
 	  , age_rates
-<<<<<<< HEAD
-	  , care_rates # note these depend on time (as of 1996)
-=======
 	  , care_rates
 	  , prStageRecipMat
->>>>>>> upstream/master
+
 	)
 	GGns <- GG
 	GGns[m, ] = GG[, m ] <- 0
@@ -728,11 +658,3 @@ if (F)
 }
 
 
-<<<<<<< HEAD
-##- Output o and tree and inputs
-parms <- c(theta, nh_wtransm, age_wtransm, care_wtransm, risk_wtransm)
-date <- format(Sys.time(),"%Y%m%d_%H%M")
-nameout <- paste( "out_treesim_", date, ".Rdata", sep = "")
-save(parms, o, tree, file = nameout)
-=======
->>>>>>> upstream/master
