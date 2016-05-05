@@ -8,8 +8,8 @@ require(deSolve)
 require(Rcpp)
 sourceCpp( 'model0.cpp' )
 
+## parameters
 
-## parameters 
 age_rates <- c(agerate1 = 1/9/365
 	, agerate2 = 1/6/365
 	, agerate3 = 1/7/365
@@ -136,8 +136,8 @@ for ( nh in NH_COMPS ){
 DEMES <- c( DEMES, 'src' )
 m <- length(DEMES)
 
-
 # indicators for each deme; note C-indexing
+
 NH = rep(NA, m)
 AGE = rep(NA, m)
 CARE = rep(NA, m )
@@ -199,8 +199,7 @@ prRecipMat <- prRecipMat / rowSums( prRecipMat )
 prRecipMat[m,] <- 0 # from src
 prRecipMat[m,m] <- 1 # src to src
 
-
-prStageRecipMat <- matrix( 0, nrow = m, ncol = m ); 
+prStageRecipMat <- matrix( 0, nrow = m, ncol = m );
 colnames(prStageRecipMat) = rownames(prStageRecipMat) <- DEMES
 .stagemweight <- function(rowdeme, coldeme){
 	if (rowdeme=='src') return (0)
@@ -328,7 +327,6 @@ dydt <- function(t,y, parms, ... ){
 	y <- pmax(y, 0 )
 	incidence <- inc.t( t, theta )
 	care_rates <- c( diag.t( t, theta), tr.t( t) )
-
 
 	FF <- F_matrix( incidence
 	  , y
@@ -656,5 +654,4 @@ if (F)
 	theta_docked <- exp(o$par)
 	print((o))
 }
-
 
