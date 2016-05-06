@@ -5,11 +5,22 @@
 
 ### 1. same model at diffreent threshold
 library(forestplot)
-#model  <-  "scale(size) ~ scale(age) + scale(stage) + scale(time) + scale(risk)"
-#model  <-  "size ~ age + stage + time + risk"
-#model  <-  "scale(size) ~ factor(age) + factor(stage) + scale(time) + factor(risk)"
-model  <-  "scale(size) ~ factor(age) + factor(stage) +  factor(risk)"
 
+  a <- synth_hsh[synth_hsh$cage2 == 'Total'
+                 & synth_hsh$reg == 'IDF',]
+head(a)
+
+  forestplot(paste(a$study,a$year), a$p_hsh12, a$lo_p_hsh12, a$up_p_hsh12,
+             cex  = .5, lineheight = "auto",
+             xlab = "",
+             col=fpColors(box = gray(0:1/2)), 
+             #                         line="darkblue", summary="royalblue", 
+             #                         hrz_lines = "#444444"),
+             vertices = TRUE,
+             new_page = TRUE)
+  
+  dev.off()
+  
 fit <- lapply(listclus, function(x) lm(model, data = x))
 
 
