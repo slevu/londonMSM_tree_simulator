@@ -1,17 +1,18 @@
 require(phydynR)
 source('model0.R')
+nh_wtransm <- c( 
+	nh1 = 1
+	,nh2 = 1
+	,nh3 = 1
+	,nh4 = 1
+	,nh5 = 1
+)
+
+
 
 MH <- 20 #10 # look up to 10 years in past for infector probs 
 PID <- Sys.getpid() 
 
-# counterfactuals sim'ed separately, eg: 
-#~ nh_wtransm <- c( 
-#~ 	nh1 = 1
-#~ 	,nh2 = 1
-#~ 	,nh3 = 1
-#~ 	,nh4 = 1
-#~ 	,nh5 = 1
-#~ )
 
 {
 
@@ -34,7 +35,7 @@ ss <- ss + 1e-4
 ss = sampleStates <- ss / rowSums(ss)
 
 ## sim tree
-{
+
 print('sim tree')
 print(date())
 st.tree <- system.time( {
@@ -86,5 +87,5 @@ sampleDemes <- setNames( sapply( 1:n, function(u) DEMES[which.max( treeSampleSta
 	)  
 	
 	save( daytree, bdt, W, cd4s, sampleDemes, plwhiv, newinf, MH
-	 , file = paste('data/simulations2/model0-simulateBaseline0/', PID, '.RData', sep=''))
-}
+	 , file = paste('data/simulations2/model0-simulateEqualStage0/', PID, '.RData', sep=''))
+

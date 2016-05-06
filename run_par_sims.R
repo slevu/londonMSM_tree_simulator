@@ -12,8 +12,9 @@ foreach(i = 1:4) %dopar% {
 ?detectCores()
 
 ##- test nested
+registerDoParallel(cores = 5)
 foreach(k = 1:3, .combine = cbind) %:% 
-foreach(i = 1:4, .combine = c) %dopar% {
+foreach(i = 1:5, .combine = c) %dopar% {
   Sys.getpid() # Sys.info()[['nodename']]
 }
 
