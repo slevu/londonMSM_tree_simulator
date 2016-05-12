@@ -34,7 +34,7 @@ ss <- ss + 1e-4
 ss = sampleStates <- ss / rowSums(ss)
 
 ## sim tree
-{
+
 print('sim tree')
 print(date())
 st.tree <- system.time( {
@@ -86,5 +86,5 @@ sampleDemes <- setNames( sapply( 1:n, function(u) DEMES[which.max( treeSampleSta
 	)  
 	
 	save( daytree, bdt, W, cd4s, sampleDemes, plwhiv, newinf, MH
-	 , file = paste('model0-simulateBaseline0/', PID, '.RData', sep=''))
-}
+	 , file = paste('data/simulations2/model0-simulateBaseline0/', PID, '.RData', sep=''))
+
