@@ -30,8 +30,8 @@ sapply(l_Baseline0, function(x){
 
 ####---- plots ----
 
-tab1 <- l_Baseline0[["0.005"]][[40]]
-tab0 <- l_EqualStage0[["0.015"]][[40]]
+tab_b <- l_Baseline0[["0.015"]][[40]]
+tab_e <- l_EqualStage0[["0.015"]][[40]]
 str(tab1)  
 ##- test cluster size 1 -> 0
 # tab1[tab1$size == 1, ]$size <- NA
