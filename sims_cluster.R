@@ -32,17 +32,14 @@ str(list.sims) # head(names(list.sims[[2]]))
  ####---- list.dist ----
 #### load list of dist from sims
 if(0){
-  for (.s in 1:length(scenario)){
-    distEqualStage0FNS <- list.files('RData', full.names=T, path = 'data/simulations/model0-simulateEqualStage0-distances')
-    distBaseline0FNS <- list.files('RData', full.names=T, path = 'data/simulations/model0-simulateBaseline0-distances')
-  }
-
+    distEqualStage0FNS <- list.files('RData', full.names=T, path = paste(path.sims, 'EqualStage0-distances', sep = '') )
+    distBaseline0FNS <- list.files('RData', full.names=T, path = paste(path.sims, 'Baseline0-distances', sep = '') )
 }
 
 ####---- ucsd clustering ----####
 # ucsd_hivclust
 if(FALSE){
-  thresholds  <-  c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
+  thresholds  <-  0.015 # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
   tmax <- max(thresholds) # limit of distance considered
 ## function: input list of dist filenames
   ucsd <- function(ldist){
@@ -50,9 +47,7 @@ if(FALSE){
     for (i in 1:length(ldist)){
     ##- some processing
     load(ldist[i])
-    name.sim <- substr(ldist[i], 
-                       regexec(".RData",ldist[i])[[1]][1] - 5, 
-                       regexec(".RData", ldist[i])[[1]][1] -1)
+    name.sim <- regmatches(ldist[i], regexpr("[0-9]{3,}", ldist[i]))
     folder.sim <- substr(ldist[i], regexec("-simulate", ldist[i])[[1]][1] + 9, regexec("-distances", ldist[i])[[1]][1] -1)
     dd <- as.data.frame(t(D))
     names(dd) <- c('ID1', 'ID2', 'distance')
@@ -63,7 +58,7 @@ if(FALSE){
     ucsd_hivclust(path.el = temp.el.fn,
                           thr = thresholds, 
                           k = tmax, 
-                          out = paste("data/sim_ucsd_results/", folder.sim, '/', sep = '' ) )
+                          out = paste("data/sim_ucsd_results2/", folder.sim, '/', sep = '' ) )
     }
   } 
   
@@ -71,19 +66,18 @@ if(FALSE){
   lapply(distEqualStage0FNS, ucsd)
 }
 
-    
 ####---- list.hivclust ----
 if(0){
 ###  get csv of clusters assignments in one list ###
   # getwd()
   csvEqualStage0FNS <- list.files("csv", full.names=T, 
-                          path = 'data/sim_ucsd_results/EqualStage0')
+                          path = 'data/sim_ucsd_results2/EqualStage0')
   csvBaseline0FNS <- list.files("csv", full.names=T, 
-                          path = 'data/sim_ucsd_results/Baseline0')
+                          path = 'data/sim_ucsd_results2/Baseline0')
 ##- function n = 1; m = 1
 list.hivclust <- function(list.csv){
   ## Structure threshold > trees
-  thresholds <- c("0.005", "0.015", "0.02", "0.05") # c("0.01", "0.02", "0.05")
+  # thresholds <- c("0.005", "0.015", "0.02", "0.05") # c("0.01", "0.02", "0.05")
   ## empty list of thresholds
   cl2 <- vector("list", length(thresholds))
   ## loop
@@ -110,8 +104,8 @@ return(cl2)
  # names(cl_EqualStage0[[1]]) 
   # str(cl_Baseline0[[1]][1])
   
-# saveRDS(cl_Baseline0, file = "data/sim_ucsd_results/list.hivclust.sim.Baseline0.rds")
-# saveRDS(cl_EqualStage0, file = "data/sim_ucsd_results/list.hivclust.sim.EqualStage0.rds")
+# saveRDS(cl_Baseline0, file = "data/sim_ucsd_results2/list.hivclust.sim.Baseline0.rds")
+# saveRDS(cl_EqualStage0, file = "data/sim_ucsd_results2/list.hivclust.sim.EqualStage0.rds")
 }
 
 ####---- load list.hivclust ----
@@ -247,8 +241,8 @@ if(0){
 #   aggregate(test$size, by = list("age" = test$age), mean )
  
   ####---- saved listUKclus ----
- # saveRDS(l_Baseline0, file = "data/sim_ucsd_results/list.sim.ucsd.Baseline0.rds" )
- # saveRDS(l_EqualStage0, file = "data/sim_ucsd_results/list.sim.ucsd.EqualStage0.rds" )
+ # saveRDS(l_Baseline0, file = "data/sim_ucsd_results2/list.sim.ucsd.Baseline0.rds" )
+ # saveRDS(l_EqualStage0, file = "data/sim_ucsd_results2/list.sim.ucsd.EqualStage0.rds" )
 
   l_Baseline0 <- readRDS(file = "data/sim_ucsd_results/list.sim.ucsd.Baseline0.rds" )
   l_EqualStage0 <- readRDS(file = "data/sim_ucsd_results/list.sim.ucsd.EqualStage0.rds" )
