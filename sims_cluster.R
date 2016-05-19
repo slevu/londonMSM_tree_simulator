@@ -6,6 +6,10 @@ source("functions.R")
 ####---- lib ----
 library(ape)
 
+####---- path sims ----
+##- used for several rounds of simulations
+path.sims <- 'data/simulations2/model0-simulate'
+
 ####---- scenario ----
 scenario <- c("EqualStage0", "Baseline0")
 
@@ -13,24 +17,26 @@ scenario <- c("EqualStage0", "Baseline0")
 list.sims <- vector("list", length(scenario))
 for (.s in 1:length(scenario)){
   list.sims[[.s]] <- list.files('RData', full.names = TRUE, 
-             path = paste('data/simulations/model0-simulate', 
+             path = paste(path.sims, 
                           scenario[.s], sep = '') )
   ## names of sims within scenario
   names(list.sims[[.s]]) <- lapply(list.sims[[.s]], function(x){
-    substr(x, regexec(".RData", x)[[1]][1] - 5, regexec(".RData", x)[[1]][1] -1)
+    regmatches(x, regexpr("[0-9]{2,}", x)) # numerical string of length >= 2
   })
   ## names of scenario
   names(list.sims)[.s] <- scenario[.s]
 }
 str(list.sims) # head(names(list.sims[[2]]))
 
-####---- list.dist ----
+
+ ####---- list.dist ----
 #### load list of dist from sims
-if(FALSE){
-distEqualStage0FNS <- list.files('RData', full.names=T, 
-                           path = 'data/simulations/model0-simulateEqualStage0-distances')
-distBaseline0FNS <- list.files('RData', full.names=T,
-                              path = 'data/simulations/model0-simulateBaseline0-distances')
+if(0){
+  for (.s in 1:length(scenario)){
+    distEqualStage0FNS <- list.files('RData', full.names=T, path = 'data/simulations/model0-simulateEqualStage0-distances')
+    distBaseline0FNS <- list.files('RData', full.names=T, path = 'data/simulations/model0-simulateBaseline0-distances')
+  }
+
 }
 
 ####---- ucsd clustering ----####
