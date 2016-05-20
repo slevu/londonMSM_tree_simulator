@@ -1,0 +1,44 @@
+---
+title: "Pipeline for simulations"
+output: 
+  html_document:
+    fig_width: 6
+    fig_height: 6
+author: "Stephane"
+date: "20/5/16"
+fontsize: 11pt
+---
+
+### Structure of data
+For each, two scenario subfolders *Baseline* and *EqualStage*
+
+1. trees
+2. distances
+3. ucsd
+4. cluster (with covariates)
+5. outdegrees
+
+### Scripts
+
+1. Generate trees 
+  + Transmission model `model0.R` defines *Baseline* scenario
+  + Modified with equal transmission rates by stage for *EqualStage* scenario
+  + Run on HPC with a loop of `simBa.sh` and `simEq.sh` running `model0-simulateBaseline0.R` and `model0-simulateEqualStage0.R`. Must use `sampleTimes`, `sampleStates`, `incidence.tsv`, `model0.cpp files`
+  + output files contain daytree, yeartree, cd4s, sampleDemes, W matrix of infector probs
+2. Genetic distances
+  + Simulated by function `tree2genDistance.R` in `tree2dist.sims.R`
+3. ucsd cluster assignement by tips
+  + With `sims.cluster.R`
+4. Cluster assignement with covariates
+  + Merge with covariates extracted from sampleDemes
+5. Add outdegrees
+  + Skip the LSD dating of trees and source attribution already done at step 1
+  + Todo: combine cluster assignement with covariates and W~0~ values
+6. Analyses
+  + association between cluster size / outdegrees and covariates
+  + type 1 / 2 errors
+  + linear and logistic regressions
+  + assortativity
+7. Graphics
+  + distribution of cluster size, outdegrees, indegrees
+  + network
