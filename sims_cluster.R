@@ -2,6 +2,7 @@
 ####---- include ----
 detail_knitr <- TRUE
 source("functions.R")
+startover <- FALSE
 
 ####---- lib ----
 library(ape)
@@ -26,19 +27,21 @@ for (.s in 1:length(scenario)){
   ## names of scenario
   names(list.sims)[.s] <- scenario[.s]
 }
-str(list.sims) # head(names(list.sims[[2]]))
+str(list.sims) # head(names(list.sims[[2]])) 
+# load(list.sims[[2]][[1]]); head(sampleDemes); head(cd4s)
 
+######----- start optional -----#####
 
  ####---- list.dist ----
 #### load list of dist from sims
-if(0){
+if (startover == TRUE){
     distEqualStage0FNS <- list.files('RData', full.names=T, path = paste(path.sims, 'EqualStage0-distances', sep = '') )
     distBaseline0FNS <- list.files('RData', full.names=T, path = paste(path.sims, 'Baseline0-distances', sep = '') )
 }
 
 ####---- ucsd clustering ----####
 # ucsd_hivclust
-if(FALSE){
+if (startover == TRUE){
   thresholds  <-  0.015 # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
   tmax <- max(thresholds) # limit of distance considered
 ## function: input list of dist filenames
@@ -67,7 +70,7 @@ if(FALSE){
 }
 
 ####---- list.hivclust ----
-if(0){
+if (startover == TRUE){
 ###  get csv of clusters assignments in one list ###
   # getwd()
   csvEqualStage0FNS <- list.files("csv", full.names=T, 
@@ -109,25 +112,29 @@ return(cl2)
 }
 
 ####---- load list.hivclust ----
+if (startover == TRUE){
   cl_Baseline0 <- readRDS( file = "data/sim_ucsd_results/list.hivclust.sim.Baseline0.rds" )
   cl_EqualStage0 <- readRDS( file = "data/sim_ucsd_results/list.hivclust.sim.EqualStage0.rds" )
 
+
   ##- Keep first 100 cluster results corresponding to a simulation
   ##- reference for names of sims
-ref_e <- names(list.sims[["EqualStage0"]])
-ref_b <- names(list.sims[["Baseline0"]])
-cl_EqualStage0 <- lapply(cl_EqualStage0, 
+  ref_e <- names(list.sims[["EqualStage0"]])
+  ref_b <- names(list.sims[["Baseline0"]])
+  cl_EqualStage0 <- lapply(cl_EqualStage0, 
                   function(a){
                     a[names(a) %in% ref_e][1:100]
                          })
-cl_Baseline0 <- lapply(cl_Baseline0, 
+  cl_Baseline0 <- lapply(cl_Baseline0, 
                   function(a){
                     a[names(a) %in% ref_b][1:100]
                          })
-# identical(names(cl_EqualStage0[[1]]), names(cl_EqualStage0[[2]]) )
-# sims at threshold 4 EqualStage0 are different
+  # identical(names(cl_EqualStage0[[1]]), names(cl_EqualStage0[[2]]) )
+  # sims at threshold 4 EqualStage0 are different
+}
 
 ####---- helper functions ----
+if (startover == TRUE){
   deme2age <- function(deme){ as.numeric(
     substr(regmatches( deme , regexpr( '\\.age[0-9]', deme ) ), 5, 5) 
   ) }
@@ -140,10 +147,10 @@ cl_Baseline0 <- lapply(cl_Baseline0,
   deme2care <- function(deme){as.numeric( 
     substr(regmatches( deme , regexpr( 'care[0-9]', deme )), 5, 5)
   ) }
-  
+}  
 ## At this stage, list of cluster assignements have an index of tips not tip labels
 ####---- clus.stat ----
-if(1){
+if (startover == TRUE){
   ###- check if sim.name = clus.name
   # sim = list.sims[["Baseline0"]] ; clus = cl_Baseline0; i = 50 ; thr = 4
 clus.stat <- function(clus, sim){
@@ -215,7 +222,7 @@ clus.stat <- function(clus, sim){
 ####---- fin clus.stat ----####
 }
 
-if(0){
+if (startover == TRUE){
   system.time(
     l_Baseline0 <- clus.stat(clus = cl_Baseline0, 
                              sim = list.sims[["Baseline0"]])
@@ -244,9 +251,101 @@ if(0){
  # saveRDS(l_Baseline0, file = "data/sim_ucsd_results2/list.sim.ucsd.Baseline0.rds" )
  # saveRDS(l_EqualStage0, file = "data/sim_ucsd_results2/list.sim.ucsd.EqualStage0.rds" )
 
-  l_Baseline0 <- readRDS(file = "data/sim_ucsd_results/list.sim.ucsd.Baseline0.rds" )
-  l_EqualStage0 <- readRDS(file = "data/sim_ucsd_results/list.sim.ucsd.EqualStage0.rds" )
+  l_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.ucsd.Baseline0.rds" )
+  l_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.ucsd.EqualStage0.rds" )
 
+####---- add degrees ----
 
-
-
+  ##- loop to merge all W to all clusters
+#   clus <- l_Baseline0
+#   sim <- list.sims[["Baseline0"]]
+#   thr <- 1
+#   i <- 15
+  ####---- add.w ----
+  add.w <- function(clus, sim){
+    ##- empty list of n thresholds
+    ll <- vector("list", length(clus))
+    ##- loop threshold
+    for (thr in 1:length(clus)){
+      ##- loop sims
+      for (i in 1:length(clus[[thr]]) ){
+        ##- check same sim and clus
+        #           if (!identical(names(clus[[thr]])[i], # name cluster
+        #                          names(sim[ names(clus[[thr]])[i] ]))  # name sim
+        #               ) stop("not the same sim results")
+        
+        ##- monitor loop
+        print(paste(names(clus)[thr], # threshold
+                    i )) # num sim
+        
+        ##- load sim with W matrix of infect probs
+        load(sim[ names(clus[[thr]])[i] ])
+        
+        ##- outdegree
+        out0 <- aggregate(x = list(outdegree = W$infectorProbability), 
+                          by = list(patient = W$donor), FUN = sum)
+        ##- indegree
+        in0 <- aggregate(x = list(indegree = W$infectorProbability),
+                         by = list(patient = W$recip), FUN = sum)
+        
+        ##- merge out and in degrees
+        b <- merge(out0,in0)
+        
+        ##- load cluster assignement
+        a <- clus[[thr]][[i]]
+        
+        ##- merge all
+        c <- merge(a, b, by.x = "id", by.y = "patient", all.x = TRUE )
+        
+        ##- names
+        ll[[thr]][[i]] <- c
+        names(ll[[thr]])[i] <- names(clus[[thr]][i])
+      } 
+      names(ll)[thr] <- names(clus)[[thr]]
+    }
+    return(ll)
+  }
+  ####---- fin add.w ----####
+  
+  
+  if (startover = TRUE){
+    system.time(
+      cw_Baseline0 <- add.w(clus = l_Baseline0, 
+                            sim = list.sims[["Baseline0"]])
+    ) # 106
+    system.time(
+      cw_EqualStage0 <- add.w(clus = l_EqualStage0,
+                              sim = list.sims[["EqualStage0"]])
+    ) # 87
+  }
+  
+  
+  ####---- saved listUKclus ----
+  # saveRDS(cw_Baseline0, file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
+  # saveRDS(cw_EqualStage0, file = "data/sim_ucsd_results2/list.sim.clus-outdeg.EqualStage0.rds" )
+  
+  cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
+  cw_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.EqualStage0.rds" )
+  
+  
+  ##- merge cluster assignement and W_0 
+  names(cw_Baseline0[["0.015"]])
+  c <- cw_Baseline0[["0.015"]][[14]]
+  
+  boxplot(c$size ~ c$stage)
+  boxplot(c$size ~ c$age)
+  boxplot(c$size ~ c$risk)
+  boxplot(c$outdegree ~ c$stage)
+  boxplot(c$outdegree ~ c$age)
+  boxplot(c$outdegree ~ c$risk)
+  
+  t.test(size ~ risk, data = c)
+  t.test(outdegree ~ risk, data = c)
+  
+  d <- cw_EqualStage0[["0.015"]][[14]]
+  t.test(size ~ risk, data = d)
+  t.test(outdegree ~ risk, data = d)
+  
+  ## https://rpubs.com/corey_sparks/27239
+  
+  
