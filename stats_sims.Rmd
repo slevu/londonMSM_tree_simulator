@@ -1,0 +1,72 @@
+---
+title: "Analyze simulations cluster size and outdegrees"
+author: "Stephane"
+date: "23 May 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE)
+```
+
+## Descriptive stats
+```{r}
+##- Load data (only threshold 0.015)
+cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
+cw_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.EqualStage0.rds" )
+```
+
+## 1. Detect difference in transmission rate by risk level
+
+```{r}
+u.test.risk <- function(df, y){
+  U <- wilcox.test(df[df$risk == 2, y], 
+                   df[df$risk == 1, y], 
+                   alternative = "greater") # "two.sided", "less"
+  return(U$p.value)
+}
+##- U tests
+p_uni_cs_0.015 <- sapply(cw_Baseline0[["0.015"]], function(df) u.test.risk(df, y = "size") )
+p_uni_cs_0.005 <- sapply(cw_Baseline0[["0.005"]], function(df) u.test.risk(df, y = "size") )
+p_uni_sa <- sapply(cw_Baseline0[["0.005"]], function(df) u.test.risk(df, y = "outdegree") )
+summary(p_uni_cs_0.015)
+summary(p_uni_cs_0.005)
+summary(p_uni_sa)
+df <- data.frame("method" = c("cluster 0.015", "cluster 0.005", "sa"), 
+                 "proportion" = c(mean( p_uni_cs_0.015 < 0.05), 
+                                  mean( p_uni_cs_0.005 < 0.05),
+                                  mean( p_uni_sa < 0.05) ) )
+##- todo: make level of lcuster automatic and kable the table
+```
+#### Proportion of tests correctly detecting difference in transmission rates
+* cluster 0.015: `r mean( p_uni_cs_0.015 < 0.05)`
+* cluster 0.005: `r mean( p_uni_cs_0.005 < 0.05)`
+* sa : `r mean( p_uni_sa < 0.05)`
+
+Interpretation: need to test scenario with different levels of difference in transmission rates
+
+## Associations
+## Type 1 / 2 error: detect a difference in risk, age, stage ?
+## Regressions
+## Assortativity
+    1. Calculate mixing matrix
+    2. Calculate true assortativity coefficient
+    3. Compare with estimated coefficient
+## Plots
+    1. Distribution cluster sizes, out- and indegrees
+    2. Network
+  
+## Next: change scenarios
+  * high, low, no age assortativity
+  * high, low, no at-risk group
+
+
+
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
