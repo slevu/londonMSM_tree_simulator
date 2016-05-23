@@ -1,10 +1,54 @@
+# rm(list=ls())
+
+cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
+cw_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.EqualStage0.rds" )
+
+a <- cw_Baseline0[[2]]
+
+## bind and distribution
+# library(data.table)
+# b <- rbindlist(a)
+
+c <- lapply(cw_Baseline0, function(x){
+  do.call("rbind", x)
+})
+names(c)
+str(c)
+
+hist(c[[2]]$size)
+hist(c[["0.015"]]$outdegree)
+hist(b$indegree)
+sapply(cw_Baseline0, function(x){
+  summary(sapply(x, function(x) sum(x$binclus) / length(x$binclus)))
+})
+
+##- merge cluster assignement and W_0 
+names(cw_Baseline0[["0.015"]])
+c <- cw_Baseline0[["0.015"]][[14]]
+
+boxplot(c$size ~ c$stage)
+boxplot(c$size ~ c$age)
+boxplot(c$size ~ c$risk)
+boxplot(c$outdegree ~ c$stage)
+boxplot(c$outdegree ~ c$age)
+boxplot(c$outdegree ~ c$risk)
+
+t.test(size ~ risk, data = c)
+t.test(outdegree ~ risk, data = c)
+
+d <- cw_EqualStage0[["0.015"]][[14]]
+t.test(size ~ risk, data = d)
+t.test(outdegree ~ risk, data = d)
+
+## https://rpubs.com/corey_sparks/27239
+
 
 ###--- stats cluster ---###
 # listUKclus <- l_bs_uk ## without patients data
 
 ####---- n clusters 2 ----
 ## number of different clusters (counting size 1)
-sapply(l_Baseline0, function(x){
+sapply(cw_Baseline0, function(x){
   summary(sapply(x, function(x) {
     length(unique(x$ClusterID) )
   }))
@@ -12,22 +56,29 @@ sapply(l_Baseline0, function(x){
 
 ####---- membership ----
 ## proportion of cluster membership
-sapply(l_Baseline0, function(x){
+sapply(cw_Baseline0, function(x){
   summary(sapply(x, function(x) sum(x$binclus) / length(x$binclus)))
 })
 
 ####---- mean size 2 ----
 ## stats of mean size
-sapply(l_Baseline0, function(x){
+sapply(cw_Baseline0, function(x){
   summary(sapply(x, function(x) mean(x$size)))
 })
 
 ####---- median size 2 ----
 ## stats of median size
-sapply(l_Baseline0, function(x){
+sapply(cw_Baseline0, function(x){
   summary(sapply(x, function(x) median(x$size)))
 })
 
+## stats of max size
+sapply(cw_Baseline0, function(x){
+  summary(sapply(x, function(x) max(x$size)))
+})
+
+lapply(cw_Baseline0, function(x) lapply(x, function(df) aggregate(df$size, by = list("stage" = df$stage), mean )))
+head(cw_Baseline0[[1]][[1]])
 ####---- plots ----
 
 tab_b <- l_Baseline0[["0.015"]][[40]]
