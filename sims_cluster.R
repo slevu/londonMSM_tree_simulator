@@ -42,7 +42,7 @@ if (startover == TRUE){
 ####---- ucsd clustering ----####
 # ucsd_hivclust
 if (startover == TRUE){
-  thresholds  <-  0.015 # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
+  thresholds  <-  c("0.005", "0.015") # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
   tmax <- max(thresholds) # limit of distance considered
 ## function: input list of dist filenames
   ucsd <- function(ldist){
@@ -80,7 +80,7 @@ if (startover == TRUE){
 ##- function n = 1; m = 1
 list.hivclust <- function(list.csv){
   ## Structure threshold > trees
-  # thresholds <- c("0.005", "0.015", "0.02", "0.05") # c("0.01", "0.02", "0.05")
+  thresholds <- c("0.005", "0.015") # c("0.005", "0.015", "0.02", "0.05") # c("0.01", "0.02", "0.05")
   ## empty list of thresholds
   cl2 <- vector("list", length(thresholds))
   ## loop
@@ -121,14 +121,19 @@ if (startover == TRUE){
   ##- reference for names of sims
   ref_e <- names(list.sims[["EqualStage0"]])
   ref_b <- names(list.sims[["Baseline0"]])
-  cl_EqualStage0 <- lapply(cl_EqualStage0, 
+  if(length(ref_e) > 100){
+     cl_EqualStage0 <- lapply(cl_EqualStage0, 
                   function(a){
                     a[names(a) %in% ref_e][1:100]
                          })
-  cl_Baseline0 <- lapply(cl_Baseline0, 
+  }
+  if (length(ref_b) > 100){
+    cl_Baseline0 <- lapply(cl_Baseline0, 
                   function(a){
                     a[names(a) %in% ref_b][1:100]
                          })
+  }
+  rm(ref_b, ref_e)
   # identical(names(cl_EqualStage0[[1]]), names(cl_EqualStage0[[2]]) )
   # sims at threshold 4 EqualStage0 are different
 }
@@ -326,26 +331,6 @@ if (startover == TRUE){
   
   cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
   cw_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.EqualStage0.rds" )
-  
-  
-  ##- merge cluster assignement and W_0 
-  names(cw_Baseline0[["0.015"]])
-  c <- cw_Baseline0[["0.015"]][[14]]
-  
-  boxplot(c$size ~ c$stage)
-  boxplot(c$size ~ c$age)
-  boxplot(c$size ~ c$risk)
-  boxplot(c$outdegree ~ c$stage)
-  boxplot(c$outdegree ~ c$age)
-  boxplot(c$outdegree ~ c$risk)
-  
-  t.test(size ~ risk, data = c)
-  t.test(outdegree ~ risk, data = c)
-  
-  d <- cw_EqualStage0[["0.015"]][[14]]
-  t.test(size ~ risk, data = d)
-  t.test(outdegree ~ risk, data = d)
-  
-  ## https://rpubs.com/corey_sparks/27239
+ 
   
   
