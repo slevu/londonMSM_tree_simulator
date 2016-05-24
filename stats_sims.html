@@ -68,41 +68,114 @@ img {
 </div>
 
 
-<div id="descriptive-stats" class="section level2">
-<h2>Descriptive stats</h2>
+<p>Load tables</p>
 <pre class="r"><code>##- Load data (only threshold 0.015)
 cw_Baseline0 &lt;- readRDS(file = &quot;data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds&quot; )
 cw_EqualStage0 &lt;- readRDS(file = &quot;data/sim_ucsd_results2/list.sim.clus-outdeg.EqualStage0.rds&quot; )</code></pre>
-</div>
 <div id="detect-difference-in-transmission-rate-by-risk-level" class="section level2">
 <h2>1. Detect difference in transmission rate by risk level</h2>
-<pre class="r"><code>u.test.risk &lt;- function(df, y){
+<div id="univariate" class="section level3">
+<h3>1.1 Univariate</h3>
+<pre class="r"><code>##- U tests on size or outdegree
+u.test.risk &lt;- function(df, y){
   U &lt;- wilcox.test(df[df$risk == 2, y], 
                    df[df$risk == 1, y], 
                    alternative = &quot;greater&quot;) # &quot;two.sided&quot;, &quot;less&quot;
   return(U$p.value)
 }
-##- U tests
-p_uni_cs_0.015 &lt;- sapply(cw_Baseline0[[&quot;0.015&quot;]], function(df) u.test.risk(df, y = &quot;size&quot;) )
-p_uni_cs_0.005 &lt;- sapply(cw_Baseline0[[&quot;0.005&quot;]], function(df) u.test.risk(df, y = &quot;size&quot;) )
-p_uni_sa &lt;- sapply(cw_Baseline0[[&quot;0.005&quot;]], function(df) u.test.risk(df, y = &quot;outdegree&quot;) )
-summary(p_uni_cs_0.015)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-## 0.08546 0.59550 0.79500 0.72660 0.91200 0.99460</code></pre>
-<pre class="r"><code>summary(p_uni_cs_0.005)</code></pre>
-<pre><code>##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-## 0.0000013 0.0018600 0.0107200 0.0486000 0.0454300 0.5077000</code></pre>
-<pre class="r"><code>summary(p_uni_sa)</code></pre>
-<pre><code>##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-## 0.000e+00 2.620e-07 4.978e-06 1.539e-04 3.870e-05 3.880e-03</code></pre>
+
+##- p-values for test of cluster size in risk 2 vs risk 1
+p_cs &lt;- lapply(cw_Baseline0, function (x)  {
+  sapply(x, function(df) u.test.risk(df, y = &quot;size&quot;) )
+ } )
+##- Add p-values for outdegree testing
+p_sa &lt;- sapply(cw_Baseline0[[1]], function(df) u.test.risk(df, y = &quot;outdegree&quot;) )
+p_uni &lt;- c(p_cs, &quot;SA&quot;= list(p_sa) )
+
+##- stats of p-values
+sapply(p_uni, summary)</code></pre>
+<pre><code>##             0.005   0.015        SA
+## Min.    1.268e-06 0.08546 8.574e-12
+## 1st Qu. 1.860e-03 0.59550 2.616e-07
+## Median  1.072e-02 0.79500 4.978e-06
+## Mean    4.860e-02 0.72660 1.539e-04
+## 3rd Qu. 4.543e-02 0.91200 3.870e-05
+## Max.    5.077e-01 0.99460 3.880e-03</code></pre>
+<pre class="r"><code>##- table of proportion p-values &lt; 0.05
+tab &lt;- data.frame(&quot;method&quot; = c(paste(&quot;Cluster&quot;, names(cw_Baseline0)), &quot;SA&quot;),
+                 &quot;proportion univariate&quot; = sapply(p_uni, function(x) mean( x &lt; 0.05)),
+                 row.names = NULL)</code></pre>
+</div>
+<div id="multivariate" class="section level3">
+<h3>1.2 Multivariate</h3>
+<pre class="r"><code>##- lm model adjusting for stage of infection
+y = &quot;outdegree&quot;
+lm.risk &lt;- function(df, y){
+  model0 &lt;- &quot;scale(log(y)) ~ scale(risk) * as.factor(stage)&quot;
+  model &lt;- sub(&quot;y&quot;, y, model0)
+  ##- pvalue for risk parameter
+  p &lt;- coef(summary( lm( model , data = df) ))[2, 4]
+  return(p)
+}
+p_mult_cs &lt;- lapply(cw_Baseline0, function (x)  {
+  sapply(x, function(df) lm.risk(df, y = &quot;size&quot;) )
+ } )
+p_mult_sa &lt;- sapply(cw_Baseline0[[1]], function(df) lm.risk(df, y = &quot;outdegree&quot;) )
+p_mult &lt;- c(p_mult_cs, &quot;SA&quot;= list(p_mult_sa) )
+sapply(p_mult, summary)</code></pre>
+<pre><code>##             0.005     0.015        SA
+## Min.    0.0000927 7.618e-05 1.151e-09
+## 1st Qu. 0.0367600 7.461e-02 5.575e-03
+## Median  0.2653000 2.293e-01 5.834e-02
+## Mean    0.3578000 2.998e-01 2.084e-01
+## 3rd Qu. 0.6543000 4.642e-01 3.859e-01
+## Max.    0.9906000 9.980e-01 9.577e-01</code></pre>
+<pre class="r"><code>tab &lt;- cbind(tab, &quot;proportion multivariate&quot; = sapply(p_mult, function(x) mean( x &lt; 0.05)))
+row.names(tab) &lt;- NULL</code></pre>
 <div id="proportion-of-tests-correctly-detecting-difference-in-transmission-rates" class="section level4">
 <h4>Proportion of tests correctly detecting difference in transmission rates</h4>
+<pre class="r"><code>knitr::kable(tab)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">method</th>
+<th align="right">proportion.univariate</th>
+<th align="right">proportion multivariate</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Cluster 0.005</td>
+<td align="right">0.77</td>
+<td align="right">0.28</td>
+</tr>
+<tr class="even">
+<td align="left">Cluster 0.015</td>
+<td align="right">0.00</td>
+<td align="right">0.22</td>
+</tr>
+<tr class="odd">
+<td align="left">SA</td>
+<td align="right">1.00</td>
+<td align="right">0.47</td>
+</tr>
+</tbody>
+</table>
 <ul>
-<li>cluster 0.015: 0</li>
-<li>cluster 0.005: 0.77</li>
-<li>sa : 1</li>
+<li>Note: restricting to outdegrees &gt; 0 doesn’t change anything</li>
+<li>Interpretation: need to test scenario with different levels of difference in transmission rates</li>
 </ul>
-<p>Interpretation: need to test scenario with different levels of difference in transmission rates</p>
+<pre class="r"><code>##- into a dataframe for ggplot boxplot
+head(data.frame(sapply(p_uni, c), check.names = F))</code></pre>
+<pre><code>##             0.005     0.015           SA
+## 13334 0.015446196 0.7441394 1.935218e-06
+## 13379 0.012583818 0.8973152 2.269750e-03
+## 13428 0.018239612 0.9394112 2.729986e-07
+## 13477 0.006030160 0.6010319 1.279334e-07
+## 13526 0.002305735 0.8267174 2.913151e-09
+## 13575 0.041278682 0.2151845 5.196653e-07</code></pre>
+<pre class="r"><code>### laaaaaaaaaaa------------------------------------------------------</code></pre>
+</div>
 </div>
 </div>
 <div id="associations" class="section level2">

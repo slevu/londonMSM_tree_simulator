@@ -6,10 +6,10 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(cache=TRUE)
+knitr::opts_chunk$set(cache=FALSE)
 ```
 
-## Descriptive stats
+Load tables
 ```{r}
 ##- Load data (only threshold 0.015)
 cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
@@ -17,33 +17,72 @@ cw_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Eq
 ```
 
 ## 1. Detect difference in transmission rate by risk level
-
+### 1.1 Univariate
 ```{r}
+##- U tests on size or outdegree
 u.test.risk <- function(df, y){
   U <- wilcox.test(df[df$risk == 2, y], 
                    df[df$risk == 1, y], 
                    alternative = "greater") # "two.sided", "less"
   return(U$p.value)
 }
-##- U tests
-p_uni_cs_0.015 <- sapply(cw_Baseline0[["0.015"]], function(df) u.test.risk(df, y = "size") )
-p_uni_cs_0.005 <- sapply(cw_Baseline0[["0.005"]], function(df) u.test.risk(df, y = "size") )
-p_uni_sa <- sapply(cw_Baseline0[["0.005"]], function(df) u.test.risk(df, y = "outdegree") )
-summary(p_uni_cs_0.015)
-summary(p_uni_cs_0.005)
-summary(p_uni_sa)
-df <- data.frame("method" = c("cluster 0.015", "cluster 0.005", "sa"), 
-                 "proportion" = c(mean( p_uni_cs_0.015 < 0.05), 
-                                  mean( p_uni_cs_0.005 < 0.05),
-                                  mean( p_uni_sa < 0.05) ) )
-##- todo: make level of lcuster automatic and kable the table
-```
-#### Proportion of tests correctly detecting difference in transmission rates
-* cluster 0.015: `r mean( p_uni_cs_0.015 < 0.05)`
-* cluster 0.005: `r mean( p_uni_cs_0.005 < 0.05)`
-* sa : `r mean( p_uni_sa < 0.05)`
 
-Interpretation: need to test scenario with different levels of difference in transmission rates
+##- p-values for test of cluster size in risk 2 vs risk 1
+p_cs <- lapply(cw_Baseline0, function (x)  {
+  sapply(x, function(df) u.test.risk(df, y = "size") )
+ } )
+##- Add p-values for outdegree testing
+p_sa <- sapply(cw_Baseline0[[1]], function(df) u.test.risk(df, y = "outdegree") )
+p_uni <- c(p_cs, "SA"= list(p_sa) )
+
+##- stats of p-values
+sapply(p_uni, summary)
+
+##- table of proportion p-values < 0.05
+tab <- data.frame("method" = c(paste("Cluster", names(cw_Baseline0)), "SA"),
+                 "proportion univariate" = sapply(p_uni, function(x) mean( x < 0.05)),
+                 row.names = NULL)
+
+```
+
+
+### 1.2 Multivariate
+```{r}
+##- lm model adjusting for stage of infection
+y = "outdegree"
+lm.risk <- function(df, y){
+  model0 <- "scale(log(y)) ~ scale(risk) * as.factor(stage)"
+  model <- sub("y", y, model0)
+  ##- pvalue for risk parameter
+  p <- coef(summary( lm( model , data = df) ))[2, 4]
+  return(p)
+}
+p_mult_cs <- lapply(cw_Baseline0, function (x)  {
+  sapply(x, function(df) lm.risk(df, y = "size") )
+ } )
+p_mult_sa <- sapply(cw_Baseline0[[1]], function(df) lm.risk(df, y = "outdegree") )
+p_mult <- c(p_mult_cs, "SA"= list(p_mult_sa) )
+sapply(p_mult, summary)
+
+tab <- cbind(tab, "proportion multivariate" = sapply(p_mult, function(x) mean( x < 0.05)))
+row.names(tab) <- NULL
+```
+
+#### Proportion of tests correctly detecting difference in transmission rates
+```{r, results='asis'}
+knitr::kable(tab)
+```
+
+* Note: restricting to outdegrees > 0 doesn't change anything
+* Interpretation: need to test scenario with different levels of difference in transmission rates
+
+```{r}
+##- into a dataframe for ggplot boxplot
+head(data.frame(sapply(p_uni, c), check.names = F))
+### laaaaaaaaaaa------------------------------------------------------
+```
+
+
 
 ## Associations
 ## Type 1 / 2 error: detect a difference in risk, age, stage ?
