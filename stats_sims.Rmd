@@ -13,8 +13,62 @@ Load tables
 ```{r}
 ##- Load data (only threshold 0.015)
 cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
-cw_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.EqualStage0.rds" )
+# cw_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.EqualStage0.rds" )
 ```
+
+## 0. Plot cluster size and outdegree
+```{r}
+##- calculate individual mean size and outdegree over sims
+ ## change structure (first few for speed)
+    a <- lapply(cw_Baseline0, function(x) do.call(rbind, x[1:10]))
+    str(a)
+    ## mean by id of set of variables var
+    mean.sims <- lapply(a, function(df) {
+      aggregate(df[, c("binclus", "size", "outdegree", "indegree")],
+                           list("id" = df$id, 
+                                "stage" = df$stage,
+                                "age" = df$age,
+                                "risk" = df$risk),                                                               function(x) mean(x, na.rm = TRUE) )
+    })
+    ##- full table
+    par(mfrow = c(length(a), 2), bty = 'n')
+    for (i in 1:length(a)){
+      hist(a[[i]]$size, main = names(a)[i], xlab = "cluster size")
+      plot(a[[i]]$size, a[[i]]$outdegree,
+           xlab = "cluster size",
+           ylab = "out-degree",
+           col="#00000050", 
+           main = names(a)[i])
+    }
+    dev.off()
+    ##- correlation
+    cor(a[[1]]$size, a[[1]]$outdegree, use = "complete")
+    cor(a[[2]]$size, a[[2]]$outdegree, use = "complete")
+    
+
+    par(mfrow = c(1, 2), bty = 'n')
+      hist(a[[1]]$outdegree, main = "", xlab = "out-degree")
+      hist(a[[1]]$indegree, main = "", xlab =  "in-degree")
+     
+    dev.off()
+    
+     ##- mean
+    str(mean.sims)
+    b <- mean.sims
+    
+    par(mfrow = c(length(b), 2), bty = 'n')
+    for (i in 1:length(b)){
+      hist(b[[i]]$size, main = names(b)[i], xlab = "cluster size")
+      plot(b[[i]]$size, b[[i]]$outdegree,
+           xlab = "cluster size",
+           ylab = "out-degree",
+           col="#00000050", 
+           main = names(b)[i])
+    }
+    dev.off()
+
+```
+* Cluster sizes and outdegrees have weak correlation
 
 ## 1. Detect difference in transmission rate by risk level
 ### 1.1 Univariate
@@ -73,13 +127,20 @@ row.names(tab) <- NULL
 knitr::kable(tab)
 ```
 
-* Note: restricting to outdegrees > 0 doesn't change anything
+* Note: restricting to outdegrees > 0 doesn't change anything (there are no zero values ?)
 * Interpretation: need to test scenario with different levels of difference in transmission rates
 
 ```{r}
-##- into a dataframe for ggplot boxplot
-head(data.frame(sapply(p_uni, c), check.names = F))
+##- into a dataframe for ggplot boxplot or violinplot
+cc <- matrix(sapply(p_uni, c), ncol = 3)
+colnames(cc) <- names(p_uni)
+head(cc)
+d <- as.data.frame.table(cc)
+head(d)
+str(d)
 ### laaaaaaaaaaa------------------------------------------------------
+library(ggplot2)
+ggplot(d[d$Var2 != "SA",], aes(x = Var2, y = Freq, fill = Var2)) + geom_violin()
 ```
 
 
