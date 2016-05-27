@@ -11,7 +11,7 @@ knitr::opts_chunk$set(cache=FALSE)
 
 Load tables
 ```{r}
-##- Load data (only threshold 0.015)
+##- Load data
 cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
 # cw_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.EqualStage0.rds" )
 ```
@@ -103,7 +103,7 @@ tab <- data.frame("method" = c(paste("Cluster", names(cw_Baseline0)), "SA"),
 ### 1.2 Multivariate
 ```{r}
 ##- lm model adjusting for stage of infection
-y = "outdegree"
+# y = "outdegree"
 lm.risk <- function(df, y){
   model0 <- "scale(log(y)) ~ scale(risk) * as.factor(stage)"
   model <- sub("y", y, model0)
@@ -132,7 +132,7 @@ knitr::kable(tab)
 
 ```{r}
 ##- into a dataframe for ggplot boxplot or violinplot
-cc <- matrix(sapply(p_uni, c), ncol = 3)
+cc <- matrix(sapply(p_uni, c), ncol = 5)
 colnames(cc) <- names(p_uni)
 head(cc)
 d <- as.data.frame.table(cc)

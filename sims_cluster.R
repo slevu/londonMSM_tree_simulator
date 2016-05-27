@@ -42,7 +42,7 @@ if (startover == TRUE){
 ####---- ucsd clustering ----####
 # ucsd_hivclust
 if (startover == TRUE){
-  thresholds  <-  c("0.005", "0.015") # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
+  thresholds  <-  c("0.003", "0.03") #c("0.005", "0.015") # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
   tmax <- max(thresholds) # limit of distance considered
 ## function: input list of dist filenames
   ucsd <- function(ldist){
@@ -80,7 +80,7 @@ if (startover == TRUE){
 ##- function n = 1; m = 1
 list.hivclust <- function(list.csv){
   ## Structure threshold > trees
-  thresholds <- c("0.005", "0.015") # c("0.005", "0.015", "0.02", "0.05") # c("0.01", "0.02", "0.05")
+  thresholds <- c("0.003", "0.005", "0.015", "0.03") # c("0.005", "0.015", "0.02", "0.05") # c("0.01", "0.02", "0.05")
   ## empty list of thresholds
   cl2 <- vector("list", length(thresholds))
   ## loop
@@ -231,11 +231,11 @@ if (startover == TRUE){
   system.time(
     l_Baseline0 <- clus.stat(clus = cl_Baseline0, 
                              sim = list.sims[["Baseline0"]])
-  ) # 550
+  ) # 468
   system.time(
     l_EqualStage0 <- clus.stat(clus = cl_EqualStage0,
                                sim = list.sims[["EqualStage0"]])
-  ) # 600
+  ) # 458
   
 }
 
@@ -321,7 +321,7 @@ if (startover == TRUE){
     system.time(
       cw_EqualStage0 <- add.w(clus = l_EqualStage0,
                               sim = list.sims[["EqualStage0"]])
-    ) # 87
+    ) # 343
   }
   
   
