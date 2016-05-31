@@ -28,7 +28,7 @@ for (i in 1:length(a)){
 }
 
 ##---- plot long table ----
-quartz()
+# quartz()
 par(mfrow = c(length(a)/2, 2), bty = 'n')
 for (i in 1:length(a)){
   hist(a[[i]]$size, main = names(a)[i], xlab = '')
@@ -140,21 +140,23 @@ row.names(tab) <- NULL
 ##---- plot p-values
 cc <- matrix(sapply(p_uni, c), ncol = length(p_uni))
 colnames(cc) <- names(p_uni)
-head(cc)
+# head(cc)
 d <- as.data.frame.table(cc)
-head(d)
-str(d)
+# head(d)
+# str(d)
 
 ccc <- matrix(sapply(p_mult, c), ncol = length(p_mult))
 colnames(ccc) <- names(p_mult)
-head(ccc)
+# head(ccc)
 dd <- as.data.frame.table(ccc)
-head(dd)
-str(dd)
+# head(dd)
+# str(dd)
 library(ggplot2) 
+##- univariate
 ggplot(d[d$Var2 != "SA",], aes(x = Var2, y = Freq, fill = Var2)) + geom_violin()
-
+##- multivariate
 g <- ggplot(dd, aes(x = Var2, y = Freq, fill = Var2)) + geom_violin()
+g
 
 ##---- compute age matrix for cluster size  ----
 l <- cw_Baseline0[[2]][[2]]
@@ -174,5 +176,13 @@ for (k in 1:dim(el)[1]){
 }
 sum(agemat)
 require(lattice)
-lattice.options(default.theme = standard.theme(color=F))
+# lattice.options(default.theme = standard.theme(color=F))
 levelplot( agemat, col.regions = heat.colors)
+
+##- essai neighborhood size
+cor(l$size, l$nbhsize)
+cor(l$outdegree, l$nbhsize, use = "complete" )
+plot(l$outdegree, l$nbhsize)
+boxplot(l$outdegree ~ l$risk) 
+boxplot(l$nbhsize ~ l$risk) 
+boxplot(l$size ~ l$risk) 
