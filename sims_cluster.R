@@ -42,7 +42,7 @@ if (startover == TRUE){
 ####---- ucsd clustering ----####
 # ucsd_hivclust
 if (startover == TRUE){
-  thresholds  <-  c("0.003", "0.03") #c("0.005", "0.015") # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
+  thresholds  <-  c("0.001", "0.05") # c("0.015", "0.005") # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
   tmax <- max(thresholds) # limit of distance considered
 ## function: input list of dist filenames
   ucsd <- function(ldist){
@@ -80,7 +80,7 @@ if (startover == TRUE){
 ##- function n = 1; m = 1
 list.hivclust <- function(list.csv){
   ## Structure threshold > trees
-  thresholds <- c("0.003", "0.005", "0.015", "0.03") # c("0.005", "0.015", "0.02", "0.05") # c("0.01", "0.02", "0.05")
+  thresholds <- c("0.001", "0.005", "0.015", "0.05") # c("0.005", "0.015", "0.02", "0.05") # c("0.01", "0.02", "0.05")
   ## empty list of thresholds
   cl2 <- vector("list", length(thresholds))
   ## loop
@@ -259,7 +259,7 @@ if (startover == TRUE){
   l_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.ucsd.Baseline0.rds" )
   l_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.ucsd.EqualStage0.rds" )
 
-####---- add degrees ----
+####---- add degrees and neighborhood size ----
 
   ##- loop to merge all W to all clusters
 #   clus <- l_Baseline0
@@ -267,7 +267,7 @@ if (startover == TRUE){
 #   thr <- 1
 #   i <- 15
   ####---- add.w ----
-  add.w <- function(clus, sim){
+  add.w <- function(clus, sim, dist){
     ##- empty list of n thresholds
     ll <- vector("list", length(clus))
     ##- loop threshold
@@ -296,14 +296,26 @@ if (startover == TRUE){
         ##- merge out and in degrees
         b <- merge(out0,in0)
         
+        ###- Add neighborhood size
+        load(dist[[i]])
+        dd <- as.data.frame(t(D))
+        
+        ##- calculate neighborhood size by tip label
+          ##- number of neighbour|threshold
+        .t  <- tapply(dd$V3, dd$V1, function(x) sum(x < thr))
+          ##- convert tip ID in tip label
+        names(.t) <- lapply(names(.t), function(x) daytree$tip.label[ as.numeric(x) ])
+        nbrhood <- data.frame("id" = names(test), "nbhsize" = test, stringsAsFactors = FALSE)
+        
         ##- load cluster assignement
         a <- clus[[thr]][[i]]
         
         ##- merge all
         c <- merge(a, b, by.x = "id", by.y = "patient", all.x = TRUE )
+        d <- merge(c, nbrhood, by = "id")
         
         ##- names
-        ll[[thr]][[i]] <- c
+        ll[[thr]][[i]] <- d
         names(ll[[thr]])[i] <- names(clus[[thr]][i])
       } 
       names(ll)[thr] <- names(clus)[[thr]]
@@ -316,12 +328,14 @@ if (startover == TRUE){
   if (startover = TRUE){
     system.time(
       cw_Baseline0 <- add.w(clus = l_Baseline0, 
-                            sim = list.sims[["Baseline0"]])
-    ) # 106
+                            sim = list.sims[["Baseline0"]],
+                            dist = distBaseline0FNS)
+    ) # 464
     system.time(
       cw_EqualStage0 <- add.w(clus = l_EqualStage0,
-                              sim = list.sims[["EqualStage0"]])
-    ) # 343
+                              sim = list.sims[["EqualStage0"]],
+                              dist = distEqualStage0FNS)
+    ) # 404
   }
   
   
