@@ -12,7 +12,7 @@ fontsize: 11pt
 ### Structure of data
 For each, two scenario subfolders *Baseline* and *EqualStage*
 
-1. trees
+1. trees   
 2. distances
 3. ucsd
 4. cluster (with covariates)
@@ -23,17 +23,20 @@ For each, two scenario subfolders *Baseline* and *EqualStage*
 1. Generate trees 
   + Transmission model `model0.R` defines *Baseline* scenario
   + Modified with equal transmission rates by stage for *EqualStage* scenario
-  + Run on HPC with a loop of `simBa.sh` and `simEq.sh` running `model0-simulateBaseline0.R` and `model0-simulateEqualStage0.R`. Must use `sampleTimes`, `sampleStates`, `incidence.tsv`, `model0.cpp files`
+  + Run on *HPC* with a loop of `simBa.sh` and `simEq.sh` running `model0-simulateBaseline0.R` and `model0-simulateEqualStage0.R`. Must use `sampleTimes`, `sampleStates`, `incidence.tsv`, `model0.cpp files`
   + output files contain daytree, yeartree, cd4s, sampleDemes, W matrix of infector probs
 2. Genetic distances
   + Simulated by function `tree2genDistance.R` in `tree2dist.sims.R`
-3. ucsd cluster assignement by tips
-  + With `sims.cluster.R`
-4. Cluster assignement with covariates
-  + Merge with covariates extracted from sampleDemes
-5. Add outdegrees
-  + Skip the LSD dating of trees and source attribution already done at step 1
-  + Todo: combine cluster assignement with covariates and W~0~ values
+3. *UCSD* cluster assignement by tips    
+  + With `sims.cluster.R`  
+  + Cluster assignement with covariates: Merge with covariates extracted from sampleDemes
+  + Add outdegrees: Skip the LSD dating of trees and source attribution already done at step 1. And combine cluster assignement with covariates and W~0~ values  
+4. Assortativity matrices
+ + by infector probability and by neighborhood 
+ + done on *HPC* with `assort_matrix0.R` and `sim_age_anal.sh` in a loop:
+ + `files=(data/simulations2/model0-simulateBaseline0/*.RData)`
+ + `for ((i=0; i < ${#file[@]}; i++)); do qsub -v file=${files[$i]} sim_age_anal.sh; done`
+
 6. Analyses
   + association between cluster size / outdegrees and covariates
   + type 1 / 2 errors

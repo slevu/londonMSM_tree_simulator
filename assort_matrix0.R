@@ -50,7 +50,7 @@ THRESHOLD_YRS <- Inf #10 # only count donors sampled within this many years of t
 ##- function
 age_mat <- function(sim, dist, thr)
 {
-  name.sim <- regmatches(sim, regexpr("[0-9]{3,}", sim))
+  name.sim <- paste(regmatches(sim, regexpr("[0-9]{3,}", sim)), ".RData", sep = '')
   dfn <- dist[ grep( name.sim, dist) ]
   
   load(sim)
@@ -72,24 +72,27 @@ age_mat <- function(sim, dist, thr)
   stage <- sapply( sampleDemes[ samplesInCohort ], deme2stage )
   
   amat <- matrix( 0, nrow=4, ncol=4)
-  for (k in 1:length(WW$donor)){
+  #system.time(
+    for (k in 1:length(WW$donor)){
     u <- WW$donor[k]
     v <- WW$recip[k]
     au <- deme2age( sampleDemes[ u] )
     av <- deme2age( sampleDemes[v] )
     amat[ au, av ] <- amat[ au, av ] + WW$infectorProbability[k]
-  }
+    }
+  #) # 97s
   rownames(amat) = colnames(amat) <- 1:4
   
-  #load distance mat
+  ##- load distance mat
   load(dfn) #D
   DD <- D
   D1 <- daytree$tip.label[ D[1,] ]
   D2 <- daytree$tip.label[ D[2,] ]
   DD <- DD[ , (D1 %in% samplesInCohort) & (D2 %in% samplesInCohort) ]
   
-  
+  ##- age matrix based on neighborhood|threshold
   l <- list()
+  # system.time(
   for (i in 1:length(thr)){
     CL_THRESHOLD <- thr[i]
     
@@ -113,6 +116,7 @@ age_mat <- function(sim, dist, thr)
     names(l)[i] <- thresholds[i]
     print(paste(name.sim, thresholds[i]))
   }
+  # ) # 164s
   
   ll <- list("agemat_sa" = amat, 
              "tab_sa" = data.frame(od=od, age=age, stage=stage), 
@@ -126,10 +130,7 @@ age_mat <- function(sim, dist, thr)
 ## by thresholds
 thresholds <- c("0.001", "0.005", "0.015", "0.05")
 
-age_mat(sim, dist = distBaseline0FNS, thr = thresholds)
-# system.time(
-#   test <- lapply( list.sims[["Baseline0"]][1:2], function(sim){
-#     age_mat(sim, dist = distBaseline0FNS, thr = thresholds)
-#   })
-# ) # 381s for 2 sims
+system.time(
+o <- age_mat(sim, dist = distBaseline0FNS, thr = thresholds)
+)
 

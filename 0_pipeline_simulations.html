@@ -71,7 +71,8 @@ img {
 <h3>Structure of data</h3>
 <p>For each, two scenario subfolders <em>Baseline</em> and <em>EqualStage</em></p>
 <ol style="list-style-type: decimal">
-<li>trees</li>
+<li>trees<br />
+</li>
 <li>distances</li>
 <li>ucsd</li>
 <li>cluster (with covariates)</li>
@@ -86,7 +87,7 @@ img {
 <ul>
 <li>Transmission model <code>model0.R</code> defines <em>Baseline</em> scenario</li>
 <li>Modified with equal transmission rates by stage for <em>EqualStage</em> scenario</li>
-<li>Run on HPC with a loop of <code>simBa.sh</code> and <code>simEq.sh</code> running <code>model0-simulateBaseline0.R</code> and <code>model0-simulateEqualStage0.R</code>. Must use <code>sampleTimes</code>, <code>sampleStates</code>, <code>incidence.tsv</code>, <code>model0.cpp files</code></li>
+<li>Run on <em>HPC</em> with a loop of <code>simBa.sh</code> and <code>simEq.sh</code> running <code>model0-simulateBaseline0.R</code> and <code>model0-simulateEqualStage0.R</code>. Must use <code>sampleTimes</code>, <code>sampleStates</code>, <code>incidence.tsv</code>, <code>model0.cpp files</code></li>
 <li>output files contain daytree, yeartree, cd4s, sampleDemes, W matrix of infector probs</li>
 </ul>
 <ol start="2" style="list-style-type: decimal">
@@ -96,23 +97,24 @@ img {
 <li>Simulated by function <code>tree2genDistance.R</code> in <code>tree2dist.sims.R</code></li>
 </ul>
 <ol start="3" style="list-style-type: decimal">
-<li>ucsd cluster assignement by tips</li>
+<li><em>UCSD</em> cluster assignement by tips<br />
+</li>
 </ol>
 <ul>
-<li>With <code>sims.cluster.R</code></li>
+<li>With <code>sims.cluster.R</code><br />
+</li>
+<li>Cluster assignement with covariates: Merge with covariates extracted from sampleDemes</li>
+<li>Add outdegrees: Skip the LSD dating of trees and source attribution already done at step 1. And combine cluster assignement with covariates and W<sub>0</sub> values<br />
+</li>
 </ul>
 <ol start="4" style="list-style-type: decimal">
-<li>Cluster assignement with covariates</li>
+<li>Assortativity matrices</li>
 </ol>
 <ul>
-<li>Merge with covariates extracted from sampleDemes</li>
-</ul>
-<ol start="5" style="list-style-type: decimal">
-<li>Add outdegrees</li>
-</ol>
-<ul>
-<li>Skip the LSD dating of trees and source attribution already done</li>
-<li>Todo: combine cluster assignement with covariates and W<sub>0</sub> values</li>
+<li>by infector probability and by neighborhood</li>
+<li>done on <em>HPC</em> with <code>assort_matrix0.R</code> and <code>sim_age_anal.sh</code> in a loop:</li>
+<li><code>files=(data/simulations2/model0-simulateBaseline0/*.RData)</code></li>
+<li><code>for ((i=0; i &lt; ${#file[@]}; i++)); do qsub -v file=${files[$i]} sim_age_anal.sh; done</code></li>
 </ul>
 <ol start="6" style="list-style-type: decimal">
 <li>Analyses</li>
