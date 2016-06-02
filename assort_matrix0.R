@@ -48,6 +48,8 @@ THRESHOLD_YRS <- Inf #10 # only count donors sampled within this many years of t
 # CL_THRESHOLD <- .015
 
 ##- function
+## sim <- "data/simulations2/model0-simulateBaseline0/824.RData"
+## dist <- distBaseline0FNS
 age_mat <- function(sim, dist, thr)
 {
   name.sim <- paste(regmatches(sim, regexpr("[0-9]{3,}", sim)), ".RData", sep = '')
@@ -122,7 +124,7 @@ age_mat <- function(sim, dist, thr)
              "tab_sa" = data.frame(od=od, age=age, stage=stage), 
              "agemat_cl" = l)
   
-  save(ll, file = paste('data/simulations2/age/age-anal_', name.sim, '.RData', sep = ''))
+  save(ll, file = paste('data/simulations2/age/age-anal_', name.sim, sep = ''))
   return(ll)
 }
 
