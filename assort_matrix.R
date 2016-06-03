@@ -1,133 +1,41 @@
 # rm(list=ls())
+getwd()
+##--- Analyze assortativity matrices computed on HPC 
+fn.mat <- list.files('RData', full.names = TRUE, path = "data/simulations2/age/")
+load(fn.mat[1])
+str(ll)
 
-####---- path sims ----
-##- used for several rounds of simulations
-path.sims <- 'data/simulations2/model0-simulate'
+##- aggregate matrices
+##- matrix infector prob
+ag_amat_sa <- ll$agemat_sa
 
-####---- scenario ----
-scenario <- c("EqualStage0", "Baseline0")
-
-####--- list.trees ----
-list.sims <- vector("list", length(scenario))
-for (.s in 1:length(scenario)){
-  list.sims[[.s]] <- list.files('RData', full.names = TRUE, 
-                                path = paste(path.sims, 
-                                             scenario[.s], sep = '') )
-  ## names of sims within scenario
-  names(list.sims[[.s]]) <- lapply(list.sims[[.s]], function(x){
-    regmatches(x, regexpr("[0-9]{2,}", x)) # numerical string of length >= 2
-  })
-  ## names of scenario
-  names(list.sims)[.s] <- scenario[.s]
+for (i in 2:length(fn.mat)){
+  load(fn.mat[i])
+  ag_amat_sa <- ag_amat_sa + ll$agemat_sa
 }
 
-####---- list.dist ----
-## load list of dist from sims
-  distEqualStage0FNS <- list.files('RData', full.names=T, path = paste(path.sims, 'EqualStage0-distances', sep = '') )
-  distBaseline0FNS <- list.files('RData', full.names=T, path = paste(path.sims, 'Baseline0-distances', sep = '') )
-
-####---- helper functions ----
-
-    deme2age <- function(deme){ as.numeric(
-      substr(regmatches( deme , regexpr( '\\.age[0-9]', deme ) ), 5, 5) 
-    ) }
-    deme2stage <- function(deme){as.numeric( 
-      substr(regmatches( deme , regexpr( 'stage[0-9]', deme )), 6, 6)
-    ) }
-    
-  
-THRESHOLD_YRS <- Inf #10 # only count donors sampled within this many years of the most recent sample (control for cohort effects) 
-# NOTE this doesnt appear to be important for age, whereas it was important for stage, so setting to Inf
-
-# Clustering threshold:
-# CL_THRESHOLD <- .015
-
-##- function
-age_mat <- function(sim, dist, thr)
-{
-  name.sim <- regmatches(sim, regexpr("[0-9]{3,}", sim))
-  dfn <- dist[ grep( name.sim, dist) ]
-  
-  load(sim)
-  samplesInCohort <- names(daytree$sampleTimes[daytree$sampleTimes > (max(daytree$sampleTimes) - THRESHOLD_YRS*365) ] )
-  samplesInCohort_donors <- intersect( samplesInCohort, W$donor)
-  
-  i <- which( (W$donor %in% samplesInCohort) & (W$recip %in% samplesInCohort ) )
-  WW <- list( donor = W$donor[i] , recip = W$recip[i], infectorProbability = W$infectorProbability[i] )
-  
-  # system.time({
-  od <- sapply( samplesInCohort , function(u){
-    if (!(u%in% samplesInCohort_donors)) return(0)
-    i <- which(WW$donor==u)
-    sum(WW$infectorProbability[i] ) 
-  })
- # }) # 39
-  
-  age <- sapply( sampleDemes[ samplesInCohort ], deme2age )
-  stage <- sapply( sampleDemes[ samplesInCohort ], deme2stage )
-  
-  amat = agemat <- matrix( 0, nrow=4, ncol=4)
-  for (k in 1:length(WW$donor)){
-    u <- WW$donor[k]
-    v <- WW$recip[k]
-    au <- deme2age( sampleDemes[ u] )
-    av <- deme2age( sampleDemes[v] )
-    amat[ au, av ] <- amat[ au, av ] + WW$infectorProbability[k]
+##- aggregate matrix cluster in a list by threshold
+str(ll)
+##- empty list of 4 matrices
+ag_amat_nb <- rep(list(matrix(0,4,4)), length(ll[["agemat_cl"]]))
+names(ag_amat_nb) <- names(ll[["agemat_cl"]])
+##- loop
+for (i in 1:length(fn.mat)){
+  load(fn.mat[i])
+  for (j in 1:length(ll[["agemat_cl"]])){
+    ag_amat_nb[[j]] <- ag_amat_nb[[j]] + ll[["agemat_cl"]][[j]][["agemat2"]]
   }
-  rownames(amat) = colnames(amat) <- 1:4
-  
-  #load distance mat
-  load(dfn) #D
-  DD <- D
-  D1 <- daytree$tip.label[ D[1,] ]
-  D2 <- daytree$tip.label[ D[2,] ]
-  DD <- DD[ , (D1 %in% samplesInCohort) & (D2 %in% samplesInCohort) ]
-  
-  
-  l <- list()
-      for (i in 1:length(thr)){
-      CL_THRESHOLD <- thr[i]
-     
-      nbrhoodSize <- setNames( rep(0, length(samplesInCohort)), samplesInCohort )
-      agemat2 <- matrix( 0, nrow = 4, ncol = 4 )
-      
-    ##- age matrix for neighborhood
-      for (k in 1:ncol(DD)){
-        if (DD[3,k] < CL_THRESHOLD ) {
-          u <- daytree$tip.label[ DD[1,k] ]
-          v <- daytree$tip.label[ DD[2,k] ]
-          au <- deme2age( sampleDemes[u] )
-          av <- deme2age( sampleDemes[v])
-          agemat2[au, av] <- agemat2[ au,av] + 1
-          nbrhoodSize[u] <- nbrhoodSize[u] + 1
-        }
-      }
-      l[[i]] <- list(agemat2 = agemat2, 
-                     nbrhoodSize = nbrhoodSize)
-      
-      names(l)[i] <- thresholds[i]
-      print(paste(name.sim, thresholds[i]))
-    }
-    
-  ll <- list(agemat_sa = amat, tab_sa = data.frame(od=od, age=age, stage=stage),  agemat_cl = l)
-  
-  save(ll, file = paste('data/simulations2/age/age-anal_', name.sim, '.RData', sep = ''))
-  return(ll)
 }
 
-##---- apply function ----
-## by thresholds
-thresholds <- c("0.001", "0.005", "0.015", "0.05")
-
-system.time(
-test <- lapply( list.sims[["Baseline0"]][1:2], function(sim){
-  age_mat(sim, dist = distBaseline0FNS, thr = thresholds)
-  })
-) # 381s for 2 sims
-str(test)
-str(fns2agemat_tables)
-tail(fns2agemat_tables[[2]][[3]])
-
+##- Newman's assortativity coefficient
+mat2assortCoef <- function(mat)
+{
+  mat <- mat / sum(mat )
+  rs <- rowSums(mat)
+  cs <- colSums(mat)
+  sum(diag(mat) - rs*cs) / (1 - sum(rs*cs))
+}
+##- Assortivity matrix (difference from null expectation under random linking)
 mat2assortmat <- function(mat){
   rs <- rowSums(mat)
   cs <- colSums(mat)
@@ -142,10 +50,11 @@ mat2assortmat <- function(mat){
   A
 }
 
-assor_mat <- mat2assortmat(fns2agemat_tables[[1]][["agemat"]])
-assor_mat2 <- mat2assortmat(fns2agemat_tables[[1]][["agemat2"]])
-sum(assor_mat)
-sum(assor_mat2)
+assor_mat_sa <- mat2assortmat(ag_amat_sa)
+assor_mat_nb <- vapply(ag_amat_nb, mat2assortmat, vector(mode = "list", length = 4))
+
+sum(assor_mat_sa)
+#######################-------------------------------- laaaaaaaaa
 require(lattice)
 # lattice.options(default.theme = standard.theme(color=F))
 levelplot( assor_mat, col.regions = heat.colors)
