@@ -14,13 +14,20 @@ library(knitr)
 read_chunk('ext-stats_sims.R')
 ```
 
+* Assortativity matrices for each sims in `age` folder
+    + analyzed in `assort_matrix.R`
+* Cluster size, neighborhood size, outdegrees in `cw_Baseline.rds` file
+* 
+
 Load tables
-```{r load data}
+
+```{r}
+# load data
 ```
 
 ## 0. Plot cluster size and outdegree
-```{r long}
-
+```{r}
+# long
 ```
 * Cluster sizes and outdegrees have weak correlation
 

@@ -160,6 +160,7 @@ g
 
 ##---- compute age matrix for cluster size  ----
 l <- cw_Baseline0[[2]][[2]]
+str(l)
 head(l[order(l$ClusterID),])
 
 x <- l$ClusterID
@@ -177,7 +178,7 @@ for (k in 1:dim(el)[1]){
 sum(agemat)
 require(lattice)
 # lattice.options(default.theme = standard.theme(color=F))
-levelplot( agemat, col.regions = heat.colors)
+levelplot( mat2assortmat( agemat ), col.regions = heat.colors)
 
 ##- essai neighborhood size
 cor(l$size, l$nbhsize)
