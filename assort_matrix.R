@@ -215,19 +215,22 @@ names(assrt_coefs_cl) <- paste0("cl", names(assrt_coefs_cl))
 df <- cbind("SA" = assrt_coefs_sa, 
             do.call(cbind.data.frame, assrt_coefs_nb),
             do.call(cbind.data.frame, assrt_coefs_cl))
-str(df)
+# str(df)
 library(reshape2)
 a <- melt(df)
-##################------------------- llllaaa
-temp = reshape(df, direction="long", varying=1:5, sep="")
+
 ##- boxplot
-boxplot( a$value ~ a$variable, ylim = c(0.01, 1.25*BASELINE_ASSRTCOEF)
-         , main='Estimated assortativity (SA,nb=neighborhood, cl=clustering)' 
-         , log = 'y')
-abline( h = BASELINE_ASSRTCOEF, col = 'red')
+# boxplot( a$value ~ a$variable, ylim = c(min(a$value), 1.25*BASELINE_ASSRTCOEF)
+#          , main='Estimated assortativity (SA,nb=neighborhood, cl=clustering)' 
+#          , log = 'y')
+# abline( h = BASELINE_ASSRTCOEF, col = 'red')
 
+library(ggplot2)
+bp <- ggplot(a, aes(variable, value)) + 
+  geom_boxplot() + 
+  geom_hline(aes(yintercept = BASELINE_ASSRTCOEF, colour = "true coef"))
+bp + theme_bw()
 
-###------------------------ lllllaaaaaa
 
 require(lattice)
 # lattice.options(default.theme = standard.theme(color=F))
