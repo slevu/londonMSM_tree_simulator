@@ -1,50 +1,48 @@
 # rm(list=ls())
 ####---- include ----
 detail_knitr <- TRUE
-source("functions.R")
+#source("functions.R")
 startover <- FALSE
 
 ####---- lib ----
-library(ape)
+#library(ape)
 
 ####---- path sims ----
 ##- used for several rounds of simulations
 path.sims <- 'data/simulations2/model0-simulate'
+path.results <- 'data/sim_ucsd_results2'
 
 ####---- scenario ----
-scenario <- c("EqualStage0", "Baseline0")
+scenario <- c("Baseline0", "EqualStage0")
+scenario <- setNames(scenario, scenario) # useful to name list in lapply
 
-####--- list.trees ----
-list.sims <- vector("list", length(scenario))
-for (.s in 1:length(scenario)){
-  list.sims[[.s]] <- list.files('RData', full.names = TRUE, 
-             path = paste(path.sims, 
-                          scenario[.s], sep = '') )
-  ## names of sims within scenario
-  names(list.sims[[.s]]) <- lapply(list.sims[[.s]], function(x){
-    regmatches(x, regexpr("[0-9]{2,}", x)) # numerical string of length >= 2
-  })
-  ## names of scenario
-  names(list.sims)[.s] <- scenario[.s]
-}
-str(list.sims) # head(names(list.sims[[2]])) 
+####--- list of sims files and distances files ---
+list.sims <- lapply(scenario, function(x){
+  list.files('RData', full.names = TRUE, 
+             path = paste(path.sims, x, sep = '') )
+})
+list.dist <- lapply(scenario, function(x){
+  list.files('RData', full.names = TRUE, 
+           path = paste(path.sims, x, '-distances', sep = '') )
+})
+
+#  for (.s in 1:length(scenario)){
+#   ## names of sims within scenario
+#   names(list.sims[[.s]]) <- lapply(list.sims[[.s]], function(x){
+#     regmatches(x, regexpr("[0-9]{2,}", x)) # numerical string of length >= 2
+#           })
+# }
+# str(list.sims); str(list.dist) # head(names(list.sims[[2]])) 
 # load(list.sims[[2]][[1]]); head(sampleDemes); head(cd4s)
-
-######----- start optional -----#####
-
- ####---- list.dist ----
-#### load list of dist from sims
-if (startover == TRUE){
-    distEqualStage0FNS <- list.files('RData', full.names=T, path = paste(path.sims, 'EqualStage0-distances', sep = '') )
-    distBaseline0FNS <- list.files('RData', full.names=T, path = paste(path.sims, 'Baseline0-distances', sep = '') )
-}
 
 ####---- ucsd clustering ----####
 # ucsd_hivclust
 if (startover == TRUE){
   thresholds  <-  c("0.001", "0.05") # c("0.015", "0.005") # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
   tmax <- max(thresholds) # limit of distance considered
-## function: input list of dist filenames
+  
+## function: input list of dist filenames, output csv of clusters
+#- debug: ldist = distBaseline0FNS; i = 2
   ucsd <- function(ldist){
     
     for (i in 1:length(ldist)){
@@ -61,32 +59,34 @@ if (startover == TRUE){
     ucsd_hivclust(path.el = temp.el.fn,
                           thr = thresholds, 
                           k = tmax, 
-                          out = paste("data/sim_ucsd_results2/", folder.sim, '/', sep = '' ) )
+                          out = paste(path.results, folder.sim, sep = '/' ) )
     }
   } 
   
-  lapply(distBaseline0FNS, ucsd)
-  lapply(distEqualStage0FNS, ucsd)
+  lapply(list.dist[["Baseline0"]], ucsd)
+  lapply(list.dist[["EqualStage0"]], ucsd)
 }
 
 ####---- list.hivclust ----
 if (startover == TRUE){
-###  get csv of clusters assignments in one list ###
-  # getwd()
-  csvEqualStage0FNS <- list.files("csv", full.names=T, 
-                          path = 'data/sim_ucsd_results2/EqualStage0')
-  csvBaseline0FNS <- list.files("csv", full.names=T, 
-                          path = 'data/sim_ucsd_results2/Baseline0')
-##- function n = 1; m = 1
-list.hivclust <- function(list.csv){
+##-  get csv of clusters assignments in one list
+    list.csv <- lapply(scenario, function(x){
+    list.files("csv", full.names=T, 
+               path = paste(path.results, x, sep = '/'))
+  })
+  
+ 
+##- function n = 100; m = 1
+list.hivclust <- function(csvs){
   ## Structure threshold > trees
-  thresholds <- c("0.001", "0.005", "0.015", "0.05") # c("0.005", "0.015", "0.02", "0.05") # c("0.01", "0.02", "0.05")
+  thresholds <- c("0.001", "0.005", "0.015", "0.05") 
+  
   ## empty list of thresholds
   cl2 <- vector("list", length(thresholds))
   ## loop
     for (m in 1:length(thresholds) ){ # index of thr
      ## vector of csv at different tree for one thr
-      filenames <- list.csv[grep(thresholds[m], list.csv)]
+      filenames <- csvs[grep(thresholds[m], csvs)]
       ## empty list of different trees
       t <- vector("list", length(filenames))
       for (n in 1:length(filenames) ){ # index of trees
@@ -102,21 +102,21 @@ list.hivclust <- function(list.csv){
 return(cl2)
   }
   
-  cl_Baseline0 <- list.hivclust(list.csv = csvBaseline0FNS )
-  cl_EqualStage0 <- list.hivclust(list.csv = csvEqualStage0FNS )
+  cl_Baseline0 <- list.hivclust(csvs = list.csv[["Baseline0"]] )
+  cl_EqualStage0 <- list.hivclust(csvs = list.csv[["EqualStage0"]] )
  # names(cl_EqualStage0[[1]]) 
   # str(cl_Baseline0[[1]][1])
   
-# saveRDS(cl_Baseline0, file = "data/sim_ucsd_results2/list.hivclust.sim.Baseline0.rds")
-# saveRDS(cl_EqualStage0, file = "data/sim_ucsd_results2/list.hivclust.sim.EqualStage0.rds")
+# saveRDS(cl_Baseline0, file = paste(path.results, 'list.hivclust.sim.Baseline0.rds', sep = '/') )
+# saveRDS(cl_EqualStage0, file = paste(path.results, 'list.hivclust.sim.EqualStage0.rds', sep = '/') )
 }
 
 ####---- load list.hivclust ----
+
+  cl_Baseline0 <- readRDS( file = paste(path.results, 'list.hivclust.sim.Baseline0.rds', sep = '/') )
+  cl_EqualStage0 <- readRDS( file = paste(path.results, 'list.hivclust.sim.EqualStage0.rds', sep = '/') )
+
 if (startover == TRUE){
-  cl_Baseline0 <- readRDS( file = "data/sim_ucsd_results/list.hivclust.sim.Baseline0.rds" )
-  cl_EqualStage0 <- readRDS( file = "data/sim_ucsd_results/list.hivclust.sim.EqualStage0.rds" )
-
-
   ##- Keep first 100 cluster results corresponding to a simulation
   ##- reference for names of sims
   ref_e <- names(list.sims[["EqualStage0"]])
@@ -139,7 +139,6 @@ if (startover == TRUE){
 }
 
 ####---- helper functions ----
-if (startover == TRUE){
   deme2age <- function(deme){ as.numeric(
     substr(regmatches( deme , regexpr( '\\.age[0-9]', deme ) ), 5, 5) 
   ) }
@@ -149,16 +148,29 @@ if (startover == TRUE){
   deme2risk <- function(deme){as.numeric( 
     substr(regmatches( deme , regexpr( 'riskLevel[0-9]', deme )), 10, 10)
   ) }
-  deme2care <- function(deme){as.numeric( 
-    substr(regmatches( deme , regexpr( 'care[0-9]', deme )), 5, 5)
-  ) }
-}  
+
 ## At this stage, list of cluster assignements have an index of tips not tip labels
 ####---- clus.stat ----
 if (startover == TRUE){
   ###- check if sim.name = clus.name
-  # sim = list.sims[["Baseline0"]] ; clus = cl_Baseline0; i = 50 ; thr = 4
+  # sim = list.sims[["Baseline0"]] ; clus = cl_Baseline0; i = 100 ; thr = 4
 clus.stat <- function(clus, sim){
+  ##- find sim that match first clus
+  ##- watch for embedded number
+  ##- all deme states are the same within one model 
+  .m <- grep(paste0('/', names(clus[[1]])[1], '.RData'), sim )
+  load( sim[.m] )
+  
+  ## get ALL tips names and demes
+  tip.states <- data.frame(
+    "id" = daytree$tip.label,
+    "stage" = sapply( sampleDemes, deme2stage ),
+    "age" = sapply( sampleDemes, deme2age ),
+    "risk" = sapply( sampleDemes, deme2risk ),
+    stringsAsFactors = FALSE)
+  rownames(tip.states) <- NULL
+  
+  ##- Start loop
   ##- empty list of n thresholds
   ll <- vector("list", length(clus))
   ##- loop threshold
@@ -168,36 +180,20 @@ clus.stat <- function(clus, sim){
       ##- check same sim and clus
         print(paste( 
           names(clus[[thr]])[i], # name cluster
-          names(sim[ names(clus[[thr]])[i] ]), # name sim
           names(clus)[thr], # threshold
           i # num sim
           ))
-        
-        load(sim[ names(clus[[thr]])[i] ])
-        
-        ## get ALL tips names and demes
-        tip.names <- data.frame(
-          "id" = daytree$tip.label,
-          "stage" = sapply( sampleDemes, deme2stage ),
-          "age" = sapply( sampleDemes, deme2age ),
-          "risk" = sapply( sampleDemes, deme2risk ),
-          stringsAsFactors = FALSE)
-        rownames(tip.names) <- NULL
         
         ## get size of clusters
         freqClust <- as.data.frame(table(clus[[thr]][[i]]$ClusterID),
                         stringsAsFactors = FALSE)
         
         ## get name instead of index in clus
-        clus[[thr]][[i]]$seq.label <- daytree$tip.label[ clus[[thr]][[i]]$SequenceID ]
+        clus[[thr]][[i]]$id <- daytree$tip.label[ clus[[thr]][[i]]$SequenceID ]
         
-        ## merge cluster number (without SequenceID)
-        a <- merge(x = tip.names, y = clus[[thr]][[i]][, 2:3],
-                   by.x = "id", by.y = "seq.label",
-                   all.x = TRUE, sort = FALSE)
-        
+        ## merge cluster number (without SequenceID nor covariates)
         ## merge cluster size (with NA)
-        b <- merge(x = a, y = freqClust, 
+        b <- merge(x = clus[[thr]][[i]][, 2:3], y = freqClust, 
                    by.x = "ClusterID", by.y = "Var1", 
                    all.x = TRUE, sort = FALSE)
         
@@ -222,7 +218,7 @@ clus.stat <- function(clus, sim){
     } 
     names(ll)[thr] <- names(clus)[[thr]]
   }
-  return(ll)
+  return( list("tip.states" = tip.states, "cluster" = ll) )
 }
 ####---- fin clus.stat ----####
 }
@@ -231,11 +227,11 @@ if (startover == TRUE){
   system.time(
     l_Baseline0 <- clus.stat(clus = cl_Baseline0, 
                              sim = list.sims[["Baseline0"]])
-  ) # 468
+  ) # 8
   system.time(
     l_EqualStage0 <- clus.stat(clus = cl_EqualStage0,
                                sim = list.sims[["EqualStage0"]])
-  ) # 458
+  ) # 8
   
 }
 
@@ -244,8 +240,8 @@ if (startover == TRUE){
 # lapply(l_Baseline0, function(x) lapply(x, function(df) aggregate(df$size, by = list("stage" = df$stage), mean )))
   
 #   names(l_Baseline0)
-#   names( l_Baseline0[[1]][[1]] )
-#   length(l_Baseline0[[1]])
+#   names( l_Baseline0[["cluster"]][[1]][[1]] )
+#   length(l_Baseline0[["cluster"]][[1]])
 #   test <- l_Baseline0[[1]][[2]]
 ##   test <- b
 ##   lapply(test, function(x) aggregate(x$size, by = list("stage" = x$stage), mean ))
@@ -258,6 +254,22 @@ if (startover == TRUE){
 
   l_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.ucsd.Baseline0.rds" )
   l_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.ucsd.EqualStage0.rds" )
+
+#   ## check
+#   a <- l_Baseline0[[1]][[1]][2:5]
+#   b <- l_Baseline0[[1]][[45]][2:5]
+#   c <- l_Baseline0[[4]][[9]][2:5]
+#   a <- a[order(a$id),]
+#   b <- b[order(b$id),]
+#   c <- c[order(c$id),]
+#   rownames(a) <- rownames(b) <- rownames(c) <- NULL
+# 
+#   head(b[order(b$id),])
+#   
+#   identical(a,b)
+#   identical(a, c)
+  
+#####lllllllaaaaa: todo = like above separate tip.states from sizes assignement
 
 ####---- add degrees and neighborhood size ----
 
