@@ -1,0 +1,44 @@
+---
+title: "Assortativity sims"
+author: "Stephane"
+date: "13 June 2016"
+output:
+  html_document:
+    fig_width: 6
+    fig_height: 6
+---
+
+```{r}
+library(knitr)
+read_chunk('assort_matrix.R')
+```
+
+* Assortativity matrices for each sims in `age` folder
+    + analyzed in `assort_matrix.R`
+* UCSD cluster size, neighborhood size, outdegrees, indegrees in `cw_Baseline.rds` file
+
+```{r load data}
+```
+
+```{r aggregate}
+```
+
+```{r utility functions}
+```
+
+```{r apply assort matrix}
+```
+
+```{r heatmaps}
+```
+
+```{r apply assort coef}
+```
+
+```{r estimated coefs}
+```
+
+```{r boxplot of assort coef}
+```
+
+

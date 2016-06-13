@@ -2,12 +2,13 @@
 
 ##---- compute age matrix for UCSD cluster size  ----
 ##---- load data ----
-cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
-##- load EdgeList
-source("functions.R")
+if(FALSE){
+  cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
+  head(cw_Baseline0[[1]][[1]])
+  ##- load EdgeList
+  source("functions.R")
 
 ##- For ucsd clustering
-if(FALSE){
   ##- empty list of 4 matrices
   ##list(matrix(0,4,4))
   list_agmat_cl <- rep(list(rep(list(matrix(0,4,4)), length = length(cw_Baseline0[[1]]))), length(cw_Baseline0))
@@ -35,14 +36,19 @@ if(FALSE){
     }
   }
   # saveRDS(list_agmat_cl, file = "data/sim_ucsd_results2/list.agmat.clus.rds" )
+  
+  ##- rm functions and large file
+  rm(list = lsf.str(), cw_Baseline0)
+  
 } else {
   list_agmat_cl <- readRDS("data/sim_ucsd_results2/list.agmat.clus.rds")
 }
-# str(list_agmat_cl[[1]])
+# names(list_agmat_cl)
 
-##- rm fns and large file
-rm(list = lsf.str(), cw_Baseline0)
+##--- Analyze age matrices computed on HPC 
+fn.mat <- list.files('RData', full.names = TRUE, path = "data/simulations2/age/")
 
+##---- aggregate ----
 ##- aggregate matrix cluster in a list by threshold
 ##- empty list of 4 matrices
 ag_amat_cl <- rep(list(matrix(0,4,4)), length(list_agmat_cl))
@@ -54,15 +60,11 @@ for (i in 1:length(list_agmat_cl) ){
   }
 }
 
-
-##--- Analyze assortativity matrices computed on HPC 
-fn.mat <- list.files('RData', full.names = TRUE, path = "data/simulations2/age/")
+##- aggregate matrices
+##-  age matrix of infector probs
 ##- load first list
 load(fn.mat[1]) 
 # str(ll)
-
-##- aggregate matrices
-##- matrix of infector probs
 ag_amat_sa <- ll$agemat_sa
 
 for (i in 2:length(fn.mat)){
@@ -82,7 +84,7 @@ for (i in 1:length(fn.mat)){
   }
 }
 
-###--- utility functions
+##---- utility functions ----
 ##- Newman's assortativity coefficient
 mat2assortCoef <- function(mat){
   mat <- mat / sum(mat )
@@ -105,15 +107,17 @@ mat2assortmat <- function(mat){
   A
 }
 
-###--- apply assort matrix
+##---- apply assort matrix ----
 assor_mat_sa <- mat2assortmat(ag_amat_sa)
 assor_mat_nb <- lapply(ag_amat_nb, mat2assortmat)
 assor_mat_cl <- lapply(ag_amat_cl, mat2assortmat)
 
-###--- plots ---
+##---- heatmaps ----
 require(lattice)
 ##- SA
-levelplot( assor_mat_sa, col.regions = heat.colors)
+print("Assortativity of infector probs by age")
+levelplot( assor_mat_sa,
+           col.regions = heat.colors)
 
 ##- neighborhood
 plots_grid <- function(a){
@@ -128,6 +132,7 @@ for (i in 1:length(a)){
 
 p <- plots_grid(assor_mat_nb)
 ##- can't find automatic layout, do it manually:
+print("Assortativity of neighborhood size by age")
 print(p[[1]], split = c(1,1,2,2), more = TRUE)
 print(p[[2]], split = c(2,1,2,2), more = TRUE)
 print(p[[3]], split = c(1,2,2,2), more = TRUE)
@@ -136,12 +141,14 @@ print(p[[4]], split = c(2,2,2,2), more = FALSE)
 ##- ucsd
 p <- plots_grid(assor_mat_cl)
 ##- can't find automatic layout, do it manually:
+print("Assortativity of cluster size by age")
 print(p[[1]], split = c(1,1,2,2), more = TRUE)
 print(p[[2]], split = c(2,1,2,2), more = TRUE)
 print(p[[3]], split = c(1,2,2,2), more = TRUE)
 print(p[[4]], split = c(2,2,2,2), more = FALSE)
 
-###--- apply assort coef
+
+##---- apply assort coef ----
 coef_mat_sa <- mat2assortCoef(ag_amat_sa)
 coef_mat_nb <- lapply(ag_amat_nb, mat2assortCoef)
 coef_mat_cl <- lapply(ag_amat_cl, mat2assortCoef)
@@ -171,7 +178,8 @@ print(BASELINE_ASSRTCOEF)
 ##- "true" heatmap
 levelplot( mat2assortmat( fmat ), col.regions = heat.colors)
 
-##--- compare true with estimated coefs ---
+
+##---- estimated coefs ----
 # compute assort coef for each sim; plot results with 'truth'
 assrt_coefs_sa <- vector(mode="numeric", length = length(fn.mat))
 for (i in 1:length(fn.mat)){
@@ -201,16 +209,17 @@ for (i in 1:length(list_agmat_cl)){
     assrt_coefs_cl[[i]][[j]] <-   mat2assortCoef(list_agmat_cl[[i]][[j]])
   }
 }
+
+##---- stop ----
 ## or
 # sapply(list_agmat_cl, function(x){
 #   lapply(x, mat2assortCoef)
 #   })
 
-##-- boxplot of assort coef
+##---- boxplot of assort coef ----
 ##- transform in df
 names(assrt_coefs_nb) <- paste0("nb", names(assrt_coefs_nb))
 names(assrt_coefs_cl) <- paste0("cl", names(assrt_coefs_cl))
-
 
 df <- cbind("SA" = assrt_coefs_sa, 
             do.call(cbind.data.frame, assrt_coefs_nb),
@@ -226,20 +235,95 @@ a <- melt(df)
 # abline( h = BASELINE_ASSRTCOEF, col = 'red')
 
 library(ggplot2)
-bp <- ggplot(a, aes(variable, value)) + 
-  geom_boxplot() + 
-  geom_hline(aes(yintercept = BASELINE_ASSRTCOEF, colour = "true coef"))
-bp + theme_bw()
+bp <- ggplot(a, aes(variable, value))
+bp + geom_boxplot() + 
+  geom_hline(aes(yintercept = BASELINE_ASSRTCOEF, colour = "true coefficient")) +
+  theme_bw() + theme(legend.position="top", legend.title=element_blank())
+# bp + geom_violin()
+
+##---- regressions ----
+###--- individual bootstrap regressions ---
+###--- start function
+###- summarize regression on bootstrap
+# x = cw_Baseline0[[1]][[1]]; reg =lm; model =  "scale(size) ~ factor(age)"
+reg.sum.bs <- function(ls, reg, model, alpha = 0.05, ...){
+  
+  ## coef by threshold and by tree
+  coef <- lapply(ls, function(x){
+    lapply(x , function(x){
+      coef(summary(reg(formula = model, data = x, ...)))
+    })
+  })
+  # str(coef[[1]][[1]])
+  
+  ## pvalue by threshold and by tree
+  pvalue <- lapply(coef, function(x){
+    sapply(x , function(x){
+      identity(x[,4])
+    })
+  })
+  
+  ##- number of p-value < 0.05
+  sum.signif <- sapply(pvalue, function(x){
+    apply(x, 1, function(x) sum(x < alpha) / length(x))
+  }
+  )
+  
+  ## parameter by threshold
+  param <-  lapply(coef, function(x){
+    sapply(x , function(x){
+      identity(x[,1])
+    })
+  })
+  
+  ## mean of parameter
+  mean.parms <- signif(sapply(param, function(x){
+    apply(x, 1, mean)
+  }), 2)
+  
+  ## R square, only for lm()
+  if(identical(reg, lm)){
+    r2 <- lapply(ls, function(x){
+      sapply(x , function(x){
+        summary(reg(model, data = x))$r.squared
+      })
+    })
+    ## mean R2
+    mean.r2 <- signif(sapply(r2, function(x){
+      mean(x)
+    }), 3)
+    
+    return(list("model" = model, "mean parameter" = mean.parms, "signif pvalue" = sum.signif, "mean r.squared" = mean.r2)) 
+  } else {
+    
+    return(list("model" = model, "mean parameter" = mean.parms, "signif pvalue" = sum.signif))
+  }
+}
+###--- end function 
 
 
-require(lattice)
-# lattice.options(default.theme = standard.theme(color=F))
-levelplot( mat2assortmat( agemat ), col.regions = heat.colors)
+model3_cl <- "scale(size) ~ factor(age)"
+model3_sa <- "scale(outdegree) ~ factor(age)"
+model4 <- "scale(size) ~ factor(age) + factor(stage) + factor(age)*factor(stage)"
 
-# ##- essai neighborhood size
-# cor(l$size, l$nbhsize)
-# cor(l$outdegree, l$nbhsize, use = "complete" )
-# plot(l$outdegree, l$nbhsize)
-# boxplot(l$outdegree ~ l$risk) 
-# boxplot(l$nbhsize ~ l$risk) 
-# boxplot(l$size ~ l$risk) 
+## example
+## age
+a <- reg.sum.bs(ls = cw_Baseline0, reg = lm, model = model3) 
+a
+aa <- reg.sum.bs(ls = cw_Baseline0, reg = lm, model = model3_sa) 
+aa
+b <- reg.sum.bs(ls = cw_Baseline0, reg = lm, model = model4) 
+b
+## age and stage
+
+
+####---- all lm ----
+lapply(cw_Baseline0, function(x) {reg.sum.bs(ls = x, reg = lm, model = model3)
+})
+lapply(models, function(x) {reg.sum.bs(ls = l_EqualStage0, reg = lm, model = x)
+})
+
+####---- logistic ----
+reg.sum.bs(ls = listUKclus, reg = glm, model = logit_model_uk, family = binomial(link = "logit"))
+
+####---- stop ----
