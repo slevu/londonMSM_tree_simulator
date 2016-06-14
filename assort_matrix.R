@@ -43,22 +43,14 @@ if(FALSE){
 } else {
   list_agmat_cl <- readRDS("data/sim_ucsd_results2/list.agmat.clus.rds")
 }
-# names(list_agmat_cl)
+# names(list_agmat_cl); head(names(list_agmat_cl[[1]]))
 
 ##--- Analyze age matrices computed on HPC 
 fn.mat <- list.files('RData', full.names = TRUE, path = "data/simulations2/age/")
 
 ##---- aggregate ----
 ##- aggregate matrix cluster in a list by threshold
-##- empty list of 4 matrices
-ag_amat_cl <- rep(list(matrix(0,4,4)), length(list_agmat_cl))
-names(ag_amat_cl) <- names(list_agmat_cl) # treshold names
-##- loop
-for (i in 1:length(list_agmat_cl) ){
-  for (j in 1:length(list_agmat_cl[[i]]) ){
-    ag_amat_cl[[i]] <- ag_amat_cl[[i]] + list_agmat_cl[[i]][[j]]
-  }
-}
+ag_mat_cl <- lapply(list_agmat_cl, function(x) Reduce('+', x))
 
 ##- aggregate matrices
 ##-  age matrix of infector probs
