@@ -155,20 +155,6 @@ if (startover == TRUE){
   ###- check if sim.name = clus.name
   # sim = list.sims[["Baseline0"]] ; clus = cl_Baseline0; i = 100 ; thr = 4
 clus.stat <- function(clus, sim){
-  ##- find sim that match first clus
-  ##- watch for embedded number
-  ##- all deme states are the same within one model 
-  .m <- grep(paste0('/', names(clus[[1]])[1], '.RData'), sim )
-  load( sim[.m] )
-  
-  ## get ALL tips names and demes
-  tip.states <- data.frame(
-    "id" = daytree$tip.label,
-    "stage" = sapply( sampleDemes, deme2stage ),
-    "age" = sapply( sampleDemes, deme2age ),
-    "risk" = sapply( sampleDemes, deme2risk ),
-    stringsAsFactors = FALSE)
-  rownames(tip.states) <- NULL
   
   ##- Start loop
   ##- empty list of n thresholds
@@ -183,17 +169,35 @@ clus.stat <- function(clus, sim){
           names(clus)[thr], # threshold
           i # num sim
           ))
-        
+      cl <- clus[[thr]][[i]]
+      ##- find sim that match first clus
+      ##- watch for embedded number
+      ##- all deme states are the same within one model 
+      .m <- grep(paste0('/', names(clus[[thr]])[i], '.RData'), sim )
+      load( sim[.m] )
+      
+      ## get ALL tips names and demes
+      tip.states <- data.frame(
+        "id" = daytree$tip.label,
+        "stage" = sapply( sampleDemes, deme2stage ),
+        "age" = sapply( sampleDemes, deme2age ),
+        "risk" = sapply( sampleDemes, deme2risk ),
+        stringsAsFactors = FALSE)
+      rownames(tip.states) <- NULL
+      
         ## get size of clusters
-        freqClust <- as.data.frame(table(clus[[thr]][[i]]$ClusterID),
-                        stringsAsFactors = FALSE)
+        freqClust <- as.data.frame(table(cl$ClusterID), stringsAsFactors = FALSE)
         
         ## get name instead of index in clus
-        clus[[thr]][[i]]$id <- daytree$tip.label[ clus[[thr]][[i]]$SequenceID ]
+        cl$id <- daytree$tip.label[ cl$SequenceID ]
         
         ## merge cluster number (without SequenceID nor covariates)
+        a <- merge(x = tip.states, y = cl[, 2:3],
+                   by.x = "id", by.y = "id",
+                   all.x = TRUE, sort = FALSE)
+        
         ## merge cluster size (with NA)
-        b <- merge(x = clus[[thr]][[i]][, 2:3], y = freqClust, 
+        b <- merge(x = a, y = freqClust, 
                    by.x = "ClusterID", by.y = "Var1", 
                    all.x = TRUE, sort = FALSE)
         
@@ -218,7 +222,7 @@ clus.stat <- function(clus, sim){
     } 
     names(ll)[thr] <- names(clus)[[thr]]
   }
-  return( list("tip.states" = tip.states, "cluster" = ll) )
+  return(ll)
 }
 ####---- fin clus.stat ----####
 }
@@ -227,27 +231,14 @@ if (startover == TRUE){
   system.time(
     l_Baseline0 <- clus.stat(clus = cl_Baseline0, 
                              sim = list.sims[["Baseline0"]])
-  ) # 8
+  ) # 469
   system.time(
     l_EqualStage0 <- clus.stat(clus = cl_EqualStage0,
                                sim = list.sims[["EqualStage0"]])
-  ) # 8
+  ) # 463
   
 }
 
-
-
-# lapply(l_Baseline0, function(x) lapply(x, function(df) aggregate(df$size, by = list("stage" = df$stage), mean )))
-  
-#   names(l_Baseline0)
-#   names( l_Baseline0[["cluster"]][[1]][[1]] )
-#   length(l_Baseline0[["cluster"]][[1]])
-#   test <- l_Baseline0[[1]][[2]]
-##   test <- b
-##   lapply(test, function(x) aggregate(x$size, by = list("stage" = x$stage), mean ))
-#   aggregate(test$size, by = list("risk" = test$risk), mean )
-#   aggregate(test$size, by = list("age" = test$age), mean )
- 
   ####---- saved listUKclus ----
  # saveRDS(l_Baseline0, file = "data/sim_ucsd_results2/list.sim.ucsd.Baseline0.rds" )
  # saveRDS(l_EqualStage0, file = "data/sim_ucsd_results2/list.sim.ucsd.EqualStage0.rds" )
@@ -255,21 +246,24 @@ if (startover == TRUE){
   l_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.ucsd.Baseline0.rds" )
   l_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.ucsd.EqualStage0.rds" )
 
-#   ## check
-#   a <- l_Baseline0[[1]][[1]][2:5]
-#   b <- l_Baseline0[[1]][[45]][2:5]
-#   c <- l_Baseline0[[4]][[9]][2:5]
-#   a <- a[order(a$id),]
-#   b <- b[order(b$id),]
-#   c <- c[order(c$id),]
-#   rownames(a) <- rownames(b) <- rownames(c) <- NULL
+###- check
+  #   names(l_Baseline0)
+  #   head( l_Baseline0[[1]][[1]] )
+  #   length(l_Baseline0[[1]])
 # 
-#   head(b[order(b$id),])
-#   
-#   identical(a,b)
-#   identical(a, c)
+#   system.time(
+#   z <- lapply(l_Baseline0, function(x){
+#     sapply(x, function(m) {
+#     # faster than `merge(df, s, all.x = TRUE)`
+#     #- add covariates
+#      # m <-  cbind(df, s[ match(df$id, s$id), -1 ])
+#     #- mean y by x
+#       agg <-  tapply(m$size, m$stage, mean )
+#       return(agg)
+#       }) 
+#     })
+#   )
   
-#####lllllllaaaaa: todo = like above separate tip.states from sizes assignement
 
 ####---- add degrees and neighborhood size ----
 
@@ -341,12 +335,12 @@ if (startover == TRUE){
     system.time(
       cw_Baseline0 <- add.w(clus = l_Baseline0, 
                             sim = list.sims[["Baseline0"]],
-                            dist = distBaseline0FNS)
+                            dist = list.dist[["Baseline0"]] )
     ) # 464
     system.time(
       cw_EqualStage0 <- add.w(clus = l_EqualStage0,
                               sim = list.sims[["EqualStage0"]],
-                              dist = distEqualStage0FNS)
+                              dist = list.dist[["EqualStage0"]])
     ) # 404
   }
   
