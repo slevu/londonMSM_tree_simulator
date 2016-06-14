@@ -50,25 +50,22 @@ fn.mat <- list.files('RData', full.names = TRUE, path = "data/simulations2/age/"
 
 ##---- aggregate ----
 ##- aggregate matrix cluster in a list by threshold
+##- ucsd cluster
 ag_mat_cl <- lapply(list_agmat_cl, function(x) Reduce('+', x))
 
-##- aggregate matrices
+
 ##-  age matrix of infector probs
-##- load first list
 load(fn.mat[1]) 
 # str(ll)
 ag_amat_sa <- ll$agemat_sa
-
 for (i in 2:length(fn.mat)){
   load(fn.mat[i])
   ag_amat_sa <- ag_amat_sa + ll$agemat_sa
 }
 
-##- aggregate matrix cluster in a list by threshold
-##- empty list of 4 matrices
+##- nbrhood size
 ag_amat_nb <- rep(list(matrix(0,4,4)), length(ll[["agemat_cl"]]))
 names(ag_amat_nb) <- names(ll[["agemat_cl"]]) # treshold names
-##- loop
 for (i in 1:length(fn.mat)){
   load(fn.mat[i])
   for (j in 1:length(ll[["agemat_cl"]]) ){
@@ -168,7 +165,7 @@ for (k in 1:120) for (l in 1:120){
 BASELINE_ASSRTCOEF <- mat2assortCoef( fmat )
 print(BASELINE_ASSRTCOEF)
 ##- "true" heatmap
-levelplot( mat2assortmat( fmat ), col.regions = heat.colors)
+# levelplot( mat2assortmat( fmat ), col.regions = heat.colors)
 
 
 ##---- estimated coefs ----
@@ -193,20 +190,8 @@ for (i in 1:length(fn.mat)){
 
 ##- For ucsd
 ##- empty list of 4 matrices
-assrt_coefs_cl <- rep(list(vector(mode="numeric", length = length(list_agmat_cl[[1]]))), length(list_agmat_cl))
-names(assrt_coefs_cl) <- names(list_agmat_cl) # treshold names
-##- loop
-for (i in 1:length(list_agmat_cl)){
-  for (j in 1:length(list_agmat_cl[[1]]) ){
-    assrt_coefs_cl[[i]][[j]] <-   mat2assortCoef(list_agmat_cl[[i]][[j]])
-  }
-}
-
+assrt_coefs_cl <-  lapply(list_agmat_cl, function(x) sapply(x, mat2assortCoef))
 ##---- stop ----
-## or
-# sapply(list_agmat_cl, function(x){
-#   lapply(x, mat2assortCoef)
-#   })
 
 ##---- boxplot of assort coef ----
 ##- transform in df
@@ -232,6 +217,56 @@ bp + geom_boxplot() +
   geom_hline(aes(yintercept = BASELINE_ASSRTCOEF, colour = "true coefficient")) +
   theme_bw() + theme(legend.position="top", legend.title=element_blank())
 # bp + geom_violin()
+
+##---- association age vs sizes, degrees at different thr
+rm(list=ls())
+cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
+
+## change structure in long table (first few for speed)
+.n <- 3 
+.m <- sample(1:100, .n)
+c <- lapply(cw_Baseline0, 
+            function(x) do.call(rbind, x[.m]))
+rm(cw_Baseline0, a)
+
+# head(c[[2]])
+# names(c)
+# str(c)
+
+## winsorize outliers
+winsorize <- function (x, fraction=.1)
+{
+  if(length(fraction) != 1 || fraction < 0 ||
+     fraction > 0.5) {
+    stop("bad value for 'fraction'")
+  }
+  lim <- quantile(x, probs=c(fraction, 1-fraction), na.rm = TRUE)
+  x[ x < lim[1] ] <- lim[1]
+  x[ x > lim[2] ] <- lim[2]
+  x
+}
+
+cc <- lapply(c, function(x) {
+  x[,c(6, 8, 10)] <- lapply(x[,c(6, 8, 10)], winsorize)
+  return(x)
+  })
+str(cc)
+library(reshape2)
+df <- melt(c,  measure.vars = c(6, 8, 10))
+
+# head(df)
+# str(df)
+# sum(is.na(df$value))
+
+# df <- df[df$L1 == "0.015",]
+tapply(df$value, list(df$L1, df$variable), function(x) mean(x, na.rm = T))
+
+p <- ggplot(df, aes(x = factor(age), y = value, fill = variable)) + geom_boxplot() + theme_bw() + theme(legend.position="none", legend.title = element_blank(), strip.text.x = element_text(size = 12)) 
+p + facet_wrap(~ L1 + variable, nrow = 4, scales = "free_y")
+
+# coord_cartesian(ylim = quantile(df$value, c(0.1, 0.9), na.rm = TRUE)) + 
+
+
 
 ##---- regressions ----
 ###--- individual bootstrap regressions ---
