@@ -4,7 +4,7 @@
 ##---- load data ----
 if(FALSE){
   cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
-  head(cw_Baseline0[[1]][[1]])
+# names(cw_Baseline0) ; head(cw_Baseline0[[1]][[1]])
   ##- load EdgeList
   source("functions.R")
 
@@ -199,26 +199,36 @@ names(assrt_coefs_nb) <- paste0("nb", names(assrt_coefs_nb))
 names(assrt_coefs_cl) <- paste0("cl", names(assrt_coefs_cl))
 
 df <- cbind("SA" = assrt_coefs_sa, 
-            do.call(cbind.data.frame, assrt_coefs_nb),
-            do.call(cbind.data.frame, assrt_coefs_cl))
+            "NB" = do.call(cbind.data.frame, assrt_coefs_nb),
+            "CL" = do.call(cbind.data.frame, assrt_coefs_cl) )
 # str(df)
 library(reshape2)
 a <- melt(df)
+a$method <- substr(a$variable, 1, 2)
+##- add '' for threshold of SA method
+a$thr <- c(rep('NA', length(a[a$method == 'SA', 'method'])), regmatches(a$variable, regexpr("\\d\\.\\d*",  a$variable)) )
 
 ##- boxplot
-# boxplot( a$value ~ a$variable, ylim = c(min(a$value), 1.25*BASELINE_ASSRTCOEF)
-#          , main='Estimated assortativity (SA,nb=neighborhood, cl=clustering)' 
-#          , log = 'y')
+# boxplot( a$value ~ a$variable, ylim = c(min(a$value), 1.25*BASELINE_ASSRTCOEF), main='Estimated assortativity (SA,nb=neighborhood, cl=clustering)', log = 'y')
 # abline( h = BASELINE_ASSRTCOEF, col = 'red')
 
 library(ggplot2)
-bp <- ggplot(a, aes(variable, value))
-bp + geom_boxplot() + 
-  geom_hline(aes(yintercept = BASELINE_ASSRTCOEF, colour = "true coefficient")) +
-  theme_bw() + theme(legend.position="top", legend.title=element_blank())
-# bp + geom_violin()
+bp1 <- ggplot(a, aes(thr, value))
+bp2 <- bp1 + geom_boxplot() + 
+  facet_grid(~ method, scales = "free", space = "free", labeller=labeller(method = c(SA = "SA", CL = "UCSD cluster", NB = "Neighborhood")))  + 
+  geom_hline(aes(yintercept = BASELINE_ASSRTCOEF, colour = "true coefficient")) + theme_bw() + theme(legend.position="top", legend.title=element_blank()) + xlab("Distance threshold") + ylab("Assortativity coefficient")
+bp2
+# bp2 + scale_y_log10()
+  library(scales)  
+ bp2 + scale_y_continuous(trans = "log")
 
-##---- association age vs sizes, degrees at different thr
+ ## With scale that adapt to transformation
+ ggplot(a[a$value >= 0,], aes(thr, value)) + geom_boxplot() +  coord_trans(y = "log")+
+   facet_grid(~ method, scales = "free", space = "free", labeller=labeller(method = c(SA = "SA", CL = "UCSD cluster", NB = "Neighborhood")))  + 
+   geom_hline(aes(yintercept = BASELINE_ASSRTCOEF, colour = "true coefficient")) + theme_bw() + theme(legend.position="top", legend.title=element_blank()) + xlab("Distance threshold") + ylab("Assortativity coefficient")
+ 
+##---- associations ----
+## age vs sizes, degrees at different thr
 rm(list=ls())
 cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
 
