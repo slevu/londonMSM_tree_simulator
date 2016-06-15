@@ -1,8 +1,8 @@
 # rm(list=ls())
 ####---- include ----
 detail_knitr <- TRUE
-#source("functions.R")
-startover <- FALSE
+source("functions.R")
+startover <- TRUE
 
 ####---- lib ----
 #library(ape)
@@ -42,7 +42,7 @@ if (startover == TRUE){
   tmax <- max(thresholds) # limit of distance considered
   
 ## function: input list of dist filenames, output csv of clusters
-#- debug: ldist = distBaseline0FNS; i = 2
+#- debug: ldist = list.dist[["Baseline0"]]; i = 100
   ucsd <- function(ldist){
     
     for (i in 1:length(ldist)){
@@ -59,7 +59,7 @@ if (startover == TRUE){
     ucsd_hivclust(path.el = temp.el.fn,
                           thr = thresholds, 
                           k = tmax, 
-                          out = paste(path.results, folder.sim, sep = '/' ) )
+                          out = paste(path.results, folder.sim,'', sep = '/' ) )
     }
   } 
   
@@ -115,28 +115,6 @@ return(cl2)
 
   cl_Baseline0 <- readRDS( file = paste(path.results, 'list.hivclust.sim.Baseline0.rds', sep = '/') )
   cl_EqualStage0 <- readRDS( file = paste(path.results, 'list.hivclust.sim.EqualStage0.rds', sep = '/') )
-
-if (startover == TRUE){
-  ##- Keep first 100 cluster results corresponding to a simulation
-  ##- reference for names of sims
-  ref_e <- names(list.sims[["EqualStage0"]])
-  ref_b <- names(list.sims[["Baseline0"]])
-  if(length(ref_e) > 100){
-     cl_EqualStage0 <- lapply(cl_EqualStage0, 
-                  function(a){
-                    a[names(a) %in% ref_e][1:100]
-                         })
-  }
-  if (length(ref_b) > 100){
-    cl_Baseline0 <- lapply(cl_Baseline0, 
-                  function(a){
-                    a[names(a) %in% ref_b][1:100]
-                         })
-  }
-  rm(ref_b, ref_e)
-  # identical(names(cl_EqualStage0[[1]]), names(cl_EqualStage0[[2]]) )
-  # sims at threshold 4 EqualStage0 are different
-}
 
 ####---- helper functions ----
   deme2age <- function(deme){ as.numeric(
@@ -268,10 +246,8 @@ if (startover == TRUE){
 ####---- add degrees and neighborhood size ----
 
   ##- loop to merge all W to all clusters
-#   clus <- l_Baseline0
-#   sim <- list.sims[["Baseline0"]]
-#   thr <- 1
-#   i <- 15
+#   clus = l_Baseline0; sim = list.sims[["Baseline0"]]; dist = list.dist[["Baseline0"]];  thr <- 1; i <- 100
+
   ####---- add.w ----
   add.w <- function(clus, sim, dist){
     ##- empty list of n thresholds
@@ -281,29 +257,28 @@ if (startover == TRUE){
       ##- loop sims
       for (i in 1:length(clus[[thr]]) ){
         ##- check same sim and clus
-        #           if (!identical(names(clus[[thr]])[i], # name cluster
-        #                          names(sim[ names(clus[[thr]])[i] ]))  # name sim
-        #               ) stop("not the same sim results")
+        # if (!identical(names(clus[[thr]])[i], # name cluster
+        #  names(sim[ names(clus[[thr]])[i] ]))  # name sim
+        #  ) stop("not the same sim results")
         
         ##- monitor loop
         print(paste(names(clus)[thr], # threshold
                     i )) # num sim
         
         ##- load sim with W matrix of infect probs
-        load(sim[ names(clus[[thr]])[i] ])
+        .m <- grep(paste0('/', names(clus[[thr]])[i], '.RData'), sim )
+        load( sim[.m] )
         
         ##- outdegree
-        out0 <- aggregate(x = list(outdegree = W$infectorProbability), 
-                          by = list(patient = W$donor), FUN = sum)
+        out0 <- aggregate(x = list(outdegree = W$infectorProbability), by = list(patient = W$donor), FUN = sum)
         ##- indegree
-        in0 <- aggregate(x = list(indegree = W$infectorProbability),
-                         by = list(patient = W$recip), FUN = sum)
+        in0 <- aggregate(x = list(indegree = W$infectorProbability), by = list(patient = W$recip), FUN = sum)
         
         ##- merge out and in degrees
         b <- merge(out0,in0)
         
         ###- Add neighborhood size
-        load(dist[[i]])
+        load( dist[[i]] )
         dd <- as.data.frame(t(D))
         
         ##- calculate neighborhood size by tip label
@@ -311,7 +286,7 @@ if (startover == TRUE){
         .t  <- tapply(dd$V3, dd$V1, function(x) sum(x < thr))
           ##- convert tip ID in tip label
         names(.t) <- lapply(names(.t), function(x) daytree$tip.label[ as.numeric(x) ])
-        nbrhood <- data.frame("id" = names(test), "nbhsize" = test, stringsAsFactors = FALSE)
+        nbrhood <- data.frame("id" = names(.t), "nbhsize" = .t, stringsAsFactors = FALSE)
         
         ##- load cluster assignement
         a <- clus[[thr]][[i]]
