@@ -17,6 +17,9 @@ read_chunk('assort_matrix.R')
     + analyzed in `assort_matrix.R`
 * UCSD cluster size, neighborhood size, outdegrees, indegrees in `cw_Baseline.rds` file
 
+```{r libs}
+```
+
 ```{r load data}
 ```
 

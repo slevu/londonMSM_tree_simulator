@@ -1,5 +1,11 @@
 # rm(list=ls())
 
+##---- libs ----
+library(reshape2)
+library("ggplot2")
+theme_set(theme_bw())
+library(scales)
+
 ##---- compute age matrix for UCSD cluster size  ----
 ##---- load data ----
 if(FALSE){
@@ -51,8 +57,7 @@ fn.mat <- list.files('RData', full.names = TRUE, path = "data/simulations2/age/"
 ##---- aggregate ----
 ##- aggregate matrix cluster in a list by threshold
 ##- ucsd cluster
-ag_mat_cl <- lapply(list_agmat_cl, function(x) Reduce('+', x))
-
+ag_amat_cl <- lapply(list_agmat_cl, function(x) Reduce('+', x))
 
 ##-  age matrix of infector probs
 load(fn.mat[1]) 
@@ -202,8 +207,9 @@ df <- cbind("SA" = assrt_coefs_sa,
             "NB" = do.call(cbind.data.frame, assrt_coefs_nb),
             "CL" = do.call(cbind.data.frame, assrt_coefs_cl) )
 # str(df)
-library(reshape2)
+## with reshape2
 a <- melt(df)
+## extra columns for facets
 a$method <- substr(a$variable, 1, 2)
 ##- add '' for threshold of SA method
 a$thr <- c(rep('NA', length(a[a$method == 'SA', 'method'])), regmatches(a$variable, regexpr("\\d\\.\\d*",  a$variable)) )
@@ -213,19 +219,17 @@ a$thr <- c(rep('NA', length(a[a$method == 'SA', 'method'])), regmatches(a$variab
 # abline( h = BASELINE_ASSRTCOEF, col = 'red')
 
 library(ggplot2)
-bp1 <- ggplot(a, aes(thr, value))
-bp2 <- bp1 + geom_boxplot() + 
+bp1 <- ggplot(a, aes(thr, value, fill = method)) + geom_boxplot()
+bp2 <- bp1  + 
   facet_grid(~ method, scales = "free", space = "free", labeller=labeller(method = c(SA = "SA", CL = "UCSD cluster", NB = "Neighborhood")))  + 
-  geom_hline(aes(yintercept = BASELINE_ASSRTCOEF, colour = "true coefficient")) + theme_bw() + theme(legend.position="top", legend.title=element_blank()) + xlab("Distance threshold") + ylab("Assortativity coefficient")
+  geom_hline(aes(yintercept = BASELINE_ASSRTCOEF, colour = "true coefficient")) + 
+  theme(legend.position="top", legend.title=element_blank(), strip.text.x = element_text(size = 12)) + guides(fill=FALSE) +
+  xlab("Distance threshold") + ylab("Assortativity coefficient")
 bp2
-# bp2 + scale_y_log10()
-  library(scales)  
- bp2 + scale_y_continuous(trans = "log")
 
- ## With scale that adapt to transformation
- ggplot(a[a$value >= 0,], aes(thr, value)) + geom_boxplot() +  coord_trans(y = "log")+
-   facet_grid(~ method, scales = "free", space = "free", labeller=labeller(method = c(SA = "SA", CL = "UCSD cluster", NB = "Neighborhood")))  + 
-   geom_hline(aes(yintercept = BASELINE_ASSRTCOEF, colour = "true coefficient")) + theme_bw() + theme(legend.position="top", legend.title=element_blank()) + xlab("Distance threshold") + ylab("Assortativity coefficient")
+## With scale that adapt to transformation
+bp2 %+% a[a$value >= 0,] + coord_trans(y = "log")
+
  
 ##---- associations ----
 ## age vs sizes, degrees at different thr
@@ -237,14 +241,15 @@ cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Base
 .m <- sample(1:100, .n)
 c <- lapply(cw_Baseline0, 
             function(x) do.call(rbind, x[.m]))
-rm(cw_Baseline0, a)
+rm(cw_Baseline0)
 
 # head(c[[2]])
 # names(c)
 # str(c)
+# lapply(c, function(x) mean(x$nbhsize))
 
 ## winsorize outliers
-winsorize <- function (x, fraction=.1)
+winsorize <- function (x, fraction=.05)
 {
   if(length(fraction) != 1 || fraction < 0 ||
      fraction > 0.5) {
@@ -264,26 +269,48 @@ str(cc)
 library(reshape2)
 df <- melt(c,  measure.vars = c(6, 8, 10))
 
+sa <- melt( cc[[1]][, -c(6, 9:10)],  measure.vars = 7)
+# head(sa)
+rest <- melt(cc,  measure.vars = c(6, 10))
+# head(rest)
+tot <- rbind( cbind(sa, "L1" = 'NA'), rest[,-c(7,8)])
+# head(tot)
+
+df_win <- melt(cc,  measure.vars = c(6, 8, 10))
 # head(df)
 # str(df)
 # sum(is.na(df$value))
+table(df$L1)
+identical(c[[1]][, "outdegree"], c[[3]][, "outdegree"]) # TRUE
+identical(df[df$L1 == '0.001' & df$variable == 'outdegree', 'value'], 
+          df[df$L1 == '0.005' & df$variable == 'outdegree', 'value'])
 
 # df <- df[df$L1 == "0.015",]
 tapply(df$value, list(df$L1, df$variable), function(x) mean(x, na.rm = T))
 
 p <- ggplot(df, aes(x = factor(age), y = value, fill = variable)) + geom_boxplot() + theme_bw() + theme(legend.position="none", legend.title = element_blank(), strip.text.x = element_text(size = 12)) 
-p + facet_wrap(~ L1 + variable, nrow = 4, scales = "free_y")
+p2 <- p + facet_wrap(~ L1 + variable, nrow = 4, scales = "free_y")
+p2
+p2 %+% df_win
 
-# coord_cartesian(ylim = quantile(df$value, c(0.1, 0.9), na.rm = TRUE)) + 
+p3 <- ggplot(tot, aes(factor(age), value, fill = variable)) + geom_boxplot()
+p4 <- p3 + facet_wrap(~ variable + L1, nrow = 1, scales = "free_y")
+p4
 
+##- at 0.015 only, winsorized
+p %+% df[df$L1 == '0.015',] + facet_wrap(~ variable, nrow = 1, scales = "free_y")
+p %+% df_win[df_win$L1 == '0.015',] + facet_wrap(~ variable, nrow = 1, scales = "free_y", labeller=labeller(variable = c(outdegree = "Outdegree", size = "Cluster size", nbhsize = "Neighborhood \n size")))
 
 
 ##---- regressions ----
 ###--- individual bootstrap regressions ---
 ###--- start function
 ###- summarize regression on bootstrap
-# x = cw_Baseline0[[1]][[1]]; reg =lm; model =  "scale(size) ~ factor(age)"
-reg.sum.bs <- function(ls, reg, model, alpha = 0.05, ...){
+# x = cw_Baseline0[[1]][[1]]; ls = cw_Baseline0, reg =lm; model =  "scale(size) ~ factor(age)"
+# y = 'scale(size)';  xs = c('factor(age)')
+reg.sum.bs <- function(ls, reg, y, xs, alpha = 0.05, ...){
+  
+  model <- paste(y, '~', paste(xs, collapse = ' + '))
   
   ## coef by threshold and by tree
   coef <- lapply(ls, function(x){
@@ -303,8 +330,12 @@ reg.sum.bs <- function(ls, reg, model, alpha = 0.05, ...){
   ##- number of p-value < 0.05
   sum.signif <- sapply(pvalue, function(x){
     apply(x, 1, function(x) sum(x < alpha) / length(x))
-  }
-  )
+  })
+  
+  ## number of p-value < 0.05 for first x of xs only and without interaction
+  sum.signif_x <- sapply(pvalue, function(x){ 
+    sum(x[grepl(xs[1], rownames(x), fixed=TRUE) & !grepl(':', rownames(x), fixed=TRUE),] < alpha) / length(x[grepl(xs[1], rownames(x), fixed=TRUE) & !grepl(':', rownames(x), fixed=TRUE), ])
+  })
   
   ## parameter by threshold
   param <-  lapply(coef, function(x){
@@ -330,10 +361,11 @@ reg.sum.bs <- function(ls, reg, model, alpha = 0.05, ...){
       mean(x)
     }), 3)
     
-    return(list("model" = model, "mean parameter" = mean.parms, "signif pvalue" = sum.signif, "mean r.squared" = mean.r2)) 
+    return(list("model" = model, "mean parameter" = mean.parms, "signif pvalue" = sum.signif,
+                "signif pvalue xs[1]" = sum.signif_x, "mean r.squared" = mean.r2)) 
   } else {
     
-    return(list("model" = model, "mean parameter" = mean.parms, "signif pvalue" = sum.signif))
+    return(list("model" = model, "mean parameter" = mean.parms, "signif pvalue" = sum.signif, "signif pvalue xs[1]" = sum.signif_x))
   }
 }
 ###--- end function 
@@ -341,16 +373,21 @@ reg.sum.bs <- function(ls, reg, model, alpha = 0.05, ...){
 
 model3_cl <- "scale(size) ~ factor(age)"
 model3_sa <- "scale(outdegree) ~ factor(age)"
+model3_nb <- "scale(nbhsize) ~ factor(age)"
 model4 <- "scale(size) ~ factor(age) + factor(stage) + factor(age)*factor(stage)"
 
+xs1 = c('factor(age)', 'factor(stage)', 'factor(age)*factor(stage)')
 ## example
 ## age
-a <- reg.sum.bs(ls = cw_Baseline0, reg = lm, model = model3) 
+a <- reg.sum.bs(ls = cw_Baseline0, reg = lm, y = 'scale(nbhsize)', xs = xs1) 
+b <- reg.sum.bs(ls = cw_Baseline0, reg = lm, y = 'scale(outdegree)', xs = xs1)
 a
+b
+
 aa <- reg.sum.bs(ls = cw_Baseline0, reg = lm, model = model3_sa) 
 aa
-b <- reg.sum.bs(ls = cw_Baseline0, reg = lm, model = model4) 
-b
+aaa <- reg.sum.bs(ls = cw_Baseline0, reg = lm, model = model3_nb) 
+aaa
 ## age and stage
 
 
