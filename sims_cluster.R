@@ -332,92 +332,48 @@ if (startover == TRUE){
   
   ##---- nbhood size ----
   
-  
-  ## function: input list of dist filenames, output csv of clusters
-  #- debug: ldist = list.dist[["Baseline0"]]; sim = list.sims[["Baseline0"]]; i = 100; j = 2
-  
-  nbh <- function(ldist, sim, thresholds){
-    ##- empty list of n thresholds
+  ###-- start nbh ---
+  ### ldist = list.dist[["Baseline0"]]; i = 1; j = 1 ; thresholds <- c("0.001", "0.005", "0.015", "0.05") 
+  nbh <- function(ldist, thresholds){
+    ##- empty list of j thresholds * i sims
     thr <- as.numeric(thresholds)
-    ll <- vector("list", length(ldist))
+    ll <- rep( list( vector("list", length(ldist)) ), length(thr) ) 
+    names(ll) <- thresholds
     
     for (i in 1:length(ldist)){
       ##- load distances
       load(ldist[i])
-      dd <- as.data.frame(t(D))
+      dd <- as.matrix(t(D))
       name.sim <- regmatches(ldist[i], regexpr("[0-9]{3,}", ldist[i]))
       
-      ##- load sim 
-      .m <- grep(paste0('/', name.sim, '.RData'), sim )
-      load( sim[.m] )
-      
-      ###- Add neighborhood size
-      head(dd)
-      
-      ##- calculate neighborhood size by tip label
+      ##- calculate neighborhood size
       ##- number of neighbour|threshold
-      ll[[i]] <- vector("list", length(thr))
       for (j in 1:length(thresholds)){
-        print(paste(i, j, name.sim))
+        print( paste(i, j, name.sim) )
         
-        .t  <- tapply(dd$V3, dd$V1, function(x) sum(x < thr[j]))
-      ##- convert tip ID in tip label
-      names(.t) <- lapply(names(.t), function(x) daytree$tip.label[ as.numeric(x) ])
-      ll[[i]][[j]] <- data.frame("id" = names(.t), "nbhsize" = .t, stringsAsFactors = FALSE, row.names = NULL)
-      names(ll[[i]])[j] <- thresholds[j]
+        .t  <- tapply(dd[,3], dd[,1], function(x) sum(x < thr[j]))
+        ll[[j]][[i]] <- cbind("id" = as.numeric(names(.t)), "nbhsize" = unname(.t))
+        names(ll[[j]])[i] <- name.sim
       }
-      names(ll)[i] <- name.sim
     }
     return(ll)
   }
   ##--- end nbh ---
   
-  thr <- c("0.001", "0.005", "0.015", "0.05") 
+  thr <- c("0.001", "0.005", "0.015", "0.05")
   system.time(
-    test1_nbh_Baseline0 <- nbh(list.dist[["Baseline0"]], list.sims[["Baseline0"]], thr )
-  ) # 73s
+    nbh_Baseline0 <- nbh(list.dist[["Baseline0"]], thr )
+  ) # 39s
   system.time(
-    test2_nbh_Baseline0 <- nbh2(list.dist[["Baseline0"]], list.sims[["Baseline0"]], thr )
+    nbh_EqualStage0 <- nbh(list.dist[["EqualStage0"]], thr )
   ) # 73s
   
-  ###################-------   llaaaaaaaaaaaa
-  ###################
-  sapply(test1_nbh_Baseline0, function(x){
-   sapplymean(x$nbhsize)
-  })
-  names(test1_nbh_Baseline0)
-  sapply(test2_nbh_Baseline0, function(x){
-    sapply(x, function(a) mean(a$nbhsize))
-  })
+  ##- check
+#   str(test3[[1]][[1]])
+#   a <- lapply(test3, function(x) do.call(rbind, x))
+#   str(a)
+#   sapply(a, function(x) mean(x[,2]))
   
-  ##--- start nbh2 ---
-  nbh2 <- function(ldist, sim, thresholds){
-    ##- empty list of n thresholds
-    thr <- as.numeric(thresholds)
-    
-    ll <- lapply(1:length(ldist), function(i){
-      ##- load distances
-      load(ldist[i])
-      dd <- as.data.frame(t(D))
-      name.sim <- regmatches(ldist[i], regexpr("[0-9]{3,}", ldist[i]))
-      
-      ##- load sim 
-      .m <- grep(paste0('/', name.sim, '.RData'), sim )
-      load( sim[.m] )
-      
-      ###- Add neighborhood size
-      ##- calculate neighborhood size by tip label
-      
-    dfs <- lapply(1:length(thr), function(j){
-      print( paste(name.sim, j) )
-      ##- number of neighbour|threshold
-      .t  <- tapply(dd$V3, dd$V1, function(x) sum(x < thr[j]))
-      ##- convert tip ID in tip label
-      names(.t) <- lapply(names(.t), function(x) daytree$tip.label[ as.numeric(x) ])
-      nbhsize <- data.frame("id" = names(.t), "nbhsize" = .t, stringsAsFactors = FALSE, row.names = NULL)
-      return(nbhsize)
-    } )
-    return(dfs)
-  })
-  return(ll)
-  }
+  ##- Todo
+  ##- convert tip ID in tip label
+  ##- incorporate in clust.stats
