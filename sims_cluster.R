@@ -246,7 +246,7 @@ if (startover == TRUE){
 ####---- add degrees and neighborhood size ----
 
   ##- loop to merge all W to all clusters
-#   clus = l_Baseline0; sim = list.sims[["Baseline0"]]; dist = list.dist[["Baseline0"]];  thr <- 1; i <- 100
+#   clus = l_Baseline0; sim = list.sims[["Baseline0"]]; dist = list.dist[["Baseline0"]];  thr <- 3; i <- 100
 
   ####---- add.w ----
   add.w <- function(clus, sim, dist){
@@ -260,6 +260,8 @@ if (startover == TRUE){
         # if (!identical(names(clus[[thr]])[i], # name cluster
         #  names(sim[ names(clus[[thr]])[i] ]))  # name sim
         #  ) stop("not the same sim results")
+        
+        thresholds <- as.numeric(names(clus))
         
         ##- monitor loop
         print(paste(names(clus)[thr], # threshold
@@ -283,7 +285,7 @@ if (startover == TRUE){
         
         ##- calculate neighborhood size by tip label
           ##- number of neighbour|threshold
-        .t  <- tapply(dd$V3, dd$V1, function(x) sum(x < thr))
+        .t  <- tapply(dd$V3, dd$V1, function(x) sum(x < thresholds[thr]))
           ##- convert tip ID in tip label
         names(.t) <- lapply(names(.t), function(x) daytree$tip.label[ as.numeric(x) ])
         nbrhood <- data.frame("id" = names(.t), "nbhsize" = .t, stringsAsFactors = FALSE)
