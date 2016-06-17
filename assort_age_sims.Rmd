@@ -1,5 +1,5 @@
 ---
-title: "Assortativity sims"
+title: "Age: Assortativity and associations to cluster size and infector probability"
 author: "Stephane"
 date: "13 June 2016"
 output:
@@ -11,37 +11,116 @@ output:
 ```{r}
 library(knitr)
 read_chunk('assort_matrix.R')
+read_chunk('age_regressions.R')
 ```
+
+```{r include}
+```
+
+* I compare SA with both UCSD cluster and _distance neighborhood_ at 4 thresholds
+* Here are mostly figures (detail_knitr = `r detail_knitr`)
+
+### Assortativity
 
 * Assortativity matrices for each sims in `age` folder
     + analyzed in `assort_matrix.R`
-* UCSD cluster size, neighborhood size, outdegrees, indegrees in `cw_Baseline.rds` file
+* UCSD cluster size, neighborhood size, outdegrees, indegrees in `cw_Baseline0.rds` file
+* Age matrices computed on HPC in `data/simulations2/age/`
 
-```{r libs}
+```{r libs, include = detail_knitr}
 ```
 
-```{r load data}
+```{r load data, echo = FALSE}
 ```
 
-```{r aggregate}
+```{r aggregate, include = detail_knitr}
 ```
 
-```{r utility functions}
+```{r utility functions, include = detail_knitr}
 ```
 
-```{r apply assort matrix}
+```{r apply assort matrix, include = detail_knitr}
 ```
 
-```{r heatmaps}
+##### Assortativity of infector probs by age
+```{r heatmap 1, echo = detail_knitr, fig.height = 3, fig.width = 3}
 ```
 
-```{r apply assort coef}
+##### Assortativity of neighborhood size by age by distance threshold
+```{r heatmap 2, echo = detail_knitr}
 ```
 
-```{r estimated coefs}
+##### Assortativity of cluster size by age by distance threshold
+```{r heatmap 3, echo = detail_knitr}
 ```
 
-```{r boxplot of assort coef}
+* Assortativity mostly detected at younger age
+* And at lower threshold
+
+```{r apply assort coef globally, echo = detail_knitr}
 ```
 
+```{r true assortativity from model0, include = detail_knitr}
+```
 
+```{r estimated coefs, include = detail_knitr}
+```
+
+```{r boxplot of assort coef, include = detail_knitr}
+```
+
+##### Distribution of estimated assortativity coefficient by method
+```{r boxplot 1}
+```
+
+##### Distribution of estimated assortativity coefficient (log) by method
+```{r boxplot 2}
+```
+
+* As Erik found, all methods underestimate true assortativity
+* At lowest threshold, age assortativity into cluster is closer to truth than for SA but less precisely estimated  
+
+### Regressions
+
+```{r associations, include = detail_knitr}
+```
+
+```{r winsorize outliers, include = detail_knitr}
+```
+
+```{r reshape, include = detail_knitr}
+```
+
+```{r effect winsorize, include = detail_knitr}
+```
+
+##### Distribution of outdegrees and cluster sizes at distance threshold = 0.015 by age category
+```{r boxplot sizes vs age, echo = detail_knitr}
+```
+
+* Data are from 5 bootstrap values
+* Outliers have been censored (_winsorized_) to 95% range of values
+
+```{r regressions, include = detail_knitr}
+```
+
+##### Regressing age without stage interaction
+```{r m1}
+```
+
+* Significant associations of size and age
+    + At threshold 0.015, UCSD cluster would find `r round(m1[[2]][[2]][4]*100)`%  
+    + SA would find `r round(m1[[2]][[2]][1]*100)`%
+
+##### Regressing age by cluster size with stage interaction
+```{r m2}
+```
+
+##### Regressing age by neighborhood size with stage interaction
+```{r m3}
+```
+
+* Significant associations of size and age (when adjusting for stage)
+    + At threshold 0.015, UCSD cluster would find `r round(m2[[2]][[2]][4]*100)`%  
+    + At threshold 0.015, neighborhood would find `r round(m3[[2]][[2]][4]*100)`% 
+    + SA would find `r round(m3[[2]][[2]][1]*100)`%
