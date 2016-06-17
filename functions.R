@@ -694,3 +694,99 @@ compare.reg.bs <- function(ls, reg, model, alpha = 0.05, ...){
   }
 }
 ###--- end function 
+
+#-------------------------------------#
+##-- compare regression boostrap 2 ---#
+#-------------------------------------#
+###--- start function
+###- summarize regression on bootstrap with p-value only for first x variable (details = F)
+##- either y = (nbhsize or size) in addition to outdegree
+## debug: ls = cw_Baseline0; reg = lm; y = 'nbhsize'; alpha = 0.05; model = "y ~ factor(age) + factor(stage) + factor(age)*factor(stage)"
+compare.reg.bs2 <- function(ls, reg = lm, y = 'size', model, alpha = 0.05, details = FALSE, ...){
+  
+  ## coef by threshold and by tree
+  coef <- lapply(ls, function(x){
+    lapply(x , function(x){
+      ## choose model
+      if (y %in% names(x)){
+        full.model <- sub("y", paste('scale(', y, ')', sep = ''), model)
+      } else if("outdegree" %in% names(x)){
+        full.model <- sub("y", "scale(outdegree)", model)
+      } else stop("cannot find y")
+      
+      coef(summary(reg(formula = full.model, data = x, ...)))
+    })
+  })
+  
+  # names(coef[[1]])
+  
+  ## pvalue by threshold and by tree
+  pvalue <- lapply(coef, function(x){
+    sapply(x , function(x){
+      identity(x[,4])
+    })
+  })
+  
+  if(details){
+  ##- number of p-value < 0.05
+  sum.signif <- sapply(pvalue, function(x){
+    apply(x, 1, function(x) sum(x < alpha) / length(x))
+  })
+  }
+  
+  ## number of p-value < 0.05 for first x of xs only and without interaction
+  xs <- trimws( unlist(strsplit(model, '[~+]')) ) # elements of model
+  # debug: x <- pvalue[[2]]
+  title <- paste('p-values for all categories of', xs[2], 'explaining outdegree and', y)
+  p_x1 <- sapply(pvalue, function(x){ 
+    sum(x[grepl(xs[2], rownames(x), fixed=TRUE) & !grepl(':', rownames(x), fixed=TRUE),] < alpha) / length(x[grepl(xs[2], rownames(x), fixed=TRUE) & !grepl(':', rownames(x), fixed=TRUE), ])
+  })
+  sum.signif_x <- list(title, p_x1)
+  
+  ## parameter by threshold
+  param <-  lapply(coef, function(x){
+    sapply(x , function(x){
+      identity(x[,1])
+    })
+  })
+  
+  if(details){
+  ## mean of parameter
+  mean.parms <- signif(sapply(param, function(x){
+    apply(x, 1, mean)
+  }), 2)
+  }
+  
+  ## R square, only for lm()
+  if(identical(reg, lm)){
+    r2 <- lapply(ls, function(x){
+      sapply(x , function(x){
+        ## choose model
+        if (y %in% names(x)){
+          full.model <- sub("y", paste('scale(', y, ')', sep = ''), model)
+        } else if("outdegree" %in% names(x)){
+          full.model <- sub("y", "scale(outdegree)", model)
+        } else stop("cannot find y")
+        
+        summary(reg(full.model, data = x))$r.squared
+      })
+    })
+    ## mean R2
+    mean.r2 <- signif(sapply(r2, function(x){
+      mean(x)
+    }), 3)
+    
+    if(details){
+    return(list("model" = model, "mean parameter" = mean.parms, "signif pvalue" = sum.signif, sum.signif_x, "mean r.squared" = mean.r2)) 
+    } else {
+      return(list("model" = model, sum.signif_x, "mean r.squared" = mean.r2))
+    }
+  } else { # if not lm
+    if (details){
+      return(list("model" = model, "mean parameter" = mean.parms, "signif pvalue" = sum.signif, sum.signif_x))
+    } else {
+      return(list("model" = model, sum.signif_x))
+    }
+  }
+}
+###--- end function
