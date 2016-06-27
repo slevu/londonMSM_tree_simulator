@@ -33,7 +33,7 @@ list.dist <- lapply(scenario, function(x){
 ####---- ucsd clustering ----####
 # ucsd_hivclust
 if (startover == TRUE){
-  thresholds  <-  c("0.001", "0.05") # c("0.015", "0.005") # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
+  thresholds  <-  c(1e-04, 5e-04) # c("0.001", "0.05") # c("0.015", "0.005") # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
   tmax <- max(thresholds) # limit of distance considered
   
 ## function: input list of dist filenames, output csv of clusters
@@ -74,7 +74,7 @@ if (startover == TRUE){
 ##- function n = 100; m = 1
 list.hivclust <- function(csvs){
   ## Structure threshold > trees
-  thresholds <- c("0.001", "0.005", "0.015", "0.05") 
+  thresholds <-  c("1e-04", "5e-04", "0.001", "0.005", "0.015", "0.05") # c("0.001", "0.005", "0.015", "0.05") 
   
   ## empty list of thresholds
   cl2 <- vector("list", length(thresholds))
@@ -140,7 +140,7 @@ return(cl2)
   }
   ##--- end nbh ---
   
-  thr <- c("0.001", "0.005", "0.015", "0.05")
+  thr <-  c("1e-04", "5e-04", "0.001", "0.005", "0.015", "0.05") # c("0.001", "0.005", "0.015", "0.05")
   system.time(
     nbh_Baseline0 <- nbh(list.dist[["Baseline0"]], thr )
   ) # 36s
@@ -180,7 +180,7 @@ return(cl2)
 ####---- clus.stat ----
 if (startover == TRUE){
   ###- check if sim.name = clus.name
-  # sim = list.sims[["Baseline0"]] ; clus = cl_Baseline0; nbh = nbh_Baseline0; i = 100 ; thr = 4
+  # sim = list.sims[["Baseline0"]] ; clus = cl_Baseline0; nbh = nbh_Baseline0; i = 100 ; thr = 1
 clus.stat <- function(clus, sim){
   
   ##- Start loop
