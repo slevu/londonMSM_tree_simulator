@@ -87,7 +87,7 @@ img {
 <ul>
 <li>Transmission model <code>model0.R</code> defines <em>Baseline</em> scenario</li>
 <li>Modified with equal transmission rates by stage for <em>EqualStage</em> scenario</li>
-<li>Run on <em>HPC</em> with a loop of <code>simBa.sh</code> and <code>simEq.sh</code> running <code>model0-simulateBaseline0.R</code> and <code>model0-simulateEqualStage0.R</code>. Must use <code>sampleTimes</code>, <code>sampleStates</code>, <code>incidence.tsv</code>, <code>model0.cpp files</code></li>
+<li>Run on <em>HPC</em> with a loop of <code>simBa.sh</code> and <code>simEq.sh</code> running <code>model0-simulateBaseline0.R</code> and <code>model0-simulateEqualStage0.R</code>. Must use <code>sampleTimes</code>, <code>sampleStates</code>, <code>incidence.tsv</code>, <code>model0.cpp</code> files</li>
 <li>output files contain daytree, yeartree, cd4s, sampleDemes, W matrix of infector probs</li>
 </ul>
 <ol start="2" style="list-style-type: decimal">
@@ -97,16 +97,45 @@ img {
 <li>Simulated by function <code>tree2genDistance.R</code> in <code>tree2dist.sims.R</code></li>
 </ul>
 <ol start="3" style="list-style-type: decimal">
-<li><em>UCSD</em> cluster assignement by tips<br />
+<li>Cluster assignement by tips<br />
 </li>
 </ol>
 <ul>
-<li>With <code>sims.cluster.R</code><br />
-</li>
-<li>Cluster assignement with covariates: Merge with covariates extracted from sampleDemes</li>
-<li>Add outdegrees: Skip the LSD dating of trees and source attribution already done at step 1. And combine cluster assignement with covariates and W<sub>0</sub> values<br />
-</li>
+<li>With <code>sims.cluster.R</code></li>
+<li>At 4 distance thresholds</li>
+<li><em>UCSD</em> cluster assignement</li>
+<li>Neighborhood size</li>
+<li>Merge with covariates extracted from sampleDemes</li>
+<li>Interim outputs saved as <code>list.sim.ucsd.Baseline0.rds</code> and <code>list.sim.ucsd.EqualStage0.rds</code></li>
+<li>Add outdegrees: Skip the LSD dating of trees and source attribution already done at step 1. And combine cluster assignement with covariates and W<sub>0</sub> values. Saved as <code>list.sim.clus-outdeg.Baseline0.rds</code> and <code>list.sim.clus-outdeg.EqualStage0.rds</code></li>
+<li>Structure:</li>
 </ul>
+<pre class="r"><code>path.results &lt;- 'data/sim_ucsd_results2'
+cw_Baseline0 &lt;- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
+names(cw_Baseline0)</code></pre>
+<pre><code>## [1] &quot;SA&quot;    &quot;0.001&quot; &quot;0.005&quot; &quot;0.015&quot; &quot;0.05&quot;</code></pre>
+<pre class="r"><code>##- first elements of second list level
+struc &lt;- lapply(cw_Baseline0, `[`, 1) # or lapply(cw_Baseline0, function(x) x[1])
+str(struc[1:2], give.attr=T, give.length = F, give.head=T, vec.len = 1, indent.str=&quot;|&quot;, comp.str=&quot;----&quot;)</code></pre>
+<pre><code>## List of 2
+## |----SA   :List of 1
+## | ..$ 13334:'data.frame':    12164 obs. of  6 variables:
+## | .. ..$ id       : chr  &quot;simt_1&quot; ...
+## | .. ..$ stage    : num  1 5 ...
+## | .. ..$ age      : num  3 4 ...
+## | .. ..$ risk     : num  1 1 ...
+## | .. ..$ outdegree: num  0.00097 ...
+## | .. ..$ indegree : num  0.204 ...
+## |----0.001:List of 1
+## | ..$ 13334:'data.frame':    12164 obs. of  8 variables:
+## | .. ..$ id       : chr  &quot;simt_3668&quot; ...
+## | .. ..$ ClusterID: int  168 262 ...
+## | .. ..$ stage    : num  3 4 ...
+## | .. ..$ age      : num  3 2 ...
+## | .. ..$ risk     : num  1 2 ...
+## | .. ..$ size     : num  2 2 ...
+## | .. ..$ nbhsize  : num  0 0 ...
+## | .. ..$ binclus  : num  1 1 ...</code></pre>
 <ol start="4" style="list-style-type: decimal">
 <li>Assortativity matrices</li>
 </ol>
@@ -115,8 +144,58 @@ img {
 <li>done on <em>HPC</em> with <code>assort_matrix0.R</code> and <code>sim_age_anal.sh</code> in a loop:</li>
 <li><code>files=(data/simulations2/model0-simulateBaseline0/*.RData)</code></li>
 <li><code>for ((i=0; i &lt; ${#file[@]}; i++)); do qsub -v file=${files[$i]} sim_age_anal.sh; done</code></li>
+<li>Structure of output for each sim:
+<ul>
+<li><code>agemat_sa</code> matrix of inf prob</li>
+<li><code>tab_sa</code> outdegree by age, stage</li>
+<li><code>agemat_cl</code> by threshold, matrix of nbrhsize by age and nbrhsize by tip</li>
+</ul></li>
+</ul>
+<pre class="r"><code>fn.mat &lt;- list.files('RData', full.names = TRUE, path = &quot;data/simulations2/age/&quot;)
+load(fn.mat[1]) 
+str(ll, vec.len = 1, indent.str = &quot;|&quot;, comp.str = &quot;----&quot;)</code></pre>
+<pre><code>## List of 3
+## |----agemat_sa: num [1:4, 1:4] 18.7 ...
+## | ..- attr(*, &quot;dimnames&quot;)=List of 2
+## | .. ..$ : chr [1:4] &quot;1&quot; ...
+## | .. ..$ : chr [1:4] &quot;1&quot; ...
+## |----tab_sa   :'data.frame': 12164 obs. of  3 variables:
+## | ..$ od   : num [1:12164] 0 0 ...
+## | ..$ age  : num [1:12164] 1 4 ...
+## | ..$ stage: num [1:12164] 2 2 ...
+## |----agemat_cl:List of 4
+## | ..$ 0.001:List of 2
+## | .. ..$ agemat2    : num [1:4, 1:4] 4 4 ...
+## | .. ..$ nbrhoodSize: Named num [1:12164] 0 0 ...
+## | .. .. ..- attr(*, &quot;names&quot;)= chr [1:12164] &quot;simt_179&quot; ...
+## | ..$ 0.005:List of 2
+## | .. ..$ agemat2    : num [1:4, 1:4] 37 112 ...
+## | .. ..$ nbrhoodSize: Named num [1:12164] 0 0 ...
+## | .. .. ..- attr(*, &quot;names&quot;)= chr [1:12164] &quot;simt_179&quot; ...
+## | ..$ 0.015:List of 2
+## | .. ..$ agemat2    : num [1:4, 1:4] 203 520 ...
+## | .. ..$ nbrhoodSize: Named num [1:12164] 0 0 ...
+## | .. .. ..- attr(*, &quot;names&quot;)= chr [1:12164] &quot;simt_179&quot; ...
+## | ..$ 0.05 :List of 2
+## | .. ..$ agemat2    : num [1:4, 1:4] 402 ...
+## | .. ..$ nbrhoodSize: Named num [1:12164] 0 0 ...
+## | .. .. ..- attr(*, &quot;names&quot;)= chr [1:12164] &quot;simt_179&quot; ...</code></pre>
+<ol start="5" style="list-style-type: decimal">
+<li>Age analysis</li>
+</ol>
+<ul>
+<li>With <code>assort_matrix.R</code>
+<ul>
+<li>list of age association into cluster by sims <code>list_agmat_cl.rds</code></li>
+<li>One assortativity matrix for infect. prob and a list of 4 for cluster and neighborhood size</li>
+<li>Idem for assortativity coefficients</li>
+<li>Also compute assortativity coefficient for each sim to compare distribution vs true coefficient from <code>model0.R</code>: boxplots</li>
+</ul></li>
+<li>With <code>age_regressions.R</code> …</li>
 </ul>
 <ol start="6" style="list-style-type: decimal">
+<li>Risk</li>
+<li><p>Stage of infection</p></li>
 <li>Analyses</li>
 </ol>
 <ul>
@@ -125,7 +204,7 @@ img {
 <li>linear and logistic regressions</li>
 <li>assortativity</li>
 </ul>
-<ol start="7" style="list-style-type: decimal">
+<ol start="9" style="list-style-type: decimal">
 <li>Graphics</li>
 </ol>
 <ul>

@@ -23,25 +23,64 @@ For each, two scenario subfolders *Baseline* and *EqualStage*
 1. Generate trees 
   + Transmission model `model0.R` defines *Baseline* scenario
   + Modified with equal transmission rates by stage for *EqualStage* scenario
-  + Run on *HPC* with a loop of `simBa.sh` and `simEq.sh` running `model0-simulateBaseline0.R` and `model0-simulateEqualStage0.R`. Must use `sampleTimes`, `sampleStates`, `incidence.tsv`, `model0.cpp files`
+  + Run on *HPC* with a loop of `simBa.sh` and `simEq.sh` running `model0-simulateBaseline0.R` and `model0-simulateEqualStage0.R`. Must use `sampleTimes`, `sampleStates`, `incidence.tsv`, `model0.cpp` files
   + output files contain daytree, yeartree, cd4s, sampleDemes, W matrix of infector probs
 2. Genetic distances
   + Simulated by function `tree2genDistance.R` in `tree2dist.sims.R`
-3. *UCSD* cluster assignement by tips    
-  + With `sims.cluster.R`  
-  + Cluster assignement with covariates: Merge with covariates extracted from sampleDemes
-  + Add outdegrees: Skip the LSD dating of trees and source attribution already done at step 1. And combine cluster assignement with covariates and W~0~ values  
+3. Cluster assignement by tips    
+  + With `sims.cluster.R`
+  + At 4 distance thresholds 
+  + *UCSD* cluster assignement
+  + Neighborhood size
+  + Merge with covariates extracted from sampleDemes
+  + Interim outputs saved as `list.sim.ucsd.Baseline0.rds` and `list.sim.ucsd.EqualStage0.rds`
+  + Add outdegrees: Skip the LSD dating of trees and source attribution already done at step 1. And combine cluster assignement with covariates and W~0~ values. Saved as `list.sim.clus-outdeg.Baseline0.rds` and `list.sim.clus-outdeg.EqualStage0.rds`
+  + Structure:
+
+```{r}
+path.results <- 'data/sim_ucsd_results2'
+cw_Baseline0 <- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
+names(cw_Baseline0)
+##- first elements of second list level
+struc <- lapply(cw_Baseline0, `[`, 1) # or lapply(cw_Baseline0, function(x) x[1])
+str(struc[1:2], give.attr=T, give.length = F, give.head=T, vec.len = 1, indent.str="|", comp.str="----")
+```
+
 4. Assortativity matrices
  + by infector probability and by neighborhood 
  + done on *HPC* with `assort_matrix0.R` and `sim_age_anal.sh` in a loop:
  + `files=(data/simulations2/model0-simulateBaseline0/*.RData)`
  + `for ((i=0; i < ${#file[@]}; i++)); do qsub -v file=${files[$i]} sim_age_anal.sh; done`
+ + Structure of output for each sim: 
+     + `agemat_sa` matrix of inf prob
+     + `tab_sa` outdegree by age, stage
+     + `agemat_cl` by threshold, matrix of nbrhsize by age and nbrhsize by tip
+ 
+```{r}
+fn.mat <- list.files('RData', full.names = TRUE, path = "data/simulations2/age/")
+load(fn.mat[1]) 
+str(ll, vec.len = 1, indent.str = "|", comp.str = "----")
+```
+ 
 
-6. Analyses
+5. Age analysis
+  + With `assort_matrix.R`
+    + list of age association into cluster by sims `list_agmat_cl.rds`
+    + One assortativity matrix for infect. prob and a list of 4 for cluster and neighborhood size
+    + Idem for assortativity coefficients
+    + Also compute assortativity coefficient for each sim to compare distribution vs true coefficient from `model0.R`: boxplots
+  + With `age_regressions.R`
+  ...
+  
+6. Risk 
+7. Stage of infection
+
+
+8. Analyses
   + association between cluster size / outdegrees and covariates
   + type 1 / 2 errors
   + linear and logistic regressions
   + assortativity
-7. Graphics
+9. Graphics
   + distribution of cluster size, outdegrees, indegrees
   + network
