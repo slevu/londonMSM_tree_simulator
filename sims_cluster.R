@@ -277,11 +277,11 @@ if (startover == TRUE){
 }
 
   ####---- saved listUKclus ----
- # saveRDS(l_Baseline0, file = "data/sim_ucsd_results2/list.sim.ucsd.Baseline0.rds" )
- # saveRDS(l_EqualStage0, file = "data/sim_ucsd_results2/list.sim.ucsd.EqualStage0.rds" )
+ # saveRDS(l_Baseline0, file = paste(path.results, 'list.sim.ucsd.Baseline0.rds', sep = '/') )
+ # saveRDS(l_EqualStage0, file = paste(path.results, 'list.sim.ucsd.EqualStage0.rds', sep = '/') )
 
-  l_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.ucsd.Baseline0.rds" )
-  l_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.ucsd.EqualStage0.rds" )
+  l_Baseline0 <- readRDS(file = paste(path.results, 'list.sim.ucsd.Baseline0.rds', sep = '/') )
+  l_EqualStage0 <- readRDS(file = paste(path.results, 'list.sim.ucsd.EqualStage0.rds', sep = '/') )
 
 ###- check
   #   names(l_Baseline0)
@@ -328,16 +328,18 @@ if (startover == TRUE){
         ##- indegree
         ind <- tapply(W$infectorProbability, W$recip, sum)
         ##- merge out and in degrees
-        b <-  data.frame('patient' = names(outd), 'outdegree' = outd, 'indegree' =ind, 
+        b <-  data.frame('patient' = names(outd), 
+                         'outdegree' = as.vector(outd), 
+                         'indegree' = as.vector(ind), 
                          row.names = NULL, stringsAsFactors = FALSE)
-        
-        ##- load cluster assignement
+      
+        ##- load covariates by tip
         a <- cl[[i]][, c(1,3:5)]
         
         ##- merge all
         c <- merge(a, b, by.x = "id", by.y = "patient", all.x = TRUE )
         
-        ##- NA is 0
+        ##- NA degree to 0
         c$outdegree[is.na(c$outdegree)] <- 0
         c$indegree[is.na(c$indegree)] <- 0
         
@@ -346,7 +348,7 @@ if (startover == TRUE){
         names(ll)[i] <- names(cl)[i]
       }
     ##- concatenate lists SA + thresholds
-    return( c("SA" = list(ll), l_Baseline0) )
+    return( c("SA" = list(ll), clus) )
     }
 
   ####---- fin add.w ----####
@@ -365,11 +367,11 @@ if (startover == TRUE){
   
   
   ####---- saved listUKclus ----
-  # saveRDS(cw_Baseline0, file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
-  # saveRDS(cw_EqualStage0, file = "data/sim_ucsd_results2/list.sim.clus-outdeg.EqualStage0.rds" )
+  # saveRDS(cw_Baseline0, file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
+  # saveRDS(cw_EqualStage0, file = paste(path.results, 'list.sim.clus-outdeg.EqualStage0.rds', sep = '/') )
   
-  cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
-  cw_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.EqualStage0.rds" )
+  cw_Baseline0 <- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
+  cw_EqualStage0 <- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.EqualStage0.rds', sep = '/') )
   
   ##---- end ----
   
