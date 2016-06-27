@@ -96,7 +96,7 @@ age_mat <- function(sim, dist, thr)
   l <- list()
   # system.time(
   for (i in 1:length(thr)){
-    CL_THRESHOLD <- thr[i]
+    CL_THRESHOLD <- as.numeric(thr[i])
     
     nbrhoodSize <- setNames( rep(0, length(samplesInCohort)), samplesInCohort )
     agemat2 <- matrix( 0, nrow = 4, ncol = 4 )
@@ -130,7 +130,7 @@ age_mat <- function(sim, dist, thr)
 
 ##---- apply function ----
 ## by thresholds
-thresholds <- c("0.001", "0.005", "0.015", "0.05")
+thresholds <- c("1e-04", "5e-04", "0.001", "0.005", "0.015", "0.05")
 
 system.time(
 o <- age_mat(sim, dist = distBaseline0FNS, thr = thresholds)
