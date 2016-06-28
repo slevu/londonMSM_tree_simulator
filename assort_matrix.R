@@ -7,6 +7,7 @@ library(reshape2)
 library("ggplot2")
 theme_set(theme_bw())
 library(scales)
+library(gridExtra)
 
 ##---- compute age matrix for UCSD cluster size  ----
 ##---- load data ----
@@ -14,7 +15,7 @@ if(FALSE){
   cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
 # names(cw_Baseline0) ; head(cw_Baseline0[[1]][[1]])
   ##- cluster and nbhsize lists only
-  c_Base <- cw_Baseline0[2:5]
+  c_Base <- cw_Baseline0[-1]
   ##- load EdgeList
   source("functions.R")
 
@@ -45,6 +46,7 @@ if(FALSE){
       names(list_agmat_cl[[i]])[j] <- names(c_Base[[i]])[j]
     }
   }
+  # very long !
   # saveRDS(list_agmat_cl, file = "data/sim_ucsd_results2/list.agmat.clus.rds" )
   
   ##- rm functions and large file
@@ -53,10 +55,10 @@ if(FALSE){
 } else {
   list_agmat_cl <- readRDS("data/sim_ucsd_results2/list.agmat.clus.rds")
 }
-# names(list_agmat_cl); head(names(list_agmat_cl[[1]]))
+# names(list_agmat_cl); head(names(list_agmat_cl[[1]])); lapply(list_agmat_cl, function(x) x[1])
 
 ##--- Analyze age matrices computed on HPC 
-fn.mat <- list.files('RData', full.names = TRUE, path = "data/simulations2/age/")
+fn.mat <- list.files('RData', full.names = TRUE, path = "data/simulations2/age")[1:2]
 
 ##---- aggregate ----
 ##- aggregate matrix cluster in a list by threshold
@@ -114,8 +116,7 @@ assor_mat_cl <- lapply(ag_amat_cl, mat2assortmat)
 require(lattice)
 ##- SA
 # print("Assortativity of infector probs by age")
-levelplot( assor_mat_sa,
-           col.regions = heat.colors)
+levelplot( assor_mat_sa, col.regions = heat.colors)
 
 ##---- heatmap 2 ----
 ##- neighborhood
@@ -132,21 +133,23 @@ for (i in 1:length(a)){
 p <- plots_grid(assor_mat_nb)
 ##- can't find automatic layout, do it manually:
 # print("Assortativity of neighborhood size by age")
-print(p[[1]], split = c(1,1,2,2), more = TRUE)
-print(p[[2]], split = c(2,1,2,2), more = TRUE)
-print(p[[3]], split = c(1,2,2,2), more = TRUE)
-print(p[[4]], split = c(2,2,2,2), more = FALSE)
+# print(p[[1]], split = c(1,1,2,2), more = TRUE) # c(x,y,nx,ny)
+# print(p[[2]], split = c(2,1,2,2), more = TRUE)
+# print(p[[3]], split = c(1,2,2,2), more = TRUE)
+# print(p[[4]], split = c(2,2,2,2), more = FALSE)
+##- plot
+do.call(grid.arrange, c(p, ncol = ceiling(length(p)/2)) )
 
-##---- heatmap 3 ----
+  ##---- heatmap 3 ----
 ##- ucsd
 p <- plots_grid(assor_mat_cl)
 ##- can't find automatic layout, do it manually:
 # print("Assortativity of cluster size by age")
-print(p[[1]], split = c(1,1,2,2), more = TRUE)
-print(p[[2]], split = c(2,1,2,2), more = TRUE)
-print(p[[3]], split = c(1,2,2,2), more = TRUE)
-print(p[[4]], split = c(2,2,2,2), more = FALSE)
-
+# print(p[[1]], split = c(1,1,2,2), more = TRUE)
+# print(p[[2]], split = c(2,1,2,2), more = TRUE)
+# print(p[[3]], split = c(1,2,2,2), more = TRUE)
+# print(p[[4]], split = c(2,2,2,2), more = FALSE)
+do.call(grid.arrange, c(p, ncol = ceiling(length(p)/2)) )
 
 ##---- apply assort coef globally ----
 coef_mat_sa <- mat2assortCoef(ag_amat_sa)
@@ -215,12 +218,15 @@ a <- melt(df)
 ## extra columns for facets
 a$method <- substr(a$variable, 1, 2)
 ##- add '' for threshold of SA method
-a$thr <- c(rep('NA', length(a[a$method == 'SA', 'method'])), regmatches(a$variable, regexpr("\\d\\.\\d*",  a$variable)) )
+a$thr <- c(rep('NA', length(a[a$method == 'SA', 'method'])), regmatches(a$variable, regexpr("\\d\\.\\d*|\\de-\\d*",  a$variable)) )
 
+test <- c("0.001", "0.005", "0.015",  "0.05", "1e-04", "5e-04",   "NA")
+as.character(as.numeric(test))
 # boxplot( a$value ~ a$variable, ylim = c(min(a$value), 1.25*BASELINE_ASSRTCOEF), main='Estimated assortativity (SA,nb=neighborhood, cl=clustering)', log = 'y')
 # abline( h = BASELINE_ASSRTCOEF, col = 'red')
 
 ##---- boxplot 1 ----
+# library(cowplot)
 bp1 <- ggplot(a, aes(thr, value, fill = method)) + geom_boxplot()
 bp2 <- bp1  + 
   facet_grid(~ method, scales = "free", space = "free", labeller=labeller(method = c(SA = "SA", CL = "UCSD cluster", NB = "Neighborhood")))  + 
