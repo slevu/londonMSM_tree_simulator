@@ -208,6 +208,8 @@ assrt_coefs_cl <-  lapply(list_agmat_cl, function(x) sapply(x, mat2assortCoef))
 ##---- stop ----
 
 ##---- boxplot of assort coef ----
+
+
 ##- transform in df
 df <- cbind("SA" = assrt_coefs_sa, 
             "NB" = do.call(cbind.data.frame, assrt_coefs_nb),
@@ -218,22 +220,44 @@ a <- melt(df)
 ## extra columns for facets
 a$method <- substr(a$variable, 1, 2)
 ##- add '' for threshold of SA method
-a$thr <- c(rep('NA', length(a[a$method == 'SA', 'method'])), regmatches(a$variable, regexpr("\\d\\.\\d*|\\de-\\d*",  a$variable)) )
+a$thr <- c(rep('NA', length(a[a$method == 'SA', 'method'])), regmatches(a$variable, regexpr("\\d\\..*|\\d*e[-+]?.*",  a$variable)) )
+# table(a$thr)
+##- force scientific notation
+# options("scipen"=-100, "digits"=4)
+options("scipen"=0, "digits"=4)
+a$thrnum <- ifelse(a$thr=='NA', 'NA', as.character(as.numeric(a$thr[a$thr!='NA'])))
 
-test <- c("0.001", "0.005", "0.015",  "0.05", "1e-04", "5e-04",   "NA")
-as.character(as.numeric(test))
-# boxplot( a$value ~ a$variable, ylim = c(min(a$value), 1.25*BASELINE_ASSRTCOEF), main='Estimated assortativity (SA,nb=neighborhood, cl=clustering)', log = 'y')
-# abline( h = BASELINE_ASSRTCOEF, col = 'red')
+fancy_scientific <- function(l) {
+  # turn in to character string in scientific notation
+  l <- format(l, scientific = TRUE)
+  l <- gsub("0e\\+00","0",l)
+  # quote the part before the exponent to keep all the digits
+  l <- gsub("^(.*)e", "'\\1'e", l)
+  # remove + after exponent, if exists. E.g.: (3x10^+2 -> 3x10^2) 
+  l <- gsub("e\\+","e",l)
+  # turn the 'e+' into plotmath format
+  l <- gsub("e", "%*%10^", l)
+  # convert 1x10^ or 1.000x10^ -> 10^
+  l <- gsub("\\'1[\\.0]*\\'\\%\\*\\%", "", l)
+  # return this as an expression
+  parse(text=l)
+}
+
+# table(a$thrnum)
+# tail(a$thrnum)
 
 ##---- boxplot 1 ----
 # library(cowplot)
-bp1 <- ggplot(a, aes(thr, value, fill = method)) + geom_boxplot()
+bp1 <- ggplot(a, aes(thrnum, value, fill = method)) + geom_boxplot()
 bp2 <- bp1  + 
   facet_grid(~ method, scales = "free", space = "free", labeller=labeller(method = c(SA = "SA", CL = "UCSD cluster", NB = "Neighborhood")))  + 
   geom_hline(aes(yintercept = BASELINE_ASSRTCOEF, colour = "true coefficient")) + 
   theme(legend.position="top", legend.title=element_blank(), strip.text.x = element_text(size = 12)) + guides(fill=FALSE) +
   xlab("Distance threshold") + ylab("Assortativity coefficient")
-bp2
+# bp2 + theme_bw()
+bp2 + geom_boxplot(aes(thrnum, value, fill = NULL, color = method), show.legend = FALSE) + theme(legend.position="none") +
+  scale_x_discrete(labels=fancy_scientific) + 
+  background_grid() # cowplot
 
 ##---- boxplot 2 ----
 ## With scale that adapts to transformation
