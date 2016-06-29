@@ -1,24 +1,66 @@
 ###--- external code for stats_sims.Rmd
+# rm(list=ls())
 
 ##---- load data ----
 cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
 # cw_EqualStage0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.EqualStage0.rds" )
 
+##- reorganize: for each sim, merge SA and cluster sizes for different thresholds
+revert_list <- function(ls) { # @Josh O'Brien
+  # get sub-elements in same order
+  x <- lapply(ls, `[`, names(ls[[1]]))
+  # stack and reslice
+  apply(do.call(rbind, x), 2, as.list) 
+}
+
+cw <- revert_list(cw_Baseline0[-c(2,3)])
+# names(cw); names(cw[[1]])
+# ########################---------------- laaaaaa
+r <- cw[[1]]
+str(r)
+system.time(a <- merge(r[["SA"]], r[["0.015"]], by = 'id') )
+system.time(b <- cbind(r[["SA"]], r[["0.015"]][ match(r[["SA"]]$id, r[["0.015"]]$id), c('size','nbhsize') ]))
+str(a)
+str(b)
+str(x)
+test <- lapply(r[-1], function(x) cbind(x[ , c('size','nbhsize')] ))
+test <- unlist(r[-1])
+str(test)
+
+test <- lapply(cw, function(x) {
+  merge(x[["SA"]], x[["0.015"]], by = 'id')
+})
+
+system.time(
+    z <- lapply(l_Baseline0, function(x){
+      sapply(x, function(m) {
+      # faster than `merge(df, s, all.x = TRUE)`
+      #- add covariates
+       # m <-  cbind(df, s[ match(df$id, s$id), -1 ])
+      #- mean y by x
+        agg <-  tapply(m$size, m$stage, mean )
+        return(agg)
+        }) 
+      })
+    )
+  
+  
 ##----  long ----
 ##- calculate individual mean size and outdegree over sims
-## change structure in long table (first few for speed)
+## change structure in long table (first few for speed and 4 higher thr)
 .n <- 3 
 .m <- sample(1:100, .n)
-a <- lapply(cw_Baseline0, 
+a <- lapply(cw_Baseline0[-c(2,3)], 
              function(x) do.call(rbind, x[.m]))
-# str(a); str(a[[1]])
+# str(a)
 
 ##---- stats cluster ----
 ## summary
-sapply(a, function(x) summary(x$size))
+sapply(a[-1], function(x) summary(x$size))
 ## proportion in cluster
-sapply(a, function(x) mean(x$binclus))
+sapply(a[-1], function(x) mean(x$binclus))
 
+##---- corr ----
 ##- correlation cluster size vs outdegree
 for (i in 1:length(a)){
   print(paste(names(a)[i],
@@ -26,7 +68,7 @@ for (i in 1:length(a)){
                         a[[i]]$outdegree, 
                         use = "complete"), 3)) )
 }
-
+cor(a[["0.015"]]$size, a[["SA"]]$outdegree, use = "complete")
 ##---- plot long table ----
 # quartz()
 par(mfrow = c(length(a)/2, 2), bty = 'n')
