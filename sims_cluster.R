@@ -30,10 +30,13 @@ list.dist <- lapply(scenario, function(x){
 # str(list.sims); str(list.dist) # head(names(list.sims[[2]])) 
 # load(list.sims[[2]][[1]]); head(sampleDemes); head(cd4s)
 
+##--- thrs
+ thresholds <-  c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
+
 ####---- ucsd clustering ----####
 # ucsd_hivclust
 if (startover == TRUE){
-  thresholds  <-  c(1e-04, 5e-04) # c("0.001", "0.05") # c("0.015", "0.005") # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
+  thresholds  <-  c(0.00001, 0.0001)# c(1e-04, 5e-04) # c("0.001", "0.05") # c("0.015", "0.005") # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
   tmax <- max(thresholds) # limit of distance considered
   
 ## function: input list of dist filenames, output csv of clusters
@@ -70,12 +73,11 @@ if (startover == TRUE){
                path = paste(path.results, x, sep = '/'))
   })
   
- 
+
 ##- function n = 100; m = 1
 list.hivclust <- function(csvs){
   ## Structure threshold > trees
-  thresholds <-  c("1e-04", "5e-04", "0.001", "0.005", "0.015", "0.05") # c("0.001", "0.005", "0.015", "0.05") 
-  
+
   ## empty list of thresholds
   cl2 <- vector("list", length(thresholds))
   ## loop
@@ -113,8 +115,8 @@ return(cl2)
 ####---- nbhood size ----
   if(startover){
   ###-- start nbh ---
-  ### ldist = list.dist[["Baseline0"]]; i = 1; j = 1 ; thresholds <- c("0.001", "0.005", "0.015", "0.05") 
-  nbh <- function(ldist, thresholds){
+  ### ldist = list.dist[["Baseline0"]]; i = 1; j = 1 
+  nbh <- function(ldist){
     ##- empty list of j thresholds * i sims
     thr <- as.numeric(thresholds)
     ll <- rep( list( vector("list", length(ldist)) ), length(thr) ) 
@@ -140,13 +142,12 @@ return(cl2)
   }
   ##--- end nbh ---
   
-  thr <-  c("1e-04", "5e-04", "0.001", "0.005", "0.015", "0.05") # c("0.001", "0.005", "0.015", "0.05")
+   system.time(
+    nbh_Baseline0 <- nbh(list.dist[["Baseline0"]] )
+  ) # 55s
   system.time(
-    nbh_Baseline0 <- nbh(list.dist[["Baseline0"]], thr )
-  ) # 36s
-  system.time(
-    nbh_EqualStage0 <- nbh(list.dist[["EqualStage0"]], thr )
-  ) # 25s
+    nbh_EqualStage0 <- nbh(list.dist[["EqualStage0"]] )
+  ) # 40s
 
   # saveRDS(nbh_Baseline0, file = paste(path.results, 'list.nbhsize.sim.Baseline0.rds', sep = '/') )
   # saveRDS(nbh_EqualStage0, file = paste(path.results, 'list.nbhsize.sim.EqualStage0.rds', sep = '/') )
@@ -180,8 +181,8 @@ return(cl2)
 ####---- clus.stat ----
 if (startover == TRUE){
   ###- check if sim.name = clus.name
-  # sim = list.sims[["Baseline0"]] ; clus = cl_Baseline0; nbh = nbh_Baseline0; i = 100 ; thr = 1
-clus.stat <- function(clus, sim){
+  # sim = list.sims[["Baseline0"]] ; clus = cl_Baseline0; nbh = nbh_Baseline0; i = 1 ; thr = 1
+clus.stat <- function(clus, nbh, sim){
   
   ##- Start loop
   ##- empty list of n thresholds
@@ -231,8 +232,7 @@ clus.stat <- function(clus, sim){
                    all.x = TRUE, sort = FALSE)
         
         ## merge neighborhood size (with NA)
-        b <- merge(x = aa, y = nb, 
-                    by.x = "id", by.y = "id", 
+        b <- merge(x = aa, y = nb, by.x = "id", by.y = "id", 
                     all.x = TRUE, sort = FALSE)
         
         #- size 1 if not into a cluster
@@ -267,12 +267,14 @@ clus.stat <- function(clus, sim){
 if (startover == TRUE){
   system.time(
     l_Baseline0 <- clus.stat(clus = cl_Baseline0, 
+                             nbh = nbh_Baseline0,
                              sim = list.sims[["Baseline0"]])
-  ) # 469
+  ) # 766
   system.time(
     l_EqualStage0 <- clus.stat(clus = cl_EqualStage0,
+                               nbh = nbh_EqualStage0,
                                sim = list.sims[["EqualStage0"]])
-  ) # 463
+  ) # 750
   
 }
 
@@ -285,7 +287,7 @@ if (startover == TRUE){
 
 ###- check
   #   names(l_Baseline0)
-  #   str( l_Baseline0[[2]][[1]] )
+  #   str( l_Baseline0[[3]][[1]] )
   #   length(l_Baseline0[[1]])
 # 
 #   system.time(
@@ -358,11 +360,11 @@ if (startover == TRUE){
     system.time(
       cw_Baseline0 <- add.w(clus = l_Baseline0, 
                             sim = list.sims[["Baseline0"]] )
-    ) # 50
+    ) # 58
     system.time(
       cw_EqualStage0 <- add.w(clus = l_EqualStage0,
                               sim = list.sims[["EqualStage0"]] )
-    ) # 45
+    ) # 52
   }
   
   
