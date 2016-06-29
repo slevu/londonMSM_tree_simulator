@@ -5,11 +5,16 @@ detail_knitr <- FALSE
 ##---- libs ----
 library(reshape2)
 library("ggplot2")
-theme_set(theme_bw())
+# theme_set(theme_bw())
 library(scales)
 library(gridExtra)
+require(lattice)
 
-##---- compute age matrix for UCSD cluster size  ----
+##---- format exponential ----
+# options(scipen = -100)
+# options(scipen = 0)
+
+##--- compute age matrix for UCSD cluster size  ---
 ##---- load data ----
 if(FALSE){
   cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
@@ -26,6 +31,7 @@ if(FALSE){
   names(list_agmat_cl) <- names(c_Base)
   # treshold names
   ##- loop
+system.time(
   for (i in 1:length(c_Base)){ # index threshold
     for (j in 1:length(c_Base[[i]]) ){ # index sim
       l <- c_Base[[i]][[j]]
@@ -46,7 +52,8 @@ if(FALSE){
       names(list_agmat_cl[[i]])[j] <- names(c_Base[[i]])[j]
     }
   }
-  # very long !
+) # 720s !
+  
   # saveRDS(list_agmat_cl, file = "data/sim_ucsd_results2/list.agmat.clus.rds" )
   
   ##- rm functions and large file
@@ -55,10 +62,13 @@ if(FALSE){
 } else {
   list_agmat_cl <- readRDS("data/sim_ucsd_results2/list.agmat.clus.rds")
 }
+options(scipen = -100)
+names(list_agmat_cl) <- as.character( as.numeric(names(list_agmat_cl) ) )
+options(scipen = 0)
 # names(list_agmat_cl); head(names(list_agmat_cl[[1]])); lapply(list_agmat_cl, function(x) x[1])
 
 ##--- Analyze age matrices computed on HPC 
-fn.mat <- list.files('RData', full.names = TRUE, path = "data/simulations2/age")[1:2]
+fn.mat <- list.files('RData', full.names = TRUE, path = "data/simulations2/age")
 
 ##---- aggregate ----
 ##- aggregate matrix cluster in a list by threshold
@@ -76,7 +86,9 @@ for (i in 2:length(fn.mat)){
 
 ##- nbrhood size
 ag_amat_nb <- rep(list(matrix(0,4,4)), length(ll[["agemat_cl"]]))
-names(ag_amat_nb) <- names(ll[["agemat_cl"]]) # treshold names
+options(scipen = -100)
+names(ag_amat_nb) <- as.character( as.numeric(names(ll[["agemat_cl"]])) ) # treshold names
+options(scipen = 0)
 for (i in 1:length(fn.mat)){
   load(fn.mat[i])
   for (j in 1:length(ll[["agemat_cl"]]) ){
@@ -113,7 +125,6 @@ assor_mat_nb <- lapply(ag_amat_nb, mat2assortmat)
 assor_mat_cl <- lapply(ag_amat_cl, mat2assortmat)
 
 ##---- heatmap 1 ----
-require(lattice)
 ##- SA
 # print("Assortativity of infector probs by age")
 levelplot( assor_mat_sa, col.regions = heat.colors)
@@ -131,24 +142,14 @@ for (i in 1:length(a)){
 }
 
 p <- plots_grid(assor_mat_nb)
-##- can't find automatic layout, do it manually:
 # print("Assortativity of neighborhood size by age")
-# print(p[[1]], split = c(1,1,2,2), more = TRUE) # c(x,y,nx,ny)
-# print(p[[2]], split = c(2,1,2,2), more = TRUE)
-# print(p[[3]], split = c(1,2,2,2), more = TRUE)
-# print(p[[4]], split = c(2,2,2,2), more = FALSE)
 ##- plot
 do.call(grid.arrange, c(p, ncol = ceiling(length(p)/2)) )
 
   ##---- heatmap 3 ----
 ##- ucsd
 p <- plots_grid(assor_mat_cl)
-##- can't find automatic layout, do it manually:
 # print("Assortativity of cluster size by age")
-# print(p[[1]], split = c(1,1,2,2), more = TRUE)
-# print(p[[2]], split = c(2,1,2,2), more = TRUE)
-# print(p[[3]], split = c(1,2,2,2), more = TRUE)
-# print(p[[4]], split = c(2,2,2,2), more = FALSE)
 do.call(grid.arrange, c(p, ncol = ceiling(length(p)/2)) )
 
 ##---- apply assort coef globally ----
@@ -193,7 +194,10 @@ for (i in 1:length(fn.mat)){
 ##- For neighborhood
 ##- empty list of 4 matrices
 assrt_coefs_nb <- rep(list(vector(mode="numeric", length = length(fn.mat))), length(ll[["agemat_cl"]]))
-names(assrt_coefs_nb) <- names(ll[["agemat_cl"]]) # treshold names
+options(scipen = -100)
+names(assrt_coefs_nb) <- as.character(as.numeric ( names(ll[["agemat_cl"]]) ) ) # treshold names
+options(scipen = 0)
+
 ##- loop
 for (i in 1:length(fn.mat)){
   load(fn.mat[i])
@@ -222,12 +226,10 @@ a$method <- substr(a$variable, 1, 2)
 ##- add '' for threshold of SA method
 a$thr <- c(rep('NA', length(a[a$method == 'SA', 'method'])), regmatches(a$variable, regexpr("\\d\\..*|\\d*e[-+]?.*",  a$variable)) )
 # table(a$thr)
+# str(a)
 ##- force scientific notation
-# options("scipen"=-100, "digits"=4)
-options("scipen"=0, "digits"=4)
-a$thrnum <- ifelse(a$thr=='NA', 'NA', as.character(as.numeric(a$thr[a$thr!='NA'])))
-
 fancy_scientific <- function(l) {
+  if( is.na(as.numeric(l)) ) parse(text = l) else {
   # turn in to character string in scientific notation
   l <- format(l, scientific = TRUE)
   l <- gsub("0e\\+00","0",l)
@@ -241,25 +243,24 @@ fancy_scientific <- function(l) {
   l <- gsub("\\'1[\\.0]*\\'\\%\\*\\%", "", l)
   # return this as an expression
   parse(text=l)
+  }
 }
 
-# table(a$thrnum)
-# tail(a$thrnum)
-
 ##---- boxplot 1 ----
-# library(cowplot)
-bp1 <- ggplot(a, aes(thrnum, value, fill = method)) + geom_boxplot()
+library(cowplot)
+bp1 <- ggplot(a, aes(reorder(thr, as.numeric(thr)), value, color = method)) + geom_boxplot()
 bp2 <- bp1  + 
   facet_grid(~ method, scales = "free", space = "free", labeller=labeller(method = c(SA = "SA", CL = "UCSD cluster", NB = "Neighborhood")))  + 
-  geom_hline(aes(yintercept = BASELINE_ASSRTCOEF, colour = "true coefficient")) + 
-  theme(legend.position="top", legend.title=element_blank(), strip.text.x = element_text(size = 12)) + guides(fill=FALSE) +
+  geom_hline(aes(yintercept = BASELINE_ASSRTCOEF, colour = "true coefficient"), linetype = "dashed") + 
   xlab("Distance threshold") + ylab("Assortativity coefficient")
-# bp2 + theme_bw()
-bp2 + geom_boxplot(aes(thrnum, value, fill = NULL, color = method), show.legend = FALSE) + theme(legend.position="none") +
-  scale_x_discrete(labels=fancy_scientific) + 
-  background_grid() # cowplot
+
+  # theme(legend.position="top", legend.title=element_blank(), strip.text.x = element_text(size = 12)) + guides(fill=FALSE) +
+bp3 <- bp2 + theme(legend.position="none") + 
+  background_grid() # + theme_bw()
+bp3
+# bp3 + scale_x_discrete(labels = fancy_scientific)
 
 ##---- boxplot 2 ----
 ## With scale that adapts to transformation
-bp2 %+% a[a$value >= 0,] + coord_trans(y = "log")
+bp3 %+% a[a$value >= 0,] + coord_trans(y = "log")
 
