@@ -50,7 +50,7 @@ str(struc[1:2], give.attr=T, give.length = F, give.head=T, vec.len = 1, indent.s
  + by infector probability and by neighborhood 
  + done on *HPC* with `assort_matrix0.R` and `sim_age_anal.sh` in a loop:
  + `files=(data/simulations2/model0-simulateBaseline0/*.RData)`
- + `for ((i=0; i < ${#file[@]}; i++)); do qsub -v file=${files[$i]} sim_age_anal.sh; done`
+ + `for ((i=0; i < ${#files[@]}; i++)); do qsub -v file=${files[$i]} sim_age_anal.sh; done`
  + Structure of output for each sim: 
      + `agemat_sa` matrix of inf prob
      + `tab_sa` outdegree by age, stage
