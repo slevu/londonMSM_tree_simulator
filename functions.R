@@ -812,3 +812,15 @@ l <- gsub("\\'1[\\.0]*\\'\\%\\*\\%", "", l)
 parse(text=l)
 }
 ###--- end function
+
+#---------------------------------#
+##---- revert list of lists  -----
+##- see: http://goo.gl/sFMWzD
+#---------------------------------#
+revert_list <- function(ls) { # @Josh O'Brien
+  # get sub-elements in same order
+  x <- lapply(ls, `[`, names(ls[[1]]))
+  # stack and reslice
+  apply(do.call(rbind, x), 2, as.list) 
+}
+###--- end function
