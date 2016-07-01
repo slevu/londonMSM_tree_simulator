@@ -70,9 +70,12 @@ str(ll, vec.len = 1, indent.str = "|", comp.str = "----")
     + Idem for assortativity coefficients
     + Also compute assortativity coefficient for each sim to compare distribution vs true coefficient from `model0.R`: boxplots
   + With `age_regressions.R`
-  ...
+  + Results in `assort_age_sims.Rmd`
   
 6. Risk 
+  + With `ext-stats_sims.R`
+  + Results in `stats_sims.Rmd`
+  
 7. Stage of infection
 
 
