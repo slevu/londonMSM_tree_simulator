@@ -40,32 +40,9 @@ p_sa <- sapply(cw[[1]], function(df) u.test.risk(df, y = "outdegree") )
 p_uni <- c('CL' = p_cs, 'NB' = p_nb, "SA"= list(p_sa) )
 # str(p_uni)
 
-##---- boxplot 1 ----
-super_boxplot <- function(ls){
-##- long table
-  a <- melt(ls)
-  ## extra columns for facets
-  a$method <- substr(a$L1, 1, 2)
-  ##- add 'NA' for threshold of SA method
-  a$thr <- c(regmatches(a$L1, regexpr("\\d\\..*|\\d*e[-+]?.*",  a$L1)), rep('NA', length(a[a$method == 'SA', 'method'])) )
-
-##- plot
-  bp1 <- ggplot(a, aes(reorder(thr, as.numeric(thr)), value, color = method)) + geom_boxplot()
-  bp2 <- bp1  +
-    facet_grid(~ method, scales = "free", space = "free", labeller=labeller  (method = c(SA = "SA", CL = "UCSD cluster", NB = "Neighborhood")))  + 
-    xlab("Distance threshold") + ylab("p-value") + 
-    theme(legend.position="none") +
-    theme(strip.background = element_blank()) +
-    background_grid()
-  bp2
-}
-
-super_boxplot(p_uni)
-
-##---- sign uni
 ##- table of proportion p-values < 0.05
 tab1 <- data.frame("method" = names(p_uni),
-                  "proportion univariate" = sapply(p_uni, function(x) mean( x < 0.05)), row.names = NULL)
+                  "univariate" = sapply(p_uni, function(x) mean( x < 0.05)), row.names = NULL)
 
 ##---- lm ----
 ##- lm model adjusting for stage of infection with option transformation
@@ -89,63 +66,11 @@ p_mult_sa <- sapply(cw[[1]], function(df) {
 
 p_mult <- c('CL' = p_mult_cs, 'NB'= p_mult_nb, "SA"= list(p_mult_sa) )
 
-super_boxplot(p_mult)
-
-tab <- cbind(tab1, "proportion multivariate" = sapply(p_mult, function(x) mean( x < 0.05)))
+tab <- cbind(tab1, "multivariate" = sapply(p_mult, function(x) mean( x < 0.05)))
 row.names(tab) <- NULL
-tab
 
 
-###############------ surplus ------
-
-##- essai neighborhood size
-cor(l$size, l$nbhsize)
-cor(l$size, l$risk)
-cor(l$nbhsize, l$risk)
-
-cor(l$outdegree, l$nbhsize, use = "complete" )
-plot(l$outdegree, l$nbhsize)
-boxplot(l$outdegree ~ l$risk) 
-boxplot(l$nbhsize ~ l$risk) 
-boxplot(l$size ~ l$risk) 
-
-ggplot(l, aes(factor(risk), log(nbhsize))) + geom_violin()
-
-###########################
-###########################
-
-
-
-##----  long ----
-##- calculate individual mean size and outdegree over sims
-## change structure in long table (first few for speed and 4 higher thr)
-.n <- 3 
-.m <- sample(1:100, .n)
-a <- lapply(cw, function(x) do.call(rbind, x[.m]))
-# str(a)
-
-##- make sure id are ordered
-sa <- list('risk' = as.character(a[[1]]$risk), 'SA' = a[[1]]$outdegree)
-nb <- lapply(a[-1], function(x) c(x$nbhsize))
-cl <- lapply(a[-1], function(x) c(x$size))
-str(nb)
-str(cl)
-str(sa)
-
-mu <- c(sa, 'CL' = cl, 'NB'= nb )
-str(mu)
-#####################-------------------------------laaaaaaa
-head(mu)
-mumu <- reshape(mu, varying = list(names(mu)[-1]), direction = 'long')
-mumu <- melt(mu, id = 'risk')
-str(mumu)
-head(mumu)
-?reshape
-?melt
-##- same order of id (already done)
-# x <- lapply(a, function(df) df[order(df$id),] )
-
-str(x)
+##---- boxplot 1 ----
 super_boxplot <- function(ls){
   ##- long table
   a <- melt(ls)
@@ -165,110 +90,72 @@ super_boxplot <- function(ls){
   bp2
 }
 
+super_boxplot(ls = p_uni)
 
-##---- stats cluster ----
-## summary
-sapply(a[-1], function(x) summary(x$size))
-## proportion in cluster
-sapply(a[-1], function(x) mean(x$binclus))
-## proportion in cluster by risk
-sapply(a[-1], function(x) tapply(x$binclus, x$risk, mean))
+##---- boxplot 2 ----
+super_boxplot(p_mult)
 
-##---- corr ----
-##- correlation cluster size vs outdegree
-for (i in 1:length(a)){
-  print(paste(names(a)[i],
-              round(cor(a[[i]]$size, 
-                        a[[i]]$outdegree, 
-                        use = "complete"), 3)) )
-}
-cor(a[["0.015"]]$size, a[["SA"]]$outdegree, use = "complete")
-##---- plot long table ----
-# quartz()
-par(mfrow = c(length(a[-1])/2, 2), bty = 'n')
-for (i in 1:length(a[-1])){
-  hist(a[-1][[i]]$size, main = names(a[-1])[i], xlab = '')
-}
-dev.off()
+##----  long ----
+##- calculate individual mean size and outdegree over sims
+## change structure in long table (first few for speed and 4 higher thr)
+.n <- 10 
+.m <- sample(1:100, .n)
+z <- lapply(cw, function(x) do.call(rbind, x[.m]))
+# str(a)
 
-##- hist log - log
-par(mfrow = c(length(a)/2, 2), bty = 'n')
-for (i in 1:length(a)){
-  h <- hist(log(a[[i]]$size), plot = F)
-  h$counts <- log1p(h$counts) # log(y)
-  plot(h, ylab = "log(Freq)",
-       main = names(a)[i], xlab = "log(size)")
-}
-dev.off()
+##- make sure id are ordered
+sa <- list('risk' = as.character(z[[1]]$risk), 'SA' = z[[1]]$outdegree)
+nb <- lapply(z[-1], function(x) c(x$nbhsize))
+cl <- lapply(z[-1], function(x) c(x$size))
+# str(nb); str(cl); str(sa)
 
-##- size vs outdegree
-par(mfrow = c(length(a)/2, 2), bty = 'n')
-for (i in 1:length(a)){
-  plot(a[[i]]$size, a[[i]]$outdegree,
-       xlab = "cluster size",
-       ylab = "out-degree",
-       col="#00000050", 
-       main = names(a)[i])
-}
-dev.off()
+mu <- data.frame(sa, 'CL' = cl, 'NB'= nb )
+# str(mu)
 
-##---- combine into means ----
-## mean by id of set of variables var
-# mean.sims <- lapply(a, function(df) {
-#   aggregate(df[, c("binclus", "size", "outdegree", "indegree")],
-#             list("id" = df$id, 
-#                  "stage" = df$stage,
-#                  "age" = df$age,
-#                  "risk" = df$risk),                              function(x) mean(x, na.rm = TRUE) )
-# })
+a <- melt(mu, id.vars = 'risk')
 
+##---- boxplot 3 ----
+# str(a); head(a); tail(a)
+a$method <- substr(a$variable, 1, 2)
 
+##- censored 5% outliers
+source('functions.R')
+a$value_win <- unlist(tapply(a$value, a$variable, function(x) (winsorize(x, 0.05)) ) )
+# str(a); tail(a, 100)
 
-# 
-# par(mfrow = c(1, 2), bty = 'n')
-# hist(a[[1]]$outdegree, main = "", xlab = "out-degree")
-# hist(a[[1]]$indegree, main = "", xlab =  "in-degree")
-# 
-# dev.off()
-# 
-# ##- mean
-# str(mean.sims)
-# b <- mean.sims
-# 
-# par(mfrow = c(length(b), 2), bty = 'n')
-# for (i in 1:length(b)){
-#   hist(b[[i]]$size, main = names(b)[i], xlab = "cluster size")
-#   plot(b[[i]]$size, b[[i]]$outdegree,
-#        xlab = "cluster size",
-#        ylab = "out-degree",
-#        col="#00000050", 
-#        main = names(b)[i])
-# }
-# dev.off()
+##- plot
+bp4  <- ggplot(a, aes(risk, value_win, color = method)) + geom_boxplot()
+bp5 <- bp4  +
+  facet_wrap(~ variable, scales = "free")  + 
+  xlab("Risk level") + ylab("Outdegree or cluster size (censored)") + 
+  theme(legend.position="none") +
+  theme(strip.background = element_blank()) +
+  background_grid()
+bp5
+# bp5 %+% a[a$value_win > 0,] 
 
-#####
-#####
-#####
-##- reorganize: for each sim, merge SA and cluster sizes for different thresholds
-revert_list <- function(ls) { # @Josh O'Brien
-  # get sub-elements in same order
-  x <- lapply(ls, `[`, names(ls[[1]]))
-  # stack and reslice
-  apply(do.call(rbind, x), 2, as.list) 
-}
+##---- boxplot 4 ----
+##- plot log, uncensored
+bp6  <- ggplot(a, aes(risk, log(value + 10-5), color = method)) + geom_boxplot()
+bp7 <- bp6  +
+  facet_wrap(~ variable, scales = "free")  + 
+  xlab("Risk level") + ylab("Outdegree or cluster size (log)") + 
+  theme(legend.position="none") +
+  theme(strip.background = element_blank()) +
+  background_grid()
+bp7
 
-##- revert and keep 4 thresholds
-rcw <- revert_list(cw_Baseline0[-c(2,3)])
-# names(cw); names(cw[[1]])
+##---- stats cluster 1 ----
+##- proportion in cluster by risk
+round(sapply(z[-1], function(x) tapply(x$binclus, x$risk, mean)), 2)
 
-r <- rcw[[1]]
+##---- stats cluster 2 ----
+##- mean outdegree or size, by risk
+mm <- tapply(a$value, list(a$risk, a$variable), mean)
+round(mm, 2)
 
-tabs <- lapply(cw, function(x) {
-  cbind(x[["SA"]], x[["0.015"]][ match(x[["SA"]]$id, x[["0.015"]]$id), c('size','nbhsize') ])
-})
+##---- stats cluster 3 ----
+##- ratio mean
+round( mm[2,] / mm[1,], 2)
 
-str(tabs)
-
-# p_cs2 <- lapply(tabs, function (x)  {
-# u.test.risk(x, y = "size")
-# } )
+##------ stop ------

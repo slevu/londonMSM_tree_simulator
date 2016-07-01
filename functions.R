@@ -824,3 +824,19 @@ revert_list <- function(ls) { # @Josh O'Brien
   apply(do.call(rbind, x), 2, as.list) 
 }
 ###--- end function
+
+#---------------------------------#
+##---- winsorize outliers -----
+#---------------------------------#
+winsorize <- function (x, fraction=.05)
+{
+  if(length(fraction) != 1 || fraction < 0 ||
+     fraction > 0.5) {
+    stop("bad value for 'fraction'")
+  }
+  lim <- quantile(x, probs=c(fraction, 1-fraction), na.rm = TRUE)
+  x[ x < lim[1] ] <- lim[1]
+  x[ x > lim[2] ] <- lim[2]
+  x
+}
+#---------------------------------#
