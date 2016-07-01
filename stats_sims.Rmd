@@ -13,64 +13,70 @@ library(knitr)
 read_chunk('ext-stats_sims.R')
 ```
 
-* Assortativity matrices for each sims in `age` folder
-    + analyzed in `assort_matrix.R`
-* Cluster size, neighborhood size, outdegrees in `cw_Baseline.rds` file
-* 
+```{r, libs, warning = FALSE}
+```
+* There is a 10-fold difference in transmission rates between risk level 1 and 2
+* In baseline scenario, test sensitivity to detect difference between risk groups
 
 Load tables
-
-```{r}
-# load data
+```{r, load data}
 ```
 
-## 0. Plot cluster size and outdegree
-```{r, stats cluster}
-# long
-```
-* Cluster sizes and outdegrees have weak correlation
+Detect difference in transmission rate by risk level
+Univariate
+p-values of univariate test: size ~ risk
 
-## 1. Detect difference in transmission rate by risk level
-### 1.1 Univariate
-```{r}
-
+```{r, u test}
 ```
 
+Multivariate
 
-### 1.2 Multivariate
-```{r}
-
+```{r, lm}
 ```
+* Note log transformation and no zero values for outdegrees
 
 #### Proportion of tests correctly detecting difference in transmission rates
 ```{r, results='asis'}
-# knitr::kable(tab)
-```
-
-* Note: restricting to outdegrees > 0 doesn't change anything (there are no zero values ?)
-* Interpretation: need to test scenario with different levels of difference in transmission rates
-
-```{r}
-##- into a dataframe for ggplot boxplot or violinplot
-
+knitr::kable(tab)
 ```
 
 
+#### p-values univariate
+```{r, boxplot 1, warning = FALSE}
+```
 
-## Associations
-## Type 1 / 2 error: detect a difference in risk, age, stage ?
-## Regressions
-## Assortativity
-    1. Calculate mixing matrix
-    2. Calculate true assortativity coefficient
-    3. Compare with estimated coefficient
-## Plots
-    1. Distribution cluster sizes, out- and indegrees
-    2. Network
-  
-## Next: change scenarios
-  * high, low, no age assortativity
-  * high, low, no at-risk group
+* neighborhood size and SA always detect difference
+* uscd cluster require low threshold to start seeing the difference
+
+#### p-values multivariate
+```{r, boxplot 2, warning = FALSE}
+```
+
+* Important loss of sensitivity to detection when adjusting
+* Need to test scenario with different levels of difference in transmission rates ?
+
+```{r, long}
+```
+
+#### Outdegree/sizes vs risk level
+```{r, boxplot 3}
+```
+
+* note: only use 10 bootstraps and outlier values are censored at 5%
+* When difference detected, effect size always underestimated
+
+#### Some stats
+Proportion in ucsd clusters by risk
+```{r, stats cluster 1}
+```
+
+Mean outdegree or size, by risk
+```{r, stats cluster 2}
+```
+
+Ratio of means (risk level 2 / risk level 1)
+```{r, stats cluster 3}
+```
 
 
 
