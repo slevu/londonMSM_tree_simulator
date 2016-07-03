@@ -1,6 +1,6 @@
 # rm(list=ls())
 ####---- include ----
-detail_knitr <- FALSE
+detail_knitr <- TRUE
 
 ##---- libs ----
 library(reshape2)

@@ -7,6 +7,9 @@ startover <- FALSE
 ####---- lib ----
 #library(ape)
 
+##--- thrs
+thresholds <-  c("0.001", "0.005", "0.015", "0.05") # c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
+
 ####---- path sims ----
 ##- used for several rounds of simulations
 path.sims <- 'data/simulations2/model0-simulate'
@@ -30,8 +33,6 @@ list.dist <- lapply(scenario, function(x){
 # str(list.sims); str(list.dist) # head(names(list.sims[[2]])) 
 # load(list.sims[[2]][[1]]); head(sampleDemes); head(cd4s)
 
-##--- thrs
- thresholds <-  c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
 
 ####---- ucsd clustering ----####
 # ucsd_hivclust
