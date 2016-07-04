@@ -1,0 +1,34 @@
+---
+title: "5 summary stats sims"
+author: "Stephane"
+date: "4 July 2016"
+output: html_document
+---
+
+```{r}
+library(knitr)
+read_chunk('5_summary_stats.R')
+```
+
+```{r load data}
+```
+
+**Number of clusters**
+```{r n clusters}
+```
+
+**Proportion into clusters**
+```{r proportion membership}
+```
+
+**Mean cluster size**
+```{r mean size}
+```
+
+**Mean neighborhood size**
+```{r mean nbhsize}
+```
+
+**Mean outdegrees**
+```{r mean outdegree}
+```
