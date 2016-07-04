@@ -1,0 +1,134 @@
+---
+title: "Neigborhood vs ucsd cluster"
+author: "Stephane"
+date: "4 July 2016"
+output: html_document
+---
+
+Attempt to understand:
+  1. how UCSD cluster are calculated (single or complete linkage)
+  2. how neighborhood size differs from cluster size
+  
+```{r, message = FALSE}
+##- understanding difference neighbourhood and ucsd cluster
+# rm(list=ls())
+library(igraph)
+threshold <- '0.015'
+####---- path sims ----
+path.sims <- 'data/simulations2/model0-simulate'
+path.results <- 'data/sim_ucsd_results2'
+####---- scenario ----
+scenario <- c("Baseline0", "EqualStage0")
+scenario <- setNames(scenario, scenario) # useful to name list in lapply
+####--- list of distances files ---
+list.dist <- lapply(scenario, function(x){
+  list.files('RData', full.names = TRUE, 
+             path = paste(path.sims, x, '-distances', sep = '') )
+})
+```
+
+**Distance matrix from first baseline simulations**
+```{r}
+##- load distances
+ldist <- list.dist[["Baseline0"]]
+load(ldist[1])
+dd <- as.matrix(t(D)) # columns = from, to, distance 
+name.sim <- regmatches(ldist[1], regexpr("[0-9]{3,}", ldist[1]))
+```
+
+**Choose one cluster as an example**
+```{r}
+##- load ucsd assignement
+##- keep first sim and 0.015 only
+cl_Baseline0 <- readRDS( file = paste(path.results, 'list.hivclust.sim.Baseline0.rds', sep = '/') )
+# names(cl_Baseline0)
+cl <- cl_Baseline0[[threshold]][[name.sim]]
+# str(cl)
+##- size of cluster
+freqClust <- as.data.frame(table(cl$ClusterID), stringsAsFactors = FALSE)
+head(freqClust, 10)
+```
+
+```{r, include = FALSE}
+##- load computed cluster and nbhsize
+l_Baseline0 <- readRDS(file = paste(path.results, 'list.sim.ucsd.Baseline0.rds', sep = '/') )
+names(l_Baseline0)
+l <- l_Baseline0[[threshold]][[name.sim]]
+str(l)
+```
+
+**Subset of pairwise distances from a given cluster**
+```{r}
+#- what are the distances within a given cluster ?
+seq <- cl[cl$ClusterID == 8,]$SequenceID # 8 # 934 # 1703
+el <- dd[dd[,1] %in% seq & dd[,2] %in% seq, ]
+el
+```
+
+* Cluster #8 is chosen, it has a size 7
+* The distances between its members can exceed the threshold (`r as.numeric(threshold)`) which corresponds to connected components or *single-linkage method* (agglomerative until min{d(x,y)} < threshold) 
+
+**Graph showing only distances within threshold**
+```{r}
+##- restrict edges
+el_g <- el[el[,3] < as.numeric(threshold),]
+#- make igraph
+g1 <- graph.data.frame( as.data.frame(el_g), directed = F )
+plot(g1, vertex.shape = 'none')
+```
+
+**How neighbourhood size is calculated ?**
+
+For now the first following calculation is performed: for each element of the donor vector, sum distances less than threshold.
+```{r}
+##- For now 
+t1  <- tapply(el[,3], el[,1], function(x) sum(x < 0.015)) # out
+t1
+```
+
+What probably should be done is summing neighborhood from vertex as donor and recipient
+```{r}
+##- must add neigborhood for donor AND recipient
+t2  <- tapply(el[,3], el[,2], function(x) sum(x < 0.015)) # in 
+t <- tapply(c(t1, t2), names(c(t1, t2)), function(x) sum(x) ) # = cluster size if complete linkage method ?
+t
+```
+
+Now for all individuals.
+In my pipeline, neighborhood size is calculated only for first column of distance matrix. And 0 size are added for tree tips not in the matrix 
+```{r}
+##- how neighbourhood size is calculated ?
+##- redo what is done in sim_cluster
+all_nbh  <- tapply(dd[,3], dd[,1], function(x) sum(x < 0.015))
+# head(all_nbh)
+##- neighborhood = 0 if not in distance matrix
+nbh_size <- c(all_nbh, rep(0, 12164 - length(all_nbh) ))
+# summary(all_nbh)
+summary(nbh_size)
+##- which is the same as
+summary(l$nbhsize)
+```
+
+What I should do: 
+```{r}
+##- now if adding 
+all_donor  <- tapply(dd[,3], dd[,1], function(x) sum(x < 0.015))
+all_recip  <- tapply(dd[,3], dd[,2], function(x) sum(x < 0.015))
+# head(all_donor[order(names(all_donor))])
+# head(all_recip[order(names(all_recip))])
+all_nbh2 <- tapply(c(all_donor, all_recip), names(c(all_donor, all_recip)), sum) 
+summary(all_nbh2)
+##- add 0 for other tips
+nbh_size2 <- c(all_nbh2, rep(0, 12164 - length(all_nbh2) ))
+summary(nbh_size2)
+```
+
+**In Erik's code**
+```{r}
+##- check Erik's calculation
+load('Erik_code/age-anal0.0.RData')
+tab <- fns2agemat_tables[[1]][['tab']]
+summary(tab$nbrhoodSize)
+```
+Looks like my current values of nbhsize
+
