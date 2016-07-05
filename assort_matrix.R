@@ -124,38 +124,73 @@ assor_mat_sa <- mat2assortmat(ag_amat_sa)
 assor_mat_nb <- lapply(ag_amat_nb, mat2assortmat)
 assor_mat_cl <- lapply(ag_amat_cl, mat2assortmat)
 
-##---- heatmap 1 ----
-##- SA
-# print("Assortativity of infector probs by age")
-levelplot( assor_mat_sa, col.regions = heat.colors)
-
-##---- heatmap 2 ----
-##- neighborhood
-plots_grid <- function(a){
-  ## empty list of plots
-  p <-  vector("list", length(a)) 
-# par(mfrow = c(length(a)/2, 2), bty = 'n') # useless for lattice
-for (i in 1:length(a)){
-  p[[i]] <- levelplot( a[[i]], col.regions = heat.colors, main = names(a)[i])
-}
-  return(p)
-}
-
-p <- plots_grid(assor_mat_nb)
-# print("Assortativity of neighborhood size by age")
-##- plot
-do.call(grid.arrange, c(p, ncol = ceiling(length(p)/2)) )
-
-  ##---- heatmap 3 ----
-##- ucsd
-p <- plots_grid(assor_mat_cl)
-# print("Assortativity of cluster size by age")
-do.call(grid.arrange, c(p, ncol = ceiling(length(p)/2)) )
-
 ##---- apply assort coef globally ----
 coef_mat_sa <- mat2assortCoef(ag_amat_sa)
 coef_mat_nb <- lapply(ag_amat_nb, mat2assortCoef)
 coef_mat_cl <- lapply(ag_amat_cl, mat2assortCoef)
+
+
+##---- heatmap 1 ----
+##- SA
+# print("Assortativity of infector probs by age")
+p_sa <- levelplot( assor_mat_sa, col.regions = heat.colors,
+           main = 'SA', 
+           sub = paste('r = ', round(coef_mat_sa,2)), 
+           xlab = '', ylab = '')
+
+# p_sa
+
+##---- heatmap 2 ----
+##- neighborhood
+plots_grid <- function(mat, coef){
+  ## empty list of plots
+  p <-  vector("list", length(mat)) 
+  # par(mfrow = c(length(a)/2, 2), bty = 'n') # useless for lattice
+  for (i in 1:length(mat)){
+    p[[i]] <- levelplot( mat[[i]], col.regions = heat.colors, main = names(mat)[i], sub = paste('r = ', round(coef[[i]],2)), xlab = '', ylab = '')
+  }
+  return(p)
+}
+
+p_nb <- plots_grid(assor_mat_nb[3:6], coef_mat_nb[3:6])
+# print("Assortativity of neighborhood size by age")
+##- plot
+# do.call(grid.arrange, c(p_nb, ncol = ceiling(length(p_nb)/2)) )
+
+##---- heatmap 3 ----
+##- ucsd
+p_cl <- plots_grid(assor_mat_cl[3:6], coef_mat_cl[3:6])
+# print("Assortativity of cluster size by age")
+# do.call(grid.arrange, c(p_cl, ncol = ceiling(length(p_cl)/2)) )
+
+##- arrange all plots
+all_p <- c(list(p_sa), p_cl, p_nb)
+##- rename main title with a,b,c and r newman, small text plain, par.settings
+theme1 <-
+list(layout.heights =
+       list(top.padding = 1,
+            main.key.padding = .5,
+            key.axis.padding = 0,
+            axis.xlab.padding = 0,
+            xlab.key.padding = 0,
+            key.sub.padding = .5,
+            bottom.padding = 1),
+     layout.widths =
+       list(left.padding = .5,
+            key.ylab.padding = 0,
+            ylab.axis.padding = 0,
+            axis.key.padding = 0,
+            right.padding = .5))
+
+all_p <- lapply(1:length(all_p), function(x){
+  all_p[[x]]$main <- list(label = paste0('(', letters[x], ')'), cex = 1)
+  all_p[[x]]$sub <- list(label = all_p[[x]]$sub, cex = 1, font = 1)
+  all_p[[x]]$par.settings <- theme1
+  return( all_p[[x]])
+}   )
+
+do.call(grid.arrange, c( all_p, ncol = 3 ))
+
 
 ##---- true assortativity from model0 ----
 deme2age <- function(deme){as.numeric( substr(regmatches( deme , regexpr( '\\.age[0-9]', deme )), 5,5) ) }
@@ -227,6 +262,8 @@ a$method <- substr(a$variable, 1, 2)
 a$thr <- c(rep('NA', length(a[a$method == 'SA', 'method'])), regmatches(a$variable, regexpr("\\d\\..*|\\d*e[-+]?.*",  a$variable)) )
 # table(a$thr)
 # str(a)
+##- keep only 4 thersholds
+a <-a[!(a$thr %in% c('1e-05','1e-04')),]
 ##- force scientific notation
 fancy_scientific <- function(l) {
   if( is.na(as.numeric(l)) ) parse(text = l) else {
@@ -256,9 +293,11 @@ bp2 <- bp1  +
 
   # theme(legend.position="top", legend.title=element_blank(), strip.text.x = element_text(size = 12)) + guides(fill=FALSE) +
 bp3 <- bp2 + theme(legend.position="none") + 
-  background_grid() # + theme_bw()
+  background_grid() + # + theme_bw()
+theme(strip.background = element_blank())
 bp3
-# bp3 + scale_x_discrete(labels = fancy_scientific)
+# bp2 %+% a[a$thr != '1e-05',] + scale_x_discrete(labels = fancy_scientific) + theme(legend.position="none") + 
+# background_grid() + theme(strip.background = element_blank())
 
 ##---- boxplot 2 ----
 ## With scale that adapts to transformation

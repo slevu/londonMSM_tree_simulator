@@ -10,7 +10,7 @@ cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Base
 cw <- cw_Baseline0[-c(2)]
 # names(cw)
 ##- rbind table
-cw_bind <- lapply(cw, function(x) do.call(rbind, x[1:2]))
+cw_bind <- lapply(cw, function(x) do.call(rbind, x[1:100]))
 # str(cw_bind)
 
 ##---- plan ----
@@ -51,6 +51,7 @@ sapply(cw_bind[-1], function(x) summary(x$nbhsize))
 ####---- mean outdegree ----
 x <- do.call(rbind, cw[[1]])
 summary(x$outdegree)
+summary(x$indegree)
 # summary(cw_bind[[1]]$outdegree)
 
 ####---- median size 2 ----

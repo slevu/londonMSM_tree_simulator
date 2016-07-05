@@ -73,7 +73,8 @@ read_chunk('5_summary_stats.R')</code></pre>
 cw &lt;- cw_Baseline0[-c(2)]
 # names(cw)
 ##- rbind table
-cw_bind &lt;- lapply(cw, function(x) do.call(rbind, x))</code></pre>
+cw_bind &lt;- lapply(cw, function(x) do.call(rbind, x[1:100]))
+# str(cw_bind)</code></pre>
 <p><strong>Number of clusters</strong></p>
 <pre class="r"><code>## number of different clusters (counting size 1)
 sapply(cw[-1], function(x){
@@ -92,14 +93,9 @@ sapply(cw[-1], function(x){
 <pre class="r"><code># sapply(cw[-1], function(x){
 #   summary(sapply(x, function(x) sum(x$binclus) / length(x$binclus)))
 # })
-sapply(cw_bind[-1], function(x) summary(x$binclus))</code></pre>
-<pre><code>##           1e-04  0.001  0.005  0.015  0.05
-## Min.    0.00000 0.0000 0.0000 0.0000 0.000
-## 1st Qu. 0.00000 0.0000 0.0000 1.0000 1.000
-## Median  0.00000 0.0000 0.0000 1.0000 1.000
-## Mean    0.04059 0.1142 0.3912 0.8239 0.903
-## 3rd Qu. 0.00000 0.0000 1.0000 1.0000 1.000
-## Max.    1.00000 1.0000 1.0000 1.0000 1.000</code></pre>
+sapply(cw_bind[-1], function(x) mean(x$binclus))</code></pre>
+<pre><code>##     1e-04     0.001     0.005     0.015      0.05 
+## 0.0405878 0.1141705 0.3911674 0.8238910 0.9030171</code></pre>
 <p><strong>Mean cluster size</strong></p>
 <pre class="r"><code># sapply(cw[-1], function(x){
 #  summary(sapply(x, function(x) mean(x$size)))
@@ -117,18 +113,21 @@ sapply(cw_bind[-1], function(x) summary(x$size))</code></pre>
 #   summary(sapply(x, function(x) mean(x$nbhsize)))
 # })
 sapply(cw_bind[-1], function(x) summary(x$nbhsize))</code></pre>
-<pre><code>##           1e-04   0.001   0.005  0.015   0.05
-## Min.    0.00000 0.00000  0.0000  0.000  0.000
-## 1st Qu. 0.00000 0.00000  0.0000  0.000  1.000
-## Median  0.00000 0.00000  0.0000  1.000  3.000
-## Mean    0.02347 0.02347  0.4008  2.442  5.902
-## 3rd Qu. 0.00000 0.00000  0.0000  3.000  8.000
-## Max.    6.00000 6.00000 18.0000 48.000 96.000</code></pre>
+<pre><code>##           1e-04   0.001   0.005  0.015 0.05
+## Min.    0.00000 0.00000  0.0000  0.000  0.0
+## 1st Qu. 0.00000 0.00000  0.0000  1.000  3.0
+## Median  0.00000 0.00000  0.0000  3.000  9.0
+## Mean    0.04694 0.04694  0.8017  4.884 11.8
+## 3rd Qu. 0.00000 0.00000  1.0000  7.000 17.0
+## Max.    6.00000 6.00000 27.0000 62.000 96.0</code></pre>
 <p><strong>Mean outdegrees</strong></p>
 <pre class="r"><code>x &lt;- do.call(rbind, cw[[1]])
 summary(x$outdegree)</code></pre>
 <pre><code>##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
 ## 0.000000 0.006753 0.072780 0.238400 0.324000 5.106000</code></pre>
+<pre class="r"><code>summary(x$indegree)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## 0.00000 0.02169 0.15880 0.23840 0.39250 1.07100</code></pre>
 <pre class="r"><code># summary(cw_bind[[1]]$outdegree)</code></pre>
 
 

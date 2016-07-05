@@ -1,16 +1,18 @@
+# rm(list=ls())
 ##---- libs2 ----
 library(reshape2)
 library("ggplot2")
-theme_set(theme_bw())
+# theme_set(theme_bw())
 library(scales)
 
 ##---- associations ----
 ## age vs sizes, degrees at different thr
-# rm(list=ls())
 cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
+names(cw_Baseline0)
+cw_Baseline0 <- cw_Baseline0[c('SA', '0.001', '0.005', '0.015', '0.05')]
 
 ## change structure in long table (!!!! first few for speed)
-.n <- 5 
+.n <- 10 
 .m <- sample(1:100, .n)
 c <- lapply(cw_Baseline0, 
             function(x) do.call(rbind, x[.m]))
@@ -26,8 +28,7 @@ options(scipen = 0)
 # lapply(c, function(x) mean(x$nbhsize))
 
 ##---- winsorize outliers -----
-winsorize <- function (x, fraction=.05)
-{
+winsorize <- function (x, fraction=.05) {
   if(length(fraction) != 1 || fraction < 0 ||
      fraction > 0.5) {
     stop("bad value for 'fraction'")
@@ -59,6 +60,7 @@ tot <- rbind( cbind(.sa, "L1" = 'NA'), .thr[,-c(2,6)])
 # head(tot)
 return(tot)
 }
+
 tot <- molten(c)
 tot_win <- molten(c_win)
 
@@ -81,7 +83,9 @@ p <- ggplot(tot, aes(x = factor(age), y = value, colour = variable), outlier.col
 
 ##- at 0.015 only, winsorized
 # p %+% tot[tot$L1 %in% c('NA','0.015'),] + facet_wrap(~ variable, nrow = 1, scales = "free_y")
-p %+% tot_win[tot_win$L1 %in% c('NA','1.5e-02'),] + facet_wrap(~ variable + L1, nrow = 1, scales = "free_y", labeller=labeller(variable = c(outdegree = "Outdegree", size = "Cluster size", nbhsize = "Neighborhood \n size")))
+p %+% tot_win[tot_win$L1 %in% c('NA','1.5e-02'),] + facet_wrap(~ variable, nrow = 1, scales = "free_y", labeller=labeller(variable = c(outdegree = "Outdegree", size = "Cluster size", nbhsize = "Neighborhood \n size"))) +
+  theme(strip.background = element_blank()) + 
+  xlab("Age category") + ylab("Value")
 
 
 ##---- regressions ----
@@ -96,6 +100,8 @@ model2 <- "y ~ factor(age) + factor(stage) + factor(age)*factor(stage)"
 ##---- m1 ----
 m1 <- compare.reg.bs2(ls = cw_Baseline0, reg = lm, y = 'size', model = model1)
 m1
+m1nb <- compare.reg.bs2(ls = cw_Baseline0, reg = lm, y = 'nbhsize', model = model1)
+m1nb
 ##---- m2 ----
 m2 <- compare.reg.bs2(ls = cw_Baseline0, reg = lm, y = 'size', model = model2)
 m2
