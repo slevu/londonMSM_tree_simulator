@@ -45,8 +45,8 @@ knitr::kable(tab)
 ```{r, boxplot 1, warning = FALSE}
 ```
 
-* neighborhood size and SA always detect difference
-* uscd cluster require low threshold to start seeing the difference
+* SA always detects difference
+* neighborhood size and uscd cluster require low threshold to start seeing the difference
 
 #### p-values multivariate
 ```{r, boxplot 2, warning = FALSE}

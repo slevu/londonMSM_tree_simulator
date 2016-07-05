@@ -1,12 +1,17 @@
 ##- summary stats cluster sims
 # rm(list=ls())
+##---- libs ----
+library(ggplot2)
+library(reshape2)
+library(cowplot)
 
 ##---- load data ----
 cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
 cw <- cw_Baseline0[-c(2)]
 # names(cw)
 ##- rbind table
-cw_bind <- lapply(cw, function(x) do.call(rbind, x))
+cw_bind <- lapply(cw, function(x) do.call(rbind, x[1:2]))
+# str(cw_bind)
 
 ##---- plan ----
 ##- number of clusters (ucsd)
@@ -70,7 +75,6 @@ a <- melt(cw_bind[-1], id.vars = 'id', measure.vars = c('size','nbhsize'))
 
 str(a)
 head(a)
-library(ggplot2)
-library(reshape2)
-g1 <- ggplot(a[a$variable == 'size',], aes(value, color = L1)) + geom_boxplot() + facet_wrap(~variable) 
+
+g1 <- ggplot(a, aes(L1, value, color = variable)) + geom_boxplot() + facet_wrap(~variable) 
 g1
