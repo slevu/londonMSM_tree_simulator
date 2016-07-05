@@ -8,7 +8,7 @@ startover <- FALSE
 #library(ape)
 
 ##--- thrs
-thresholds <-  c("0.001", "0.005", "0.015", "0.05") # c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
+thresholds <-  c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") # c("0.001", "0.005", "0.015", "0.05")
 
 ####---- path sims ----
 ##- used for several rounds of simulations
@@ -134,7 +134,11 @@ return(cl2)
       for (j in 1:length(thresholds)){
         print( paste(i, j, name.sim) )
         
-        .t  <- tapply(dd[,3], dd[,1], function(x) sum(x < thr[j]))
+        .t1  <- tapply(dd[,3], dd[,1], function(x) sum(x < thr[j]))
+        .t2  <- tapply(dd[,3], dd[,2], function(x) sum(x < thr[j]))
+        ##- add from and to neighbors
+        .t <- tapply(c(.t1, .t2), names(c(.t1, .t2)), sum)
+        
         ll[[j]][[i]] <- cbind("id" = as.numeric(names(.t)), "nbhsize" = unname(.t))
         names(ll[[j]])[i] <- name.sim
       }
