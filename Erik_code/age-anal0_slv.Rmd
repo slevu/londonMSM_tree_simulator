@@ -12,7 +12,7 @@ In this report:
 
 Add local path
 ```{r}
-local_data <- "../data/simulations2/"
+local_data <- "./data/simulations2/"
 ```
 
 Define some parameters of the analysis 
@@ -91,8 +91,10 @@ fn2ageMatrix_table <- function(fn)
 			v <- daytree$tip.label[ DD[2,k] ]
 			au <- deme2age( sampleDemes[u] )
 			av <- deme2age( sampleDemes[v])
-			agemat2[au, av] <- agemat2[ au,av] + 1
+			agemat2[au, av] <- agemat2[ au, av] + 1
+			agemat2[av, au] <- agemat2[ av, au] + 1
 			nbrhoodSize[u] <- nbrhoodSize[u] + 1
+			nbrhoodSize[v] <- nbrhoodSize[v] + 1
 		}
 		
 	}
