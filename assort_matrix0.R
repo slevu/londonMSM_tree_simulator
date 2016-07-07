@@ -109,7 +109,9 @@ age_mat <- function(sim, dist, thr)
         au <- deme2age( sampleDemes[u] )
         av <- deme2age( sampleDemes[v])
         agemat2[au, av] <- agemat2[ au,av] + 1
+        agemat2[av, au] <- agemat2[ av,au] + 1
         nbrhoodSize[u] <- nbrhoodSize[u] + 1
+        nbrhoodSize[v] <- nbrhoodSize[v] + 1
       }
     }
     l[[i]] <- list("agemat2" = agemat2, 
@@ -130,7 +132,7 @@ age_mat <- function(sim, dist, thr)
 
 ##---- apply function ----
 ## by thresholds
-thresholds <- c("1e-04", "5e-04", "0.001", "0.005", "0.015", "0.05")
+thresholds <- c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05")
 
 system.time(
 o <- age_mat(sim, dist = distBaseline0FNS, thr = thresholds)
