@@ -152,12 +152,12 @@ gg2 <- function(ls , var , lbl, tran = identity){
   g1
 }
 
-##---- bp full ---
+##---- bp full ----
 gg(tot, 'factor(risk)', 'Risk level')
 gg(tot, 'factor(age)', 'Age category')
 gg(tot, 'factor(stage)', 'Infection stage')
 
-##--- bp 0.015 ---
+##---- bp 0.015 ----
 gg(tot_2, 'factor(risk)', 'Risk level')
 gg(tot_2, 'factor(age)', 'Age category')
 gg(tot_2, 'factor(stage)', 'Infection stage')
