@@ -186,20 +186,21 @@ return(cl2)
 ####---- clus.stat ----
 if (startover == TRUE){
   ###- check if sim.name = clus.name
-  # sim = list.sims[["Baseline0"]] ; clus = cl_Baseline0; nbh = nbh_Baseline0; i = 1 ; thr = 1
+  # sim = list.sims[["Baseline0"]] ; clus = cl_Baseline0; nbh = nbh_Baseline0; i = 1 ; thr = "0.015"
 clus.stat <- function(clus, nbh, sim){
   
   ##- Start loop
   ##- empty list of n thresholds
   ll <- vector("list", length(clus))
+  names(ll) <- names(clus)
   ##- loop threshold
-  for (thr in 1:length(clus)){
+  for (thr in names(clus)){
     ##- loop sims
     for (i in 1:length(clus[[thr]]) ){
       ##- check same sim and clus
         print( paste( 
           names(clus[[thr]])[i], # name cluster
-          names(clus)[thr], # threshold
+          thr, # threshold
           i # num sim
           ) )
       ## load cluster assignement and nbhood size
@@ -262,7 +263,6 @@ clus.stat <- function(clus, nbh, sim){
         ll[[thr]][[i]] <- b
         names(ll[[thr]])[i] <- names(clus[[thr]][i])
     } 
-    names(ll)[thr] <- names(clus)[[thr]]
   }
   return(ll)
 }
@@ -295,19 +295,19 @@ if (startover == TRUE){
   #   str( l_Baseline0[[3]][[1]] )
   #   length(l_Baseline0[[1]])
 # 
-#   system.time(
-#   z <- lapply(l_Baseline0, function(x){
-#     sapply(x, function(m) {
-#     # faster than `merge(df, s, all.x = TRUE)`
-#     #- add covariates
-#      # m <-  cbind(df, s[ match(df$id, s$id), -1 ])
-#     #- mean y by x
-#       agg <-  tapply(m$size, m$stage, mean )
-#       return(agg)
-#       }) 
-#     })
-#   )
-  
+  system.time(
+  z <- lapply(l_Baseline0, function(x){
+    sapply(x, function(m) {
+    # faster than `merge(df, s, all.x = TRUE)`
+    #- add covariates
+     # m <-  cbind(df, s[ match(df$id, s$id), -1 ])
+    #- mean y by x
+      agg <-  tapply(m$nbhsize, m$stage, mean )
+      return(agg)
+      }) 
+    })
+  )
+  lapply(z, function(x) apply(x,1, mean))
 
 ####---- add degrees ----
 
