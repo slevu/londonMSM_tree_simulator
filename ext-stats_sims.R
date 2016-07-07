@@ -69,6 +69,37 @@ p_mult <- c('CL' = p_mult_cs, 'NB'= p_mult_nb, "SA"= list(p_mult_sa) )
 tab <- cbind(tab1, "multivariate" = sapply(p_mult, function(x) mean( x < 0.05)))
 row.names(tab) <- NULL
 
+##---- logistic regression ----
+# y = "size"; df = cw[[2]][[2]]
+logit.risk <- function(df){
+  model0 <- "binclus ~ factor(risk) + factor(age) + factor(stage)"
+  ##- pvalue for risk parameter
+  fit <- glm( model0 , data = df, family = binomial(link = 'logit'))
+  cf <- coef( summary( fit ) )
+  p <- cf[2, 4]
+  effect <- cf[2,1]
+  # or <- exp(cbind(OR = coef(fit), confint(fit)))[2, ] # too long with CI
+  or <- unname(exp(coef(fit))[2])
+  return(c(p = p, OR = or))
+}
+##- save p values and OR + CI (takes time !)
+if(FALSE){
+  system.time(
+  logit_cs <- lapply(cw[-1], function (x)  {
+    sapply(x, function(df) logit.risk(df) )
+  } )
+  ) # 34s
+} else {
+  # saveRDS(logit_cs, file = "data/sim_ucsd_results2/logit_cs.rds")
+  logit_cs <- readRDS(file = "data/sim_ucsd_results2/logit_cs.rds")
+}
+# str(logit_cs[[1]])
+##- table of proportion p-values < 0.05 and mean OR
+tab_logit <- data.frame("method" = names(logit_cs),
+                   "p signif" = sapply(logit_cs, function(x) mean( x[1] < 0.05)),
+                   "OR" = sapply(logit_cs, function(x) mean( x[2])) ,
+                   row.names = NULL)
+
 
 ##---- boxplot 1 ----
 super_boxplot <- function(ls){

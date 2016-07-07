@@ -1,5 +1,5 @@
 ---
-title: "Analyze simulations cluster size and outdegrees"
+title: "Risk: cluster size vs outdegrees"
 author: "Stephane"
 date: "29 June 2016"
 output:
@@ -41,6 +41,7 @@ knitr::kable(tab)
 ```
 
 
+
 #### p-values univariate
 ```{r, boxplot 1, warning = FALSE}
 ```
@@ -64,6 +65,15 @@ knitr::kable(tab)
 
 * note: only use 10 bootstraps and outlier values are censored at 5%
 * When difference detected, effect size always underestimated
+
+#### Logistic regression of cluster membership
+```{r logistic regression}
+
+```
+
+```{r, results='asis'}
+knitr::kable(tab_logit)
+```
 
 #### Some stats
 Proportion in ucsd clusters by risk
