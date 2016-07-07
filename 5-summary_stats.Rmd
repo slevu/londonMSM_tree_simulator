@@ -10,6 +10,9 @@ library(knitr)
 read_chunk('5_summary_stats.R')
 ```
 
+```{r libs, message = FALSE, warning = FALSE}
+```
+
 ```{r load data}
 ```
 
@@ -31,4 +34,20 @@ read_chunk('5_summary_stats.R')
 
 **Mean outdegrees**
 ```{r mean outdegree}
+```
+
+**Plots**
+```{r plots, echo = FALSE}
+```
+
+**Full data**
+```{r bp full, fig.path = './figure/'}
+```
+
+**Only 0.015 threshold**
+```{r bp 0.015, fig.path = './figure/'}
+```
+
+**Limiting outliers**
+```{r bp bounded, fig.path = './figure/'}
 ```
