@@ -8,8 +8,8 @@ library(reshape2)
 
 ##---- load data ----
 cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
-cw <- cw_Baseline0[-c(2,3)]
-names(cw)
+cw <- cw_Baseline0[c('SA', '0.001', '0.005', '0.015', '0.05')]
+# names(cw)
 
 ##- same order of id
 cw <- lapply(cw, function(x){
@@ -83,14 +83,14 @@ logit.risk <- function(df){
   return(c(p = p, OR = or))
 }
 ##- save p values and OR + CI (takes time !)
-if(FALSE){
+if(!file.exists("data/sim_ucsd_results2/logit_cs.rds")){
   system.time(
   logit_cs <- lapply(cw[-1], function (x)  {
     sapply(x, function(df) logit.risk(df) )
   } )
   ) # 34s
+  saveRDS(logit_cs, file = "data/sim_ucsd_results2/logit_cs.rds")
 } else {
-  # saveRDS(logit_cs, file = "data/sim_ucsd_results2/logit_cs.rds")
   logit_cs <- readRDS(file = "data/sim_ucsd_results2/logit_cs.rds")
 }
 # str(logit_cs[[1]])
@@ -101,7 +101,7 @@ tab_logit <- data.frame("method" = names(logit_cs),
                    row.names = NULL)
 
 
-##---- boxplot 1 ----
+##---- boxplot risk 1 ----
 super_boxplot <- function(ls){
   ##- long table
   a <- melt(ls)
@@ -117,13 +117,14 @@ super_boxplot <- function(ls){
     xlab("Distance threshold") + ylab("p-value") + 
     theme(legend.position="none") +
     theme(strip.background = element_blank()) +
-    background_grid()
+    background_grid() +
+    geom_hline(aes(yintercept = 0.05), linetype = "dashed")
   bp2
 }
 
 super_boxplot(ls = p_uni)
 
-##---- boxplot 2 ----
+##---- boxplot risk 2 ----
 super_boxplot(p_mult)
 
 ##----  long ----

@@ -295,19 +295,19 @@ if (startover == TRUE){
   #   str( l_Baseline0[[3]][[1]] )
   #   length(l_Baseline0[[1]])
 # 
-  system.time(
-  z <- lapply(l_Baseline0, function(x){
-    sapply(x, function(m) {
-    # faster than `merge(df, s, all.x = TRUE)`
-    #- add covariates
-     # m <-  cbind(df, s[ match(df$id, s$id), -1 ])
-    #- mean y by x
-      agg <-  tapply(m$nbhsize, m$stage, mean )
-      return(agg)
-      }) 
-    })
-  )
-  lapply(z, function(x) apply(x,1, mean))
+#   system.time(
+#   z <- lapply(l_Baseline0, function(x){
+#     sapply(x, function(m) {
+#     # faster than `merge(df, s, all.x = TRUE)`
+#     #- add covariates
+#      # m <-  cbind(df, s[ match(df$id, s$id), -1 ])
+#     #- mean y by x
+#       nb <-  tapply(m$nbhsize, m$stage, mean )
+#       return(nb)
+#       }) 
+#     })
+#   )
+#   sapply(z, function(x) apply(x,1, mean))
 
 ####---- add degrees ----
 

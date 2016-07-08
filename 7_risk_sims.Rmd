@@ -43,14 +43,14 @@ knitr::kable(tab)
 
 
 #### p-values univariate
-```{r, boxplot 1, warning = FALSE}
+```{r, boxplot risk 1, fig.path = './figure/', warning = FALSE}
 ```
 
 * SA always detects difference
 * neighborhood size and uscd cluster require low threshold to start seeing the difference
 
 #### p-values multivariate
-```{r, boxplot 2, warning = FALSE}
+```{r, boxplot risk 2, warning = FALSE}
 ```
 
 * Important loss of sensitivity to detection when adjusting
