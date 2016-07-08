@@ -2,6 +2,10 @@
 
 ##---- libs ----
 require(phydynR)
+library(reshape2)
+library(ggplot2)
+library(cowplot)
+library(scales)
 
 ##---- source ----
 source('model0.R') # contains parameter values for sims
@@ -42,45 +46,73 @@ fns2od.by.stage <- function( fns )
     od_by_stage <- lapply( 1:5, function(stage){
       od[ names(stages)[which(stages==stage)] ]
     })
-    
+
     o[[fn]] <- od_by_stage
     # print(date())
   }
   o
 }
 
-####---- path sims ----
+##---- paths ----
 ##- used for several rounds of simulations
 path.sims <- 'data/simulations2/model0-simulate'
 path.results <- 'data/sim_ucsd_results2'
 
-####---- scenario ----
+##- scenario
 scenario <- c("Baseline0", "EqualStage0")
 scenario <- setNames(scenario, scenario) # useful to name list in lapply
 
-####--- list of sims files and distances files ---
+##- list of sims files and distances files
 list.sims <- lapply(scenario, function(x){
   list.files('RData', full.names = TRUE, 
              path = paste(path.sims, x, sep = '') )
 })
 # str(list.sims)
 
-###---- od by stage ----
+##---- od by stage ----
 ## list of od vectors by stage, named by tips
 if(FALSE){
 system.time(
 obs_bl <- fns2od.by.stage( list.sims[["Baseline0"]] )
-)
+) # 106
 system.time(
 obs_er <- fns2od.by.stage( list.sims[["EqualStage0"]] )
-) # 84
+) # 94
 
-# save(obs_bl, obs_er, file = 'data/od.by.stage.RData' )
+# save(obs_bl, obs_er, file = 'data/simulations2/od.by.stage.RData' )
 } else {
-  load('data/od.by.stage.RData')
+  load('data/simulations2/od.by.stage.RData')
 }
 
-# str(obs_er[[1]])
+# str(obs_er[1])
+# names(obs_bl)
+
+##---- plot od by stage ----
+##-- long dataframes
+od_stage_bl <- melt(unname(obs_bl) )
+od_stage_er <- melt(unname(obs_er) )
+# head(od_stage_bl); tail(od_stage_er)
+##-- one long table
+od_stage <- rbind(
+  cbind(od_stage_bl[,-3], scenario = 'BA'),
+  cbind(od_stage_er[,-3], scenario = 'ER')
+                  )
+head(od_stage)
+
+od_stage_boxplot <- function(df){
+  p <- ggplot(df, aes(factor(L2), value, colour = scenario), outlier.colour = alpha(colours(), 0.001) ) + geom_boxplot() + # facet_wrap(~ scenario) + 
+    theme(legend.position="top") + 
+    background_grid() +
+    theme(strip.background = element_blank()) + 
+    xlab("Infection stage") + ylab("Out-degrees")
+  p
+}
+
+bp <- od_stage_boxplot(od_stage)
+bp
+
+##- better and simpler without outliers ?
+boxplot(value ~ L2*scenario, data = od_stage, outline = FALSE)
 
 ##---- U test ----
 ## U test for the equal rates simulations: 
@@ -112,11 +144,13 @@ type2error
 # rate.difference.ehi
 # pstage
 
-##---- plot errors SA ----
+##---- apply rate difference ----
 #- echo = FALSE
 rd_er <- est.rd.batch( obs_er )
 rd_br <- est.rd.batch( obs_bl )
+# str(rd_br)
 
+##---- plot errors SA ----
 ##- EHI/Late rate difference (Equal transmission rates)
 boxplot( unname(rd_er), main = '' )
 abline( h = 0, col = 'red' )

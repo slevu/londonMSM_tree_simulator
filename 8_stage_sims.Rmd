@@ -1,0 +1,42 @@
+---
+title: "8_stage_sims"
+author: "Stephane"
+date: "8 July 2016"
+output: html_document
+---
+
+```{r}
+library(knitr)
+read_chunk('8_stage_anal.R')
+```
+
+```{r libs, warning=FALSE, message=FALSE}
+```
+
+```{r source}
+```
+
+```{r od by stage helper}
+```
+
+```{r paths}
+```
+
+```{r od by stage}
+```
+
+```{r plot od by stage}
+```
+
+```{r U test}
+```
+
+```{r apply rate difference, results = 'hide'}
+```
+
+```{r plot errors SA}
+```
+
+
+
+
