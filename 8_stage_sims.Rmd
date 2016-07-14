@@ -16,6 +16,9 @@ read_chunk('8_stage_anal.R')
 ```{r source}
 ```
 
+```{r cohort effect control}
+```
+
 ```{r od by stage helper}
 ```
 
@@ -34,7 +37,7 @@ read_chunk('8_stage_anal.R')
 ```{r apply rate difference, results = 'hide'}
 ```
 
-```{r plot errors SA}
+```{r plot errors SA, fig.path = './figure/'}
 ```
 
 

@@ -193,6 +193,7 @@ prune.clus <- function(a, t , st){
 
 ##---- pruning ---
 ##- sampling times (same across all sims)
+load(list.sims[["Baseline0"]][[1]]) # for daytree
 st_yrs <- days2years(daytree$sampleTimes)
 
 system.time(
@@ -201,7 +202,7 @@ l_Baseline0.pruned <- lapply(l_Baseline0, function(x){
     prune.clus(a = df, t = THRESHOLD_YRS, st = st_yrs )
   })
 })
-)
+) # 115
 system.time(
   l_EqualStage0.pruned <- lapply(l_EqualStage0, function(x){
     lapply(x, function(df){
@@ -214,12 +215,13 @@ system.time(
 ##---- u test cluster rate ----
 u.test.stage <- function(df){
   sizes_stage1 <-  df[df$stage == 1, ]$size 
-  sizes_otherstages <-  df[df$stage != 1, ]$size
+  # sizes_otherstages <-  df[df$stage != 1, ]$size
+  sizes_aids <-  df[df$stage == 5, ]$size
 #   U <- wilcox.test(sizes_stage1 ,
 #               sizes_otherstages ,
 #               alternative = 'greater')
   U <- wilcox.test(sizes_stage1 / pstage[1],
-                   sizes_otherstages / (1 - pstage[1]),
+                   sizes_aids / (1 - pstage[1]),
                    alternative = 'greater')
   return(U$p.value)
 }
@@ -227,7 +229,8 @@ u.test.stage <- function(df){
 ## test
 # df = l_Baseline0.pruned[["0.015"]][[1]]
 # summary(sizes_stage1)
-# summary(sizes_otherstages)
+# summary(sizes_aids)
+# str(df)
 
 p.cl_bl <- sapply(l_Baseline0.pruned[["0.015"]], u.test.stage)
 p.cl_er <- sapply(l_EqualStage0.pruned[["0.015"]], u.test.stage)
@@ -239,4 +242,22 @@ mean(p.cl_bl > 0.05)
 
 qqplot(p.cl_bl, p.cl_er)
 
+##---- size by stage ----
+# x <- tapply(df$size, df$stage, identity)
 
+ll <- l_Baseline0[['0.015']]
+names(ll)
+
+xy <- lapply(ll, function(x){
+  ( tapply(x$size, x$stage, identity) )
+})
+
+str(xy[1])
+
+# xx <- melt( unlist(xy, recursive = F, use.names = F ) )
+xx <- melt( xy )
+str(xx)
+tail(xx)
+?unlist
+?attributes
+attributes(xy) <- NULL
