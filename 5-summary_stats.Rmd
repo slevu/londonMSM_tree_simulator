@@ -40,14 +40,6 @@ read_chunk('5_summary_stats.R')
 ```{r plots, echo = FALSE}
 ```
 
-**Full data**
-```{r bp full, fig.path = './figure/'}
-```
-
 **Only 0.015 threshold**
-```{r bp 0.015, fig.path = './figure/'}
-```
-
-**Limiting outliers**
-```{r bp bounded, fig.path = './figure/'}
+```{r bp base, fig.path = './figure/'}
 ```
