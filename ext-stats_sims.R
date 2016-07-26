@@ -113,7 +113,7 @@ super_boxplot <- function(ls){
   ##- plot
   bp1 <- ggplot(a, aes(reorder(thr, as.numeric(thr)), value, color = method)) + geom_boxplot()
   bp2 <- bp1  +
-    facet_grid(~ method, scales = "free", space = "free", labeller=labeller  (method = c(SA = "SA", CL = "UCSD cluster", NB = "Neighborhood")))  + 
+    facet_grid(~ method, scales = "free", space = "free", labeller=labeller  (method = c(SA = "SA", CL = "Cluster", NB = "Neighborhood")))  + 
     xlab("Distance threshold") + ylab("p-value") + 
     theme(legend.position="none") +
     theme(strip.background = element_blank()) +
@@ -126,6 +126,44 @@ super_boxplot(ls = p_uni)
 
 ##---- boxplot risk 2 ----
 super_boxplot(p_mult)
+
+##---- boxplot base risk 1 ----
+super_boxplot_base <- function(ls){
+  # ls = p_uni
+  ##- long table
+  a <- melt(ls)
+  ## extra columns for facets
+  a$method <- substr(a$L1, 1, 2)
+  ##- add 'NA' for threshold of SA method
+  a$thr <- c(regmatches(a$L1, regexpr("\\d\\..*|\\d*e[-+]?.*",  a$L1)), rep('NA', length(a[a$method == 'SA', 'method'])) )
+  # str(a); table(a$thr)
+  
+  ##- plot
+  ##- to keep same range
+  lim <- range(a$value)
+  alpha <- 0.05
+  # par(mfrow=c(1,3) ) #, bty = 'n')   
+  layout(matrix(c(1,2,3), 1, 3, byrow = TRUE), 
+         widths=c(1,1.5,1.5), heights=c(1,1,1))
+  
+  boxplot(a[a$method == 'SA',]$value ~ a[a$method == 'SA',]$thr, ylim = lim)
+  title(main = 'SA', font.main = 1, ylab = 'p-value', cex.lab = 1.2)
+  abline(h = alpha, lty = 3)
+  
+  boxplot(a[a$method == 'CL',]$value ~ a[a$method == 'CL',]$thr, ylim = lim, yaxt="n")
+  title(main = 'Cluster', xlab = 'Distance threshold', cex.lab = 1.2,  font.main = 1)
+  abline(h = alpha, lty = 3)
+  
+  boxplot(a[a$method == 'NB',]$value ~ a[a$method == 'NB',]$thr, ylim = lim, yaxt="n")
+  title(main = 'Neighborhood', xlab = 'Distance threshold', cex.lab = 1.2,  font.main = 1)
+  abline(h = alpha, lty = 3)
+}
+
+super_boxplot_base(ls = p_uni)
+
+##---- boxplot base risk 2 ----
+super_boxplot_base(p_mult)
+
 
 ##----  long ----
 ##- calculate individual mean size and outdegree over sims

@@ -11,6 +11,7 @@ output:
 ```{r}
 library(knitr)
 read_chunk('ext-stats_sims.R')
+opts_chunk$set(dev = c('png','postscript') )
 ```
 
 ```{r, libs, warning = FALSE}
@@ -46,11 +47,17 @@ knitr::kable(tab)
 ```{r, boxplot risk 1, fig.path = './figure/', warning = FALSE}
 ```
 
+```{r, boxplot base risk 1, fig.path = './figure/', warning = FALSE}
+```
+
 * SA always detects difference
 * neighborhood size and uscd cluster require low threshold to start seeing the difference
 
 #### p-values multivariate
 ```{r, boxplot risk 2, warning = FALSE}
+```
+
+```{r, boxplot base risk 2, warning = FALSE}
 ```
 
 * Important loss of sensitivity to detection when adjusting
