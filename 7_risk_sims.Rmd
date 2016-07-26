@@ -2,10 +2,7 @@
 title: "Risk: cluster size vs outdegrees"
 author: "Stephane"
 date: "29 June 2016"
-output:
-  html_document:
-    fig_width: 6
-    fig_height: 6
+output: html_document
 ---
 
 ```{r}
