@@ -10,7 +10,7 @@ cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Base
 cw <- cw_Baseline0[c('SA', '0.001', '0.005', '0.015', '0.05')]
 # names(cw)
 ##- rbind table
-cw_bind <- lapply(cw, function(x) do.call(rbind, x[1:10]))
+cw_bind <- lapply(cw, function(x) do.call(rbind, x[1:100]))
 # str(cw_bind)
 
 ##---- plan ----
