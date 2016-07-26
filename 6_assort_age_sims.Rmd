@@ -12,6 +12,7 @@ output:
 library(knitr)
 read_chunk('assort_matrix.R')
 read_chunk('age_regressions.R')
+opts_chunk$set(dev = c('png','postscript') )
 ```
 
 ```{r include}
@@ -76,6 +77,10 @@ read_chunk('age_regressions.R')
 
 ##### Distribution of estimated assortativity coefficient (log) by method
 ```{r boxplot 2, echo = detail_knitr}
+```
+
+##### Distribution of estimated assortativity coefficient by method (base R)
+```{r boxplot age base, echo = detail_knitr, fig.path = './figure/'}
 ```
 
 * As Erik found, all methods underestimate true assortativity

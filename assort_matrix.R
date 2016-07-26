@@ -62,9 +62,9 @@ system.time(
 } else {
   list_agmat_cl <- readRDS("data/sim_ucsd_results2/list.agmat.clus.rds")
 }
-options(scipen = -100)
+# options(scipen = -100)
 names(list_agmat_cl) <- as.character( as.numeric(names(list_agmat_cl) ) )
-options(scipen = 0)
+# options(scipen = 0)
 # names(list_agmat_cl); head(names(list_agmat_cl[[1]])); lapply(list_agmat_cl, function(x) x[1])
 
 ##--- Analyze age matrices computed on HPC 
@@ -86,9 +86,9 @@ for (i in 2:length(fn.mat)){
 
 ##- nbrhood size
 ag_amat_nb <- rep(list(matrix(0,4,4)), length(ll[["agemat_cl"]]))
-options(scipen = -100)
+# options(scipen = -100)
 names(ag_amat_nb) <- as.character( as.numeric(names(ll[["agemat_cl"]])) ) # treshold names
-options(scipen = 0)
+# options(scipen = 0)
 for (i in 1:length(fn.mat)){
   load(fn.mat[i])
   for (j in 1:length(ll[["agemat_cl"]]) ){
@@ -229,9 +229,9 @@ for (i in 1:length(fn.mat)){
 ##- For neighborhood
 ##- empty list of 4 matrices
 assrt_coefs_nb <- rep(list(vector(mode="numeric", length = length(fn.mat))), length(ll[["agemat_cl"]]))
-options(scipen = -100)
+# options(scipen = -100)
 names(assrt_coefs_nb) <- as.character(as.numeric ( names(ll[["agemat_cl"]]) ) ) # treshold names
-options(scipen = 0)
+# options(scipen = 0)
 
 ##- loop
 for (i in 1:length(fn.mat)){
@@ -260,7 +260,7 @@ a <- melt(df)
 a$method <- substr(a$variable, 1, 2)
 ##- add '' for threshold of SA method
 a$thr <- c(rep('NA', length(a[a$method == 'SA', 'method'])), regmatches(a$variable, regexpr("\\d\\..*|\\d*e[-+]?.*",  a$variable)) )
-# table(a$thr)
+# table(a$thr); table(a$method)
 # str(a)
 ##- keep only 4 thersholds
 a <-a[!(a$thr %in% c('1e-05','1e-04')),]
@@ -287,7 +287,7 @@ fancy_scientific <- function(l) {
 library(cowplot)
 bp1 <- ggplot(a, aes(reorder(thr, as.numeric(thr)), value, color = method)) + geom_boxplot()
 bp2 <- bp1  + 
-  facet_grid(~ method, scales = "free", space = "free", labeller=labeller(method = c(SA = "SA", CL = "UCSD cluster", NB = "Neighborhood")))  + 
+  facet_grid(~ method, scales = "free", space = "free", labeller=labeller(method = c(SA = "SA", CL = "Cluster", NB = "Neighborhood")))  + 
   geom_hline(aes(yintercept = BASELINE_ASSRTCOEF, colour = "true coefficient"), linetype = "dashed") + 
   xlab("Distance threshold") + ylab("Assortativity coefficient")
 
@@ -302,4 +302,29 @@ bp3
 ##---- boxplot 2 ----
 ## With scale that adapts to transformation
 bp3 %+% a[a$value >= 0,] + coord_trans(y = "log")
+
+##---- boxplot age base ----
+# str(a)
+# str(df)
+##- to keep same range
+lim <- range(a$value, 1.1*BASELINE_ASSRTCOEF)
+
+# par(mfrow=c(1,3) ) #, bty = 'n')   
+layout(matrix(c(1,2,3), 1, 3, byrow = TRUE), 
+       widths=c(1,1.5,1.5), heights=c(1,1,1))
+
+boxplot(a[a$method == 'SA',]$value ~ a[a$method == 'SA',]$thr, ylim = lim)
+title(main = 'SA', font.main = 1, ylab = 'Assortativity coefficient', cex.lab = 1.2)
+abline(h = BASELINE_ASSRTCOEF, lty = 3)
+
+boxplot(a[a$method == 'CL',]$value ~ a[a$method == 'CL',]$thr, ylim = lim, yaxt="n")
+title(main = 'Cluster', xlab = 'Distance threshold', cex.lab = 1.2,  font.main = 1)
+abline(h = BASELINE_ASSRTCOEF, lty = 3)
+
+boxplot(a[a$method == 'NB',]$value ~ a[a$method == 'NB',]$thr, ylim = lim, yaxt="n")
+title(main = 'Neighborhood', xlab = 'Distance threshold', cex.lab = 1.2,  font.main = 1)
+abline(h = BASELINE_ASSRTCOEF, lty = 3)
+
+# dev.off()
+# ?abline; ?layout; ?boxplot
 
