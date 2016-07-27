@@ -154,13 +154,13 @@ rd_br <- est.rd.batch( obs_bl )
 ##- EHI/Late rate difference (Equal transmission rates)
 boxplot( unname(rd_er), main = '' , xaxt="n")
 axis(1, at = c(1,1:10*10))
-title(ylab = 'Rates difference', xlab = 'n simulations', cex.lab = 1.2)
+title(ylab = 'Rate difference: EHI - non EHI', xlab = 'Simulation replicate', cex.lab = 1.2)
 abline( h = 0, col = 'red' )
 
 ##- EHI/Late rate difference (Baseline)
 boxplot( unname( rd_br ), main = '', xaxt="n")
 axis(1, at = c(1,1:10*10))
-title(ylab = 'Rates difference', xlab = 'n simulations', cex.lab = 1.2)
+title(ylab = 'Rate difference: EHI - non EHI', xlab = 'Simulation replicate', cex.lab = 1.2)
 abline( h = 0, col = 'red' )
 
 ###################--- CLUSTERS ---###
