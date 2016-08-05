@@ -1,9 +1,15 @@
+###---- Allow changing sampling fraction relative to UK data ----
+###- consider calculating the fraction as tree size / infected MSM
+###- consider differentiating undiagnosed and diagnosed with missing sequences
+###- lower sampling fraction is easy, but how to add sampleStates and sampleTimes ?
+
 cd4s <- read.csv('../phylo-uk/source/cd4s.csv' )
 res <- read.csv('../phylo-uk/source/resistance.csv')
 dem <- read.csv('../phylo-uk/source/demographics.csv')
 #~ W0 <- read.csv( '../msm0/W0.csv')
 #pids <- unique( W0$donor ) #doesnt work; only ~5k in cluster are counteed here
 dates <- read.table( '../phylo-uk/data/ExaML_result.subUKogC_noDRM.reroot_dropOG.dates', skip=1) # from raxml_lsd_inputs0-rerunSLV.R
+# head(dates)
 
 sids <- dates$V1
 pids <- res$patientindex[ match(sids, res$testindex) ]
@@ -13,7 +19,7 @@ sampleTimes_birthday <- dates$V2
 date0 <- as.Date('1979-01-01')
 date_bd <- as.Date('1980-11-11')
 sampleTimes <- as.numeric(date_bd + sampleTimes_birthday - date0 )
-
+# head(sampleTimes)
 write.table( file = 'sampleTimes' , sampleTimes, col.names=F, row.names=F )
 
 
