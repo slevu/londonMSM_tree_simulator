@@ -5,7 +5,7 @@ output:
     fig_width: 6
     fig_height: 6
 author: "Stephane"
-date: "20/5/16"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 fontsize: 11pt
 ---
 
@@ -87,4 +87,4 @@ str(ll, vec.len = 1, indent.str = "|", comp.str = "----")
   + assortativity
 9. Graphics
   + distribution of cluster size, outdegrees, indegrees
-  + network
+  + network with `net0_sims_slv.R`
