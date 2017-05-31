@@ -80,15 +80,16 @@ get.mc.mld.counts <- function(x, Nsim = 100){
   return(list('states' = tip.states, 'counts' = counts.mld))
 }
 
+##---- run WATCHOUT: decomment for saving
 FILE = "./data/mc.mld.baseline.rds"
-if(!file.exists(FILE)){
+#if(!file.exists(FILE)){
   system.time(
     list.counts.mld <- lapply(l, get.mc.mld.counts)
   ) # 1979s = 33mn for 100 sims * 100 MC reps
   saveRDS(list.counts.mld, FILE)
-} else {
-  list.counts.mld <- readRDS(FILE)
-}
+# } else {
+#  list.counts.mld <- readRDS(FILE)
+# }
 
 ###################------
 
