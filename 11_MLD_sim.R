@@ -3,6 +3,7 @@
 ##- define incident infection
 ##- find MLDs
 ##- correlates of being MLS vs not
+##- on two simulation scenarios
 
 # rm(list=ls())
 ##---- libs ----
@@ -12,8 +13,12 @@ library(lmtest)
 library(Hmisc)
 
 ##- sim files
-PATHW <- "./data/simulations2/model0-simulateBaseline0"
-l <- list.files(PATHW, full.names = TRUE)
+PATHW_ba <- "./data/simulations2/model0-simulateBaseline0"
+PATHW_er <- "./data/simulations2/model0-simulateEqualStage0"
+l_ba <- list.files(PATHW_ba, full.names = TRUE)
+l_er <- list.files(PATHW_er, full.names = TRUE)
+names(l_ba) <- sapply(l_ba, function(x) sub(".RData", "", basename(x)))
+names(l_er) <- sapply(l_er, function(x) sub(".RData", "", basename(x)))
 
 ##---- helper functions ----
 deme2age <- function(deme){ as.numeric(
@@ -80,16 +85,24 @@ get.mc.mld.counts <- function(x, Nsim = 100){
   return(list('states' = tip.states, 'counts' = counts.mld))
 }
 
-##---- run WATCHOUT: decomment for saving
-FILE = "./data/mc.mld.baseline.rds"
-#if(!file.exists(FILE)){
-  system.time(
-    list.counts.mld <- lapply(l, get.mc.mld.counts)
-  ) # 1979s = 33mn for 100 sims * 100 MC reps
-  saveRDS(list.counts.mld, FILE)
-# } else {
-#  list.counts.mld <- readRDS(FILE)
-# }
+##---- run MC ----
+MC.COUNT_ba = "./data/mc.mld.baseline.rds"
+MC.COUNT_er = "./data/mc.mld.equalrates.rds"
+mc <- function(LST, FN){
+  if(!file.exists(FN)){
+    s <- system.time(
+      list.counts.mld <- lapply(LST, get.mc.mld.counts)
+    ) # 1979s = 33mn for 100 sims * 100 MC reps
+    print(s)
+    saveRDS(list.counts.mld, FN)
+  } else {
+    list.counts.mld <- readRDS(FN)
+  }
+  return(list.counts.mld)
+}
+list.counts.mld_ba <- mc(l_ba, MC.COUNT_ba)
+list.counts.mld_er <- mc(l_er, MC.COUNT_er)
+
 
 ###################------
 
@@ -199,7 +212,7 @@ if(FALSE){
   str(tab.mld)
 } ## tests zero-inflated regressions
 
-
+## debug: s = 1; k = 1; counts = list.counts.mld[[s]][[2]]; df = list.counts.mld[[s]][[1]]; X =  c('factor(age)', 'factor(stage)', 'risk')
 ## debug:  k = 1; counts = counts.mld; df = tip.states; X =  c('factor(age)', 'factor(stage)', 'risk')
 get.mld.logit <- function(k, counts = counts.mld, df = tip.states, X =  c('factor(age)', 'factor(stage)', 'risk')){ # index column, states with ID variable
   tab.mld <- data.frame('id' = rownames(counts), 'mld' = counts[, k], stringsAsFactors = FALSE)
@@ -211,16 +224,38 @@ get.mld.logit <- function(k, counts = counts.mld, df = tip.states, X =  c('facto
   mod1bi <- as.formula(paste('binmld', '~', paste(X, collapse = ' + ')))
   tab$binmld <- ifelse(tab$mld == 0, 0, 1)
   logit1 <- glm(mod1bi, family="binomial", data = tab)
-  return(logit1)
+  test <- list('coef' = summary(logit1)$coef, 'Loglikelihood' = logLik(logit1), 'AIC' = AIC(logit1))
+  # or <- exp(coef(logit1)) # CI too slow:   or <- exp(cbind(OR = coef(logit1), confint(logit1)))
+  return(test)
 }
 # fits.logit <- lapply(1:dim(counts.mld)[2], function(z) get.mld.logit(k = z))
-fits.logit <- lapply(list.counts.mld, function(x) lapply(1:dim(x$counts)[2], function(z) get.mld.logit(k = z, counts = x$counts, df = x$states)))
+
+##---- run logistic ----
+FITLOGIT_ba <- './data/fit.logit.mld.baseline.rds'
+FITLOGIT_er <- './data/fit.logit.mld.equalrates.rds'
+fit.glm <- function(LST, FN){
+  if(!file.exists(FN)){
+    st <- system.time(
+      fits.logit <- lapply(LST, function(x){
+        lapply(1:dim(x$counts)[2], function(z) get.mld.logit(k = z, counts = x$counts, df = x$states)) 
+      })
+    ) # long
+    print(st)
+    saveRDS(fits.logit, FN)
+  } else {
+    fits.logit <- readRDS(FN)
+  }
+  return(fits.logit)
+}
+fits.logit_ba <- fit.glm(list.counts.mld_ba, FITLOGIT_ba)
+fits.logit_er <- fit.glm(list.counts.mld_er, FITLOGIT_er)
+
 
 ##- count any p-value < 0.05 by X
-## debug: X = X; fit = fits.logit[[1]]
+## debug: X = X; fit = fits.logit[[1]][[1]]
 get.p.values <- function(fit, X =  c('factor(age)', 'factor(stage)', 'risk')){
-  m <- summary(fit)
-  p.values <- m$coef[,4] 
+  #m <- summary(fit)
+  p.values <- fit$coef[,4] 
   ##- get rid of parentheses
   unparenthesis <- function(string){
     gsub("\\(|\\)", "", string)
@@ -231,7 +266,46 @@ get.p.values <- function(fit, X =  c('factor(age)', 'factor(stage)', 'risk')){
   )
   return(P)
 }
-#p.sum <- sapply(fits.logit, get.p.values)
-p.sum <- lapply(fits.logit, function(x) sapply(x, function(z) get.p.values(fit = z)))
-p.sum.per.sim <- sapply(p.sum, rowSums)
-apply(p.sum.per.sim, 1, summary)
+
+##---- stats p-values ----
+## by sim
+p.sum_ba <- lapply(fits.logit_ba, function(x) sapply(x, function(z) get.p.values(fit = z)))
+p.sum_er <- lapply(fits.logit_er, function(x) sapply(x, function(z) get.p.values(fit = z)))
+## by MC replicate
+p.sum.per.sim_ba <- sapply(p.sum_ba, rowSums)
+p.sum.per.sim_er <- sapply(p.sum_er, rowSums)
+
+apply(p.sum.per.sim_ba, 1, summary)
+apply(p.sum.per.sim_er, 1, summary)
+# factor(age) factor(stage)   risk
+# Min.           1.00           100  10.00
+# 1st Qu.        7.00           100  79.50
+# Median        16.00           100  94.00
+# Mean          23.86           100  85.57
+# 3rd Qu.       36.00           100  98.00
+# Max.          81.00           100 100.00
+
+##---- check outdegree by stage
+x = l_ba[[1]]
+x = l_er[[1]]
+test <- function(x){
+  load(x)
+  
+  W <- as.data.frame(W, stringsAsFactors = FALSE)
+  names(W)[which(names(W) == 'infectorProbability')] <- 'ip'
+  od <- tapply(W$ip, W$donor, sum)
+  oddf <- data.frame('id' = names(od), od)
+  
+  head(oddf)
+  tip.states <- data.frame(
+    "id" = daytree$tip.label,
+    "stage" = sapply( sampleDemes, deme2stage ),
+    "age" = sapply( sampleDemes, deme2age ),
+    "risk" = sapply( sampleDemes, deme2risk ),
+    stringsAsFactors = FALSE)
+  rownames(tip.states) <- NULL
+  
+  df <- merge(tip.states, oddf, by = 'id', all.y = TRUE)
+  boxplot(od ~ stage, df)
+  #tapply(df$od, factor(df$stage), mean)
+}
