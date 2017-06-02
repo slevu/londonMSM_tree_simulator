@@ -276,14 +276,21 @@ p.sum.per.sim_ba <- sapply(p.sum_ba, rowSums)
 p.sum.per.sim_er <- sapply(p.sum_er, rowSums)
 
 apply(p.sum.per.sim_ba, 1, summary)
-apply(p.sum.per.sim_er, 1, summary)
-# factor(age) factor(stage)   risk
+#         factor(age) factor(stage)   risk
 # Min.           1.00           100  10.00
 # 1st Qu.        7.00           100  79.50
 # Median        16.00           100  94.00
 # Mean          23.86           100  85.57
 # 3rd Qu.       36.00           100  98.00
 # Max.          81.00           100 100.00
+apply(p.sum.per.sim_er, 1, summary)
+#         factor(age) factor(stage)   risk
+# Min.           0.00         99.00  94.00
+# 1st Qu.        5.00        100.00 100.00
+# Median        11.00        100.00 100.00
+# Mean          16.64         99.91  99.84
+# 3rd Qu.       20.25        100.00 100.00
+# Max.          81.00        100.00 100.00
 
 ##---- check outdegree by stage
 x = l_ba[[1]]
