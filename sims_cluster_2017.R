@@ -34,15 +34,16 @@ list.dist <- lapply(scenario, function(x){
 # load(list.sims[[2]][[1]]); head(sampleDemes); head(cd4s)
 
 ## plot distance
-## check uk tree distances
+## check uk tree distances (obtained with cophenetic ?)
 duktree <- readRDS("data/uktree_dist.rds")
 hist(duktree, breaks = 100, xlim = c(0,1))
 dukTN93 <- read.csv("../phylo-uk/test/tn93_average/MSM_B_uk_tn93.csv") # dukTN93 <- readRDS(file = "../phylo-uk/source/subUKogC_noDRM_151202_ucsdTN93.rds" )
-hist(dukTN93[,3], breaks = 100, xlim = c(0,1))
+hist(dukTN93[,3], breaks = 50)
 
 load(list.dist[[1]][[2]])
 dim(D)
 D[, 1:6]
+summary(D[3,])
 hist(D[3,], breaks = 100)
 load(list.sims[[1]][[2]])
 library(ape)
@@ -50,16 +51,17 @@ library(ape)
 #~ mu : clock rate (subst/site/year)
 #~ MH: dont bother computing distances when TMRCA beyond MH years
 tree <- bdt
-mu = 4.3e-3 #.003
+mu = 1.5e-3 #4.3e-3 #.003
 seqlength = 1e3;
 # (year * susbt/site/year * n site) = number of substitutions 
 tree$edge.length <- rpois(length(tree$edge.length), tree$edge.length * mu * seqlength ) / seqlength 
 dsimtree <-  as.dist(cophenetic.phylo(tree))
 summary(dsimtree)
 hist(dsimtree, breaks = 100, xlim = c(0,1))
+hist(dsimtree[dsimtree < 0.015], breaks = 50)
 
 source("tree2genDistance.R")
-dsimtree2 <- .tree2genDistance(bdt, mu = .0015, seqlength = 1e3, MH=20 )
+dsimtree2 <- .tree2genDistance(bdt, mu = .0015, seqlength = 1e3, MH=30 ) # MH=20
 summary(dsimtree2[3,])
 hist(dsimtree2[3,], breaks = 100)
 #plot(daytree)
