@@ -1,14 +1,14 @@
 # rm(list=ls())
 ####---- include ----
-detail_knitr <- TRUE
-source("functions.R")
-startover <- TRUE
+# detail_knitr <- TRUE
+# source("functions.R")
+# startover <- TRUE
 
 ####---- lib ----
 #library(ape)
 
 ##--- thrs
-thresholds <- c("0.001", "0.005", "0.015", "0.05") # c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
+# thresholds <- c("0.001", "0.005", "0.015", "0.05") # c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
 
 ####---- path sims ----
 ##- used for several rounds of simulations
@@ -35,30 +35,38 @@ list.dist <- lapply(scenario, function(x){
 
 ## plot distance
 ## check uk tree distances (obtained with cophenetic ?)
-duktree <- readRDS("data/uktree_dist.rds")
-hist(duktree, breaks = 100, xlim = c(0,1))
-dukTN93 <- read.csv("../phylo-uk/test/tn93_average/MSM_B_uk_tn93.csv") # dukTN93 <- readRDS(file = "../phylo-uk/source/subUKogC_noDRM_151202_ucsdTN93.rds" )
-hist(dukTN93[,3], breaks = 50)
+# duktree <- readRDS("data/uktree_dist.rds")
+# hist(duktree, breaks = 100, xlim = c(0,1))
+# dukTN93 <- read.csv("../phylo-uk/test/tn93_average/MSM_B_uk_tn93.csv") # dukTN93 <- readRDS(file = "../phylo-uk/source/subUKogC_noDRM_151202_ucsdTN93.rds" )
+# hist(dukTN93[,3], breaks = 50)
 
-load(list.dist[[1]][[2]])
-dim(D)
-D[, 1:6]
-summary(D[3,])
-hist(D[3,], breaks = 100)
+# load(list.dist[[1]][[2]])
+# dim(D)
+# D[, 1:6]
+# summary(D[3,])
+# hist(D[3,], breaks = 100)
 load(list.sims[[1]][[2]])
-library(ape)
+# library(ape)
 #~ tree : DatedTree, branch lenghts in years 
 #~ mu : clock rate (subst/site/year)
 #~ MH: dont bother computing distances when TMRCA beyond MH years
 tree <- bdt
-mu = 1.5e-3 #4.3e-3 #.003
-seqlength = 1e3;
-# (year * susbt/site/year * n site) = number of substitutions 
-tree$edge.length <- rpois(length(tree$edge.length), tree$edge.length * mu * seqlength ) / seqlength 
-dsimtree <-  as.dist(cophenetic.phylo(tree))
-summary(dsimtree)
-hist(dsimtree, breaks = 100, xlim = c(0,1))
-hist(dsimtree[dsimtree < 0.015], breaks = 50)
+MU = 4.3e-3 # 1.5e-3 #4.3e-3 #.003
+SEQLENGTH = 1e3;
+# (year * susbt/site/year * n site) = number of substitutions
+
+source("HPC_code/tree2CophDist.R")
+system.time(
+  el <- tree2CophDist(yeartree = tree, mu = MU, seqlength = SEQLENGTH, dlim = 0.05 )
+)
+system.time(
+  el2 <- tree2CophDist2(yeartree = tree, mu = MU, seqlength = SEQLENGTH, dlim = 0.05 )
+)
+identical(el, el2)
+head(el)
+head(el2)
+summary(el$distance)
+hist(el$distance, breaks = 100, xlim = c(0,1))
 
 source("tree2genDistance.R")
 dsimtree2 <- .tree2genDistance(bdt, mu = .0015, seqlength = 1e3, MH=30 ) # MH=20
