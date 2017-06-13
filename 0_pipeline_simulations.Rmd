@@ -28,6 +28,7 @@ For each, two scenario subfolders *Baseline* and *EqualStage*
   + output files contain daytree, yeartree, cd4s, sampleDemes, W matrix of infector probs
 2. Genetic distances
   + Simulated by function `tree2genDistance.R` in `tree2dist.sims.R`
+  + update 6/2017: done in HPC with `cophenetic()` in `tree2dist.sh` and changing rate to 4.3e-3 and limiting distances reported to 0.05
 3. Cluster assignement by tips    
   + With `sims.cluster.R`
   + At 4 distance thresholds 

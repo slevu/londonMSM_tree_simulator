@@ -1,20 +1,20 @@
 # rm(list=ls())
 ####---- include ----
 # detail_knitr <- TRUE
-# source("functions.R")
+source("functions.R")
 # startover <- TRUE
 
 ####---- lib ----
 #library(ape)
 
 ##--- thrs
-# thresholds <- c("0.001", "0.005", "0.015", "0.05") # c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
+thresholds <- c("0.001", "0.005", "0.015", "0.05") # c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
 
 ####---- path sims ----
 ##- used for several rounds of simulations
-path.sims <- 'data/simulations2/model0-simulate'
-path.results <- 'data/sim_ucsd_results2'
-
+path.sims <- '../Box Sync/HPC/simulations/model0-simulate' #'data/simulations2/model0-simulate'
+path.results <- '../Box Sync/HPC/simulations/sim_ucsd_results'  #'data/sim_ucsd_results2'
+/Users/stephanelevu/Documents/Box Sync/HPC/simulations
 ####---- scenario ----
 scenario <- c("Baseline0", "EqualStage0")
 scenario <- setNames(scenario, scenario) # useful to name list in lapply
@@ -26,94 +26,12 @@ list.sims <- lapply(scenario, function(x){
 })
 list.dist <- lapply(scenario, function(x){
   list.files('RData', full.names = TRUE, 
-           path = paste(path.sims, x, '-distances', sep = '') )
+           path = paste(path.sims, x, '-coph_distances', sep = '') )
 })
 
 ##---- check
 # str(list.sims); str(list.dist) # head(names(list.sims[[2]])) 
 # load(list.sims[[2]][[1]]); head(sampleDemes); head(cd4s)
-
-## plot distance
-## check uk tree distances (obtained with cophenetic ?)
-# duktree <- readRDS("data/uktree_dist.rds")
-# hist(duktree, breaks = 100, xlim = c(0,1))
-# dukTN93 <- read.csv("../phylo-uk/test/tn93_average/MSM_B_uk_tn93.csv") # dukTN93 <- readRDS(file = "../phylo-uk/source/subUKogC_noDRM_151202_ucsdTN93.rds" )
-# hist(dukTN93[,3], breaks = 50)
-
-# load(list.dist[[1]][[2]])
-# dim(D)
-# D[, 1:6]
-# summary(D[3,])
-# hist(D[3,], breaks = 100)
-load(list.sims[[1]][[2]])
-# library(ape)
-#~ tree : DatedTree, branch lenghts in years 
-#~ mu : clock rate (subst/site/year)
-#~ MH: dont bother computing distances when TMRCA beyond MH years
-tree <- bdt
-MU = 4.3e-3 # 1.5e-3 #4.3e-3 #.003
-SEQLENGTH = 1e3;
-# (year * susbt/site/year * n site) = number of substitutions
-
-source("HPC_code/tree2CophDist.R")
-system.time(
-  el <- tree2CophDist(yeartree = tree, mu = MU, seqlength = SEQLENGTH, dlim = 0.05 )
-)
-system.time(
-  el2 <- tree2CophDist2(yeartree = tree, mu = MU, seqlength = SEQLENGTH, dlim = 0.05 )
-)
-identical(el, el2)
-head(el)
-head(el2)
-summary(el$distance)
-hist(el$distance, breaks = 100, xlim = c(0,1))
-
-source("tree2genDistance.R")
-dsimtree2 <- .tree2genDistance(bdt, mu = .0015, seqlength = 1e3, MH=30 ) # MH=20
-summary(dsimtree2[3,])
-hist(dsimtree2[3,], breaks = 100)
-#plot(daytree)
-summary(daytree$edge.length)
-summary(tree$edge.length)
-summary(bdt$edge.length)
-summary(tree$heights)
-hist(bdt$edge.length)
-
-
-##-- test two functions for tree to distance
-if (FALSE) {
-  rt <- rtree(100)
-  if (FALSE){
-    ##- hack: exponential transform to get edge.length similar to bdt (year tree)
-    s <- sample(bdt$edge.length, 198)
-    y <- s[order(s)]
-    x <- rt$edge.length[order(rt$edge.length)]
-    expmod <- lm(log(y + 10e-6) ~ x)  # fit exponential relation
-    parm <- expmod$coef
-    summary(rt$edge.length)
-    rt$edge.length <- exp(parm[1] + parm[2]*rt$edge.length)
-    summary(rt$edge.length)
-  }
-  
-  
-  hist(rt$edge.length)
-  tree2copheneticGenDist <- function(yeartree, mu = .0015, seqlength = 1e3, MH=20){
-    yeartree$edge.length <- rpois(length(yeartree$edge.length), yeartree$edge.length * mu * seqlength ) / seqlength 
-    m <- as.matrix( as.dist(cophenetic.phylo(yeartree)) )
-    ###--- keep only the lower triangle by 
-    ## filling upper with NA
-    m[upper.tri(m, diag=TRUE)] <- NA
-    ###--- create edge list if not there
-    require(reshape2)
-    el <- melt(m, na.rm = TRUE)
-    colnames(el) <- c('ID1', 'ID2', 'distance')
-    el
-  }
-  D1 <- tree2copheneticGenDist(rt)
-  hist(D1[,3])
-  rt$heights <- node.height(rt)
-  D2 <- .tree2genDistance(rt, mu = .0015, seqlength = 1e3, MH=20 ) # doesn't work without tree$heights
-} # not used
 
 ####---- ucsd clustering ----####
 # ucsd_hivclust
@@ -129,9 +47,10 @@ if (startover == TRUE){
     ##- some processing
     load(ldist[i])
     name.sim <- regmatches(ldist[i], regexpr("[0-9]{3,}", ldist[i]))
-    folder.sim <- substr(ldist[i], regexec("-simulate", ldist[i])[[1]][1] + 9, regexec("-distances", ldist[i])[[1]][1] -1)
-    dd <- as.data.frame(t(D))
-    names(dd) <- c('ID1', 'ID2', 'distance')
+    folder.sim <- substr(ldist[i], regexec("-simulate", ldist[i])[[1]][1] + 9, regexec("-coph_distances", ldist[i])[[1]][1] -1)
+    # dd <- as.data.frame(t(D))
+    # names(dd) <- c('ID1', 'ID2', 'distance')
+    dd <- D
     ##- temp el
     temp.el.fn <- paste(tempdir(), "/", name.sim, "_el.rds", sep = '')
     saveRDS(dd, file = temp.el.fn )
