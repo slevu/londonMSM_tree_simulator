@@ -2,7 +2,7 @@
 ####---- include ----
 # detail_knitr <- TRUE
 source("functions.R")
-startover <- TRUE
+startover <- FALSE
 
 ####---- lib ----
 #library(ape)
