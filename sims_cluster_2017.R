@@ -2,19 +2,20 @@
 ####---- include ----
 # detail_knitr <- TRUE
 source("functions.R")
-# startover <- TRUE
+startover <- TRUE
 
 ####---- lib ----
 #library(ape)
 
 ##--- thrs
-thresholds <- c("0.001", "0.005", "0.015", "0.05") # c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
+thr <- c("0.001", "0.005", "0.015", "0.05") # c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
 
 ####---- path sims ----
 ##- used for several rounds of simulations
 path.sims <- '../Box Sync/HPC/simulations/model0-simulate' #'data/simulations2/model0-simulate'
-path.results <- '../Box Sync/HPC/simulations/sim_ucsd_results'  #'data/sim_ucsd_results2'
-/Users/stephanelevu/Documents/Box Sync/HPC/simulations
+path.results <- '../Box Sync/HPC/simulations/sim_ucsd_results'  # use shQuote to escape for bash
+# system(command = paste('ls', shQuote(path.results)))
+
 ####---- scenario ----
 scenario <- c("Baseline0", "EqualStage0")
 scenario <- setNames(scenario, scenario) # useful to name list in lapply
@@ -36,7 +37,7 @@ list.dist <- lapply(scenario, function(x){
 ####---- ucsd clustering ----####
 # ucsd_hivclust
 if (startover == TRUE){
-  thresholds  <-  as.numeric(thresholds) # c(0.00001, 0.0001)# c(1e-04, 5e-04) # c("0.001", "0.05") # c("0.015", "0.005") # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
+  thresholds  <-  as.numeric(thr) # c(0.00001, 0.0001)# c(1e-04, 5e-04) # c("0.001", "0.05") # c("0.015", "0.005") # c(0.005, 0.015, 0.02, 0.05) # c(0.005, 0.01, 0.02, 0.05, 0.1) 
   tmax <- max(thresholds) # limit of distance considered
   
 ## function: input list of dist filenames, output csv of clusters
@@ -50,7 +51,7 @@ if (startover == TRUE){
     folder.sim <- substr(ldist[i], regexec("-simulate", ldist[i])[[1]][1] + 9, regexec("-coph_distances", ldist[i])[[1]][1] -1)
     # dd <- as.data.frame(t(D))
     # names(dd) <- c('ID1', 'ID2', 'distance')
-    dd <- D
+    dd <- unfactorDataFrame(D)
     ##- temp el
     temp.el.fn <- paste(tempdir(), "/", name.sim, "_el.rds", sep = '')
     saveRDS(dd, file = temp.el.fn )
@@ -58,7 +59,7 @@ if (startover == TRUE){
     ucsd_hivclust(path.el = temp.el.fn,
                           thr = thresholds, 
                           k = tmax, 
-                          out = paste(path.results, folder.sim,'', sep = '/' ) )
+                          out = paste(shQuote(path.results), folder.sim,'', sep = '/' ) )
     }
   } 
   
@@ -75,9 +76,9 @@ if (startover == TRUE){
   })
   
 
-##- function n = 100; m = 1
+##- function n = 100; m = 1; csvs = list.csv[[1]]
 list.hivclust <- function(csvs){
-  ## Structure threshold > trees
+  ## Structure threshold > dist
 
   ## empty list of thresholds
   cl2 <- vector("list", length(thresholds))
@@ -85,9 +86,9 @@ list.hivclust <- function(csvs){
     for (m in 1:length(thresholds) ){ # index of thr
      ## vector of csv at different tree for one thr
       filenames <- csvs[grep(thresholds[m], csvs)]
-      ## empty list of different trees
+      ## empty list of different dist
       t <- vector("list", length(filenames))
-      for (n in 1:length(filenames) ){ # index of trees
+      for (n in 1:length(filenames) ){ # index of dist
         t[[n]] <- read.csv( filenames[n] )
         names(t)[n] <- substr(filenames[n], 
                               regexec("/d", filenames[n])[[1]][1] + 2,
@@ -126,20 +127,22 @@ return(cl2)
     for (i in 1:length(ldist)){
       ##- load distances
       load(ldist[i])
-      dd <- as.matrix(t(D))
+      dd <- unfactorDataFrame(D) #dd <- as.matrix(t(D))
       name.sim <- regmatches(ldist[i], regexpr("[0-9]{3,}", ldist[i]))
       
       ##- calculate neighborhood size
       ##- number of neighbour|threshold
       for (j in 1:length(thresholds)){
-        print( paste(i, j, name.sim) )
+        print( paste('sim:', i, 'threshold:', j, name.sim) )
         
         .t1  <- tapply(dd[,3], dd[,1], function(x) sum(x < thr[j]))
         .t2  <- tapply(dd[,3], dd[,2], function(x) sum(x < thr[j]))
         ##- add from and to neighbors
         .t <- tapply(c(.t1, .t2), names(c(.t1, .t2)), sum)
         
-        ll[[j]][[i]] <- cbind("id" = as.numeric(names(.t)), "nbhsize" = unname(.t))
+        ll[[j]][[i]] <- data.frame("id" = names(.t), 
+                                   "nbhsize" = as.numeric(unname(.t)), 
+                                   stringsAsFactors = FALSE)
         names(ll[[j]])[i] <- name.sim
       }
     }
@@ -149,10 +152,10 @@ return(cl2)
   
    system.time(
     nbh_Baseline0 <- nbh(list.dist[["Baseline0"]] )
-  ) # 55s
+  ) # 88s
   system.time(
     nbh_EqualStage0 <- nbh(list.dist[["EqualStage0"]] )
-  ) # 40s
+  ) # 79s
 
   # saveRDS(nbh_Baseline0, file = paste(path.results, 'list.nbhsize.sim.Baseline0.rds', sep = '/') )
   # saveRDS(nbh_EqualStage0, file = paste(path.results, 'list.nbhsize.sim.EqualStage0.rds', sep = '/') )
@@ -224,8 +227,9 @@ clus.stat <- function(clus, nbh, sim){
         freqClust <- as.data.frame(table(cl$ClusterID), stringsAsFactors = FALSE)
         
         ## get name instead of index in clus
-        cl$id <- daytree$tip.label[ cl$SequenceID ]
-        nb$id <- daytree$tip.label[ nb$id ]
+        ## update: already ID name in this instance
+        cl$id <- cl$SequenceID #daytree$tip.label[ cl$SequenceID ]
+        #nb$id <- daytree$tip.label[ nb$id ]
         
         ## merge cluster number (without SequenceID)
         a <- merge(x = tip.states, y = cl[, 2:3],
