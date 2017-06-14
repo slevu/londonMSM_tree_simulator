@@ -6,13 +6,25 @@ library(reshape2)
 library(cowplot)
 
 ##---- load data ----
-cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
+path.results <- '../Box Sync/HPC/simulations/sim_ucsd_results'
+cw_Baseline0 <- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
+# readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
 cw <- cw_Baseline0[c('SA', '0.001', '0.005', '0.015', '0.05')]
 # names(cw)
 ##- rbind table
 cw_bind <- lapply(cw, function(x) do.call(rbind, x[1:100]))
 # str(cw_bind)
 
+##- option : don't count cluster size 1
+names(cw)
+cw2 <- c(cw[1], lapply(cw[-1], function(x){
+  lapply(x, function(d){
+    d[d[,'size'] == 1, 'size'] <- NA 
+    return(d)
+  } )
+}))
+str(cw2[[2]][[3]])
+## laaaaaaaaaaaaaa -----------------
 ##---- plan ----
 ##- number of clusters (ucsd)
 ##- number of distinct neighborhood cluster >= 2 ?
