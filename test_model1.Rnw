@@ -1,0 +1,19 @@
+\documentclass{article}
+\title{Test model1.R plus source attribution - 21 June 2016}
+\begin{document}
+
+<<read, echo=FALSE, cache= FALSE>>=
+library(knitr)
+read_chunk('HPC_code/model1-simBaseline0.R')
+@
+
+<<setup, echo=FALSE>>=
+opts_chunk$set(comment="", message=FALSE, tidy.opts=list(width.cutoff=120), options(width=100), fig.align='center',fig.height=6, fig.width=10, out.width='11cm',  fig.show='hold', fig.path='figure/plot')
+@
+
+<<run model1.R>>=
+
+@
+
+
+\end{document}
