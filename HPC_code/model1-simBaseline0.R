@@ -2,7 +2,10 @@
 require(phydynR)
 source('model1.R')
 
-MH <- 20
+MH <- 20 # max height in year for SA
+MU <- 1.5e-3 # mutation rate
+SL <- 1e3 # seq length
+DL <- 0.05 # limit of distance to record
 PID <- Sys.getpid() 
 
 # counterfactuals sim'ed separately, eg: 
@@ -64,11 +67,14 @@ sampleTimes <- days2years( tree$sampleTimes )
 tree$edge.length <- tree$edge.length / 365
 bdt <- DatedTree(  tree, sampleTimes, tree$sampleStates, tol = Inf)
 
-D <-  cophenetic.phylo( bdt )
-cat( 'mean genetic divergence if rate = .0015\n' )
-print( mean(D ) * .0015 )
+## compute gen distances
+source('HPC_code/fn_tree2CophDist.R')
+system.time( distance <- tree2CophDist2(bdt, mu = MU, seqlength = SL, dlim = DL) ) # 146s
+str(distance)
+D[[1]] # stats for all distances
 
-n<- bdt$n
+
+n <- bdt$n
 
 treeSampleStates <- tree$sampleStates
 cd4s <- setNames( sapply( 1:nrow(treeSampleStates), function(k){
@@ -100,8 +106,32 @@ system.time(
                                          #, res = 1e3
                                          #, treeErrorTol = Inf
                                          #, minEdgeLength = 1/52
+                                         , mode = 1
   )  
-)
+) # 56s
+
+#- with new sa method
+system.time(
+  W2 <- phylo.source.attribution.hiv.msm( bdt
+                                         , bdt$sampleTimes # must use years
+                                         , cd4s = cd4s[bdt$tip.label] # named numeric vector, cd4 at time of sampling 
+                                         , ehi = ehis[bdt$tip.label] # named logical vector, may be NA, TRUE if patient sampled with early HIV infection (6 mos )
+                                         , numberPeopleLivingWithHIV  = plwhiv# scalar
+                                         , numberNewInfectionsPerYear = newinf # scalar 
+                                         , maxHeight = MH 
+                                         #, res = 1e3
+                                         #, treeErrorTol = Inf
+                                         #, minEdgeLength = 1/52
+                                         , mode = 2
+  )  
+) # 698s
 
 
 
+str(W)
+id <- tapply(as.numeric(W$infectorProbability), W$recip, sum)
+mean(id) # [1] 0.2364833
+id2 <- tapply(as.numeric(W2$infectorProbability), W2$recip, sum)
+mean(id2) # [1] 0.4409195
+
+# save( bdt, W, W2, cd4s, sampleDemes, plwhiv, newinf, MH, distance, file = paste('model1-simulateBaseline0/', PID, '.RData', sep=''))
