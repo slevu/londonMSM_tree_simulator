@@ -1,12 +1,13 @@
 ##---- run model1.R ----
 require(phydynR)
-source('model1.R')
+source('code/model1.R')
 
 MH <- 20 # max height in year for SA
-MU <- 1.5e-3 # mutation rate
+MU <- 2e-3 # mutation rate
 SL <- 1e3 # seq length
 DL <- 0.05 # limit of distance to record
-PID <- Sys.getpid() 
+PID <- Sys.getpid()
+OUT <- 'data/simulations2/model1-simBaseline0/'
 
 # counterfactuals sim'ed separately, eg: 
 #~ nh_wtransm <- c( 
@@ -68,10 +69,10 @@ tree$edge.length <- tree$edge.length / 365
 bdt <- DatedTree(  tree, sampleTimes, tree$sampleStates, tol = Inf)
 
 ## compute gen distances
-source('HPC_code/fn_tree2CophDist.R')
+source('code/fn_tree2CophDist.R')
 system.time( distance <- tree2CophDist2(bdt, mu = MU, seqlength = SL, dlim = DL) ) # 146s
-str(distance)
-D[[1]] # stats for all distances
+#str(distance)
+#D[[1]] # stats for all distances
 
 
 n <- bdt$n
@@ -95,24 +96,24 @@ ehis <-  setNames( sapply( 1:nrow( treeSampleStates), function(k){
 }), tree$tip.label)
 sampleDemes <- setNames( sapply( 1:n, function(u) DEMES[which.max( treeSampleStates[u,])] ), tree$tip.label )
 
-system.time(
-  W <- phylo.source.attribution.hiv.msm( bdt
-                                         , bdt$sampleTimes # must use years
-                                         , cd4s = cd4s[bdt$tip.label] # named numeric vector, cd4 at time of sampling 
-                                         , ehi = ehis[bdt$tip.label] # named logical vector, may be NA, TRUE if patient sampled with early HIV infection (6 mos )
-                                         , numberPeopleLivingWithHIV  = plwhiv# scalar
-                                         , numberNewInfectionsPerYear = newinf # scalar 
-                                         , maxHeight = MH 
-                                         #, res = 1e3
-                                         #, treeErrorTol = Inf
-                                         #, minEdgeLength = 1/52
-                                         , mode = 1
-  )  
-) # 56s
+# system.time(
+#   W <- phylo.source.attribution.hiv.msm( bdt
+#                                          , bdt$sampleTimes # must use years
+#                                          , cd4s = cd4s[bdt$tip.label] # named numeric vector, cd4 at time of sampling 
+#                                          , ehi = ehis[bdt$tip.label] # named logical vector, may be NA, TRUE if patient sampled with early HIV infection (6 mos )
+#                                          , numberPeopleLivingWithHIV  = plwhiv# scalar
+#                                          , numberNewInfectionsPerYear = newinf # scalar 
+#                                          , maxHeight = MH 
+#                                          #, res = 1e3
+#                                          #, treeErrorTol = Inf
+#                                          #, minEdgeLength = 1/52
+#                                          , mode = 1
+#   )  
+# ) # 56s
 
 #- with new sa method
 system.time(
-  W2 <- phylo.source.attribution.hiv.msm( bdt
+  W <- phylo.source.attribution.hiv.msm( bdt
                                          , bdt$sampleTimes # must use years
                                          , cd4s = cd4s[bdt$tip.label] # named numeric vector, cd4 at time of sampling 
                                          , ehi = ehis[bdt$tip.label] # named logical vector, may be NA, TRUE if patient sampled with early HIV infection (6 mos )
@@ -128,10 +129,10 @@ system.time(
 
 
 
-str(W)
-id <- tapply(as.numeric(W$infectorProbability), W$recip, sum)
-mean(id) # [1] 0.2364833
-id2 <- tapply(as.numeric(W2$infectorProbability), W2$recip, sum)
-mean(id2) # [1] 0.4409195
+# str(W)
+# id <- tapply(as.numeric(W$infectorProbability), W$recip, sum)
+# mean(id) # [1] 0.2364833
+# id2 <- tapply(as.numeric(W2$infectorProbability), W2$recip, sum)
+# mean(id2) # [1] 0.4409195
 
-# save( bdt, W, W2, cd4s, sampleDemes, plwhiv, newinf, MH, distance, file = paste('model1-simulateBaseline0/', PID, '.RData', sep=''))
+save( bdt, W, cd4s, sampleDemes, plwhiv, newinf, MH, distance, file = paste(OUT, PID, '.RData', sep=''))

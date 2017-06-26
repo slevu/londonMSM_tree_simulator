@@ -126,9 +126,9 @@ bp_base <- function(ls , var , lbl, tran = identity){
 }
   
 ##---- bp base ----
-p <- bp_base(ls = cw_bind[c('SA', '0.015')], var = 'risk', lbl = 'Risk level')
-p <- bp_base(ls = cw_bind[c('SA', '0.015')], var = 'age', lbl = 'Age category')
-p <- bp_base(ls = cw_bind[c('SA', '0.015')], var = 'stage', lbl = 'Infection stage')
+p <- bp_base(ls = cw_bind[c('SA', '0.005')], var = 'risk', lbl = 'Risk level')
+p <- bp_base(ls = cw_bind[c('SA', '0.005')], var = 'age', lbl = 'Age category')
+p <- bp_base(ls = cw_bind[c('SA', '0.005')], var = 'stage', lbl = 'Infection stage')
 
 p <- bp_base(ls = cw_bind[c('SA', '0.05')], var = 'risk', lbl = 'Risk level')
 p <- bp_base(ls = cw_bind[c('SA', '0.05')], var = 'age', lbl = 'Age category')
@@ -138,4 +138,3 @@ tapply(cw_bind[['0.015']]$size, cw_bind[['0.015']]$stage, summary )
 tapply(cw[['0.015']][[1]]$size, cw[['0.015']][[1]]$stage, summary )
 summary(cw[['0.015']][[1]]$size)
 cw[['0.015']][[1]][cw[['0.015']][[1]]$size == 20, ]
-hist

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #PBS -l walltime=00:10:00
-#PBS -l select=1:ncpus=1:mem=8gb
+#PBS -l select=1:ncpus=1:mem=12gb
 
 cd $PBS_O_WORKDIR
 

@@ -11,24 +11,25 @@ startover <- FALSE
 thr <- c("0.001", "0.005", "0.015", "0.05") # c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
 
 ####---- path sims ----
-##- used for several rounds of simulations
-path.sims <- '../Box Sync/HPC/simulations/model0-simulate' #'data/simulations2/model0-simulate'
-path.results <- '../Box Sync/HPC/simulations/sim_ucsd_results'  # use shQuote to escape for bash
+if( any(grep("MacBook", Sys.info())) ){
+  path.sims <- '../Box Sync/HPC/simulations/model1-sim' #'data/simulations2/model0-simulate'
+  path.results <- '../Box Sync/HPC/simulations/model1-sim_ucsd'
+} else {
+  path.sims <- '../Box/HPC/simulations/model1-sim'
+  path.results <- '../Box/HPC/simulations/model1-sim_ucsd' # imac
+}
 # system(command = paste('ls', shQuote(path.results)))
 
 ####---- scenario ----
 scenario <- c("Baseline0", "EqualStage0")
 scenario <- setNames(scenario, scenario) # useful to name list in lapply
 
-####--- list of sims files and distances files ---
+####--- list of sims files including distances ---
 list.sims <- lapply(scenario, function(x){
   list.files('RData', full.names = TRUE, 
              path = paste(path.sims, x, sep = '') )
 })
-list.dist <- lapply(scenario, function(x){
-  list.files('RData', full.names = TRUE, 
-           path = paste(path.sims, x, '-coph_distances', sep = '') )
-})
+
 
 ##---- check
 # str(list.sims); str(list.dist) # head(names(list.sims[[2]])) 
@@ -41,17 +42,17 @@ if (startover == TRUE){
   tmax <- max(thresholds) # limit of distance considered
   
 ## function: input list of dist filenames, output csv of clusters
-#- debug: ldist = list.dist[["Baseline0"]]; i = 100
+#- debug: lsim = list.sims[["Baseline0"]]; i = 1
   ucsd <- function(ldist){
     
-    for (i in 1:length(ldist)){
+    for (i in 1:length(lsim)){
     ##- some processing
-    load(ldist[i])
-    name.sim <- regmatches(ldist[i], regexpr("[0-9]{3,}", ldist[i]))
-    folder.sim <- substr(ldist[i], regexec("-simulate", ldist[i])[[1]][1] + 9, regexec("-coph_distances", ldist[i])[[1]][1] -1)
+    load(lsim[i])
+    name.sim <- regmatches(lsim[i], regexpr("[0-9]{3,}", lsim[i]))
+    folder.sim <- scenario[ grep(paste(scenario, collapse='|'), lsim[i]) ] # Baseline0 or Equalstage0
     # dd <- as.data.frame(t(D))
     # names(dd) <- c('ID1', 'ID2', 'distance')
-    dd <- unfactorDataFrame(D)
+    dd <- unfactorDataFrame(distance[['D']])
     ##- temp el
     temp.el.fn <- paste(tempdir(), "/", name.sim, "_el.rds", sep = '')
     saveRDS(dd, file = temp.el.fn )
@@ -59,11 +60,11 @@ if (startover == TRUE){
     ucsd_hivclust(path.el = temp.el.fn,
                           thr = thresholds, 
                           k = tmax, 
-                          out = paste(shQuote(path.results), folder.sim,'', sep = '/' ) )
+                          out = paste(path.results, folder.sim,'', sep = '/' ))
     }
-  } 
+  }
   
-  lapply(list.dist[["Baseline0"]], ucsd)
+  lapply(list.sims[["Baseline0"]], ucsd)
   lapply(list.dist[["EqualStage0"]], ucsd)
 }
 
@@ -76,7 +77,7 @@ if (startover == TRUE){
   })
   
 
-##- function n = 100; m = 1; csvs = list.csv[[1]]
+##- function n = 1; m = 1; csvs = list.csv[[1]]
 list.hivclust <- function(csvs){
   ## Structure threshold > dist
 
@@ -117,18 +118,18 @@ return(cl2)
 ####---- nbhood size ----
   if(startover){
   ###-- start nbh ---
-  ### ldist = list.dist[["Baseline0"]]; i = 1; j = 1 
-  nbh <- function(ldist){
+  ### lsim = list.sims[["Baseline0"]]; i = 1; j = 1 
+  nbh <- function(lsim){
     ##- empty list of j thresholds * i sims
     thr <- as.numeric(thresholds)
-    ll <- rep( list( vector("list", length(ldist)) ), length(thr) ) 
+    ll <- rep( list( vector("list", length(lsim)) ), length(thr) ) 
     names(ll) <- thresholds
     
-    for (i in 1:length(ldist)){
+    for (i in 1:length(lsim)){
       ##- load distances
-      load(ldist[i])
-      dd <- unfactorDataFrame(D) #dd <- as.matrix(t(D))
-      name.sim <- regmatches(ldist[i], regexpr("[0-9]{3,}", ldist[i]))
+      load(lsim[i])
+      dd <- unfactorDataFrame(distance[['D']]) #dd <- as.matrix(t(D))
+      name.sim <- regmatches(lsim[i], regexpr("[0-9]{3,}", lsim[i]))
       
       ##- calculate neighborhood size
       ##- number of neighbour|threshold
@@ -151,7 +152,7 @@ return(cl2)
   ##--- end nbh ---
   
    system.time(
-    nbh_Baseline0 <- nbh(list.dist[["Baseline0"]] )
+    nbh_Baseline0 <- nbh(list.sims[["Baseline0"]] )
   ) # 88s
   system.time(
     nbh_EqualStage0 <- nbh(list.dist[["EqualStage0"]] )
@@ -216,7 +217,7 @@ clus.stat <- function(clus, nbh, sim){
       
       ## get ALL tips names and demes
       tip.states <- data.frame(
-        "id" = daytree$tip.label,
+        "id" = bdt$tip.label,
         "stage" = sapply( sampleDemes, deme2stage ),
         "age" = sapply( sampleDemes, deme2age ),
         "risk" = sapply( sampleDemes, deme2risk ),
@@ -299,24 +300,27 @@ if (startover == TRUE){
   #   str( l_Baseline0[[3]][[1]] )
   #   length(l_Baseline0[[1]])
 # 
-#   system.time(
-#   z <- lapply(l_Baseline0, function(x){
-#     sapply(x, function(m) {
-#     # faster than `merge(df, s, all.x = TRUE)`
-#     #- add covariates
-#      # m <-  cbind(df, s[ match(df$id, s$id), -1 ])
-#     #- mean y by x
-#       nb <-  tapply(m$nbhsize, m$stage, mean )
-#       return(nb)
-#       }) 
-#     })
-#   )
-#   sapply(z, function(x) apply(x,1, mean))
+if(FALSE){
+  system.time(
+    z <- lapply(l_Baseline0, function(x){
+      sapply(x, function(m) {
+        # faster than `merge(df, s, all.x = TRUE)`
+        #- add covariates
+        # m <-  cbind(df, s[ match(df$id, s$id), -1 ])
+        #- mean y by x
+        nb <-  tapply(m$nbhsize, m$stage, mean )
+        return(nb)
+      })
+    })
+  )
+  sapply(z, function(x) apply(x,1, mean))
+}
+
 
 ####---- add degrees ----
 
   ##- loop to merge all W to all clusters
-#   clus = l_Baseline0; sim = list.sims[["Baseline0"]];  i <- 2
+#   clus = l_Baseline0; sim = list.sims[["Baseline0"]];  i <- 1
 
   ####---- add.w ----
   add.w <- function(clus, sim){
@@ -345,7 +349,7 @@ if (startover == TRUE){
                          row.names = NULL, stringsAsFactors = FALSE)
       
         ##- load covariates by tip
-        a <- cl[[i]][, c(1,3:5)]
+        a <- cl[[i]][, c(1,3:5)] # id, stage, age, risk
         
         ##- merge all
         c <- merge(a, b, by.x = "id", by.y = "patient", all.x = TRUE )
