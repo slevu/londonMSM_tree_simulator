@@ -2,13 +2,13 @@
 ####---- include ----
 # detail_knitr <- TRUE
 source("functions.R")
-startover <- FALSE
+startover <- TRUE
 
 ####---- lib ----
 #library(ape)
 
 ##--- thrs
-thr <- c("0.001", "0.005", "0.015", "0.05") # c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
+thr <- c("0.005", "0.015", "0.02", "0.05") # c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
 
 ####---- path sims ----
 if( any(grep("MacBook", Sys.info())) ){
@@ -43,13 +43,13 @@ if (startover == TRUE){
   
 ## function: input list of dist filenames, output csv of clusters
 #- debug: lsim = list.sims[["Baseline0"]]; i = 1
-  ucsd <- function(ldist){
+  ucsd <- function(lsim){
     
     for (i in 1:length(lsim)){
     ##- some processing
     load(lsim[i])
     name.sim <- regmatches(lsim[i], regexpr("[0-9]{3,}", lsim[i]))
-    folder.sim <- scenario[ grep(paste(scenario, collapse='|'), lsim[i]) ] # Baseline0 or Equalstage0
+    folder.sim <- scenario[ which(sapply(scenario, grepl, lsim[i])) ] # Baseline0 or Equalstage0
     # dd <- as.data.frame(t(D))
     # names(dd) <- c('ID1', 'ID2', 'distance')
     dd <- unfactorDataFrame(distance[['D']])
@@ -65,7 +65,7 @@ if (startover == TRUE){
   }
   
   lapply(list.sims[["Baseline0"]], ucsd)
-  lapply(list.dist[["EqualStage0"]], ucsd)
+  lapply(list.sims[["EqualStage0"]], ucsd)
 }
 
 ####---- list.hivclust ----
@@ -86,7 +86,7 @@ list.hivclust <- function(csvs){
   ## loop
     for (m in 1:length(thresholds) ){ # index of thr
      ## vector of csv at different tree for one thr
-      filenames <- csvs[grep(thresholds[m], csvs)]
+      filenames <- csvs[grep(thr[m], csvs)]
       ## empty list of different dist
       t <- vector("list", length(filenames))
       for (n in 1:length(filenames) ){ # index of dist
@@ -105,8 +105,8 @@ return(cl2)
   cl_Baseline0 <- list.hivclust(csvs = list.csv[["Baseline0"]] )
   cl_EqualStage0 <- list.hivclust(csvs = list.csv[["EqualStage0"]] )
 
-# saveRDS(cl_Baseline0, file = paste(path.results, 'list.hivclust.sim.Baseline0.rds', sep = '/') )
-# saveRDS(cl_EqualStage0, file = paste(path.results, 'list.hivclust.sim.EqualStage0.rds', sep = '/') )
+ #saveRDS(cl_Baseline0, file = paste(path.results, 'list.hivclust.sim.Baseline0.rds', sep = '/') )
+ #saveRDS(cl_EqualStage0, file = paste(path.results, 'list.hivclust.sim.EqualStage0.rds', sep = '/') )
 } else {
   ##- load list.hivclust
   cl_Baseline0 <- readRDS( file = paste(path.results, 'list.hivclust.sim.Baseline0.rds', sep = '/') )
@@ -155,11 +155,11 @@ return(cl2)
     nbh_Baseline0 <- nbh(list.sims[["Baseline0"]] )
   ) # 88s
   system.time(
-    nbh_EqualStage0 <- nbh(list.dist[["EqualStage0"]] )
+    nbh_EqualStage0 <- nbh(list.sims[["EqualStage0"]] )
   ) # 79s
 
-  # saveRDS(nbh_Baseline0, file = paste(path.results, 'list.nbhsize.sim.Baseline0.rds', sep = '/') )
-  # saveRDS(nbh_EqualStage0, file = paste(path.results, 'list.nbhsize.sim.EqualStage0.rds', sep = '/') )
+  #saveRDS(nbh_Baseline0, file = paste(path.results, 'list.nbhsize.sim.Baseline0.rds', sep = '/') )
+  #saveRDS(nbh_EqualStage0, file = paste(path.results, 'list.nbhsize.sim.EqualStage0.rds', sep = '/') )
   } else {
     ##- load list.hivclust
     nbh_Baseline0 <- readRDS( file = paste(path.results, 'list.nbhsize.sim.Baseline0.rds', sep = '/') )
@@ -286,14 +286,14 @@ if (startover == TRUE){
                                sim = list.sims[["EqualStage0"]])
   ) # 750
   
-}
-
   ####---- saved listUKclus ----
- # saveRDS(l_Baseline0, file = paste(path.results, 'list.sim.ucsd.Baseline0.rds', sep = '/') )
- # saveRDS(l_EqualStage0, file = paste(path.results, 'list.sim.ucsd.EqualStage0.rds', sep = '/') )
-
+  # saveRDS(l_Baseline0, file = paste(path.results, 'list.sim.ucsd.Baseline0.rds', sep = '/') )
+  # saveRDS(l_EqualStage0, file = paste(path.results, 'list.sim.ucsd.EqualStage0.rds', sep = '/') )
+} else {
   l_Baseline0 <- readRDS(file = paste(path.results, 'list.sim.ucsd.Baseline0.rds', sep = '/') )
   l_EqualStage0 <- readRDS(file = paste(path.results, 'list.sim.ucsd.EqualStage0.rds', sep = '/') )
+}
+
 
 ###- check
   #   names(l_Baseline0)
@@ -369,7 +369,7 @@ if(FALSE){
   ####---- fin add.w ----####
   
   
-  if (startover = TRUE){
+  if (startover == TRUE){
     system.time(
       cw_Baseline0 <- add.w(clus = l_Baseline0, 
                             sim = list.sims[["Baseline0"]] )
@@ -378,15 +378,15 @@ if(FALSE){
       cw_EqualStage0 <- add.w(clus = l_EqualStage0,
                               sim = list.sims[["EqualStage0"]] )
     ) # 52
+    
+    ####---- saved listUKclus ----
+    # saveRDS(cw_Baseline0, file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
+    # saveRDS(cw_EqualStage0, file = paste(path.results, 'list.sim.clus-outdeg.EqualStage0.rds', sep = '/') )
+  } else {
+    cw_Baseline0 <- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
+    cw_EqualStage0 <- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.EqualStage0.rds', sep = '/') )
   }
-  
-  
-  ####---- saved listUKclus ----
-  # saveRDS(cw_Baseline0, file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
-  # saveRDS(cw_EqualStage0, file = paste(path.results, 'list.sim.clus-outdeg.EqualStage0.rds', sep = '/') )
-  
-  cw_Baseline0 <- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
-  cw_EqualStage0 <- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.EqualStage0.rds', sep = '/') )
+ 
   
   ##---- end ----
   

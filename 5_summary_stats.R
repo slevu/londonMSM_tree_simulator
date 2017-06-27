@@ -7,16 +7,16 @@ library(cowplot)
 
 ##---- load data ----
 if( any(grep("MacBook", Sys.info())) ){
-  path.results <- '../Box Sync/HPC/simulations/sim_ucsd_results'
+  path.results <- '../Box Sync/HPC/simulations/model1-sim_ucsd'
 } else {
-  path.results <- '../Box/HPC/simulations/sim_ucsd_results' # imac
+  path.results <- '../Box/HPC/simulations/model1-sim_ucsd' # imac
 }
 cw_Baseline0 <- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
 # readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
-cw <- cw_Baseline0[c('SA', '0.001', '0.005', '0.015', '0.05')]
+cw <- cw_Baseline0 #[c('SA', '0.001', '0.005', '0.015', '0.05')]
 # names(cw)
 
-if (TRUE) {
+if (FALSE) {
   ##- option : don't count cluster size 1
   cw2 <- c(cw[1], lapply(cw[-1], function(x){
     l <- lapply(x, function(d){
@@ -126,9 +126,9 @@ bp_base <- function(ls , var , lbl, tran = identity){
 }
   
 ##---- bp base ----
-p <- bp_base(ls = cw_bind[c('SA', '0.005')], var = 'risk', lbl = 'Risk level')
-p <- bp_base(ls = cw_bind[c('SA', '0.005')], var = 'age', lbl = 'Age category')
-p <- bp_base(ls = cw_bind[c('SA', '0.005')], var = 'stage', lbl = 'Infection stage')
+p <- bp_base(ls = cw_bind[c('SA', '0.015')], var = 'risk', lbl = 'Risk level')
+p <- bp_base(ls = cw_bind[c('SA', '0.015')], var = 'age', lbl = 'Age category')
+p <- bp_base(ls = cw_bind[c('SA', '0.015')], var = 'stage', lbl = 'Infection stage')
 
 p <- bp_base(ls = cw_bind[c('SA', '0.05')], var = 'risk', lbl = 'Risk level')
 p <- bp_base(ls = cw_bind[c('SA', '0.05')], var = 'age', lbl = 'Age category')

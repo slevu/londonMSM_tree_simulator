@@ -8,16 +8,16 @@ SL <- 1e3 # seq length
 DL <- 0.05 # limit of distance to record
 LN <- c(0.01, 0.5) # parms log-normal relaxed clock
 PID <- Sys.getpid()
-OUT <- 'data/simulations2/model1-simBaseline0/'
+OUT <- 'data/simulations2/model1-simEqualStage0/'
 
-# counterfactuals sim'ed separately, eg: 
-#~ nh_wtransm <- c( 
-#~ 	nh1 = 1
-#~ 	,nh2 = 1
-#~ 	,nh3 = 1
-#~ 	,nh4 = 1
-#~ 	,nh5 = 1
-#~ )
+##- equal rates
+nh_wtransm <- c( 
+	nh1 = 1
+	,nh2 = 1
+	,nh3 = 1
+	,nh4 = 1
+	,nh5 = 1
+)
 
 #~ o <- ode(y=y0, times=times_day, func=dydt, parms=list()  , method = 'adams')
 o <- ode(y=y0, times=times_day, func=dydt, parms=list()  , method = 'rk4')

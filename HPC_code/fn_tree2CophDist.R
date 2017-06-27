@@ -17,14 +17,17 @@ tree2CophDist <- function(yeartree, mu = .0015, seqlength = 1e3, dlim = NULL){
   el
 }
 
-tree2CophDist2 <- function(yeartree, mu = .0015, seqlength = 1e3, dlim = NULL){
+tree2CophDist2 <- function(yeartree, mu = .0018, seqlength = 1e3, dlim = NULL, parmLN = c(0.01, 0.5)){
   require(ape)
   set.seed(123)
   # (year * susbt/site/year * n site) = number of substitutions 
   yeartree$edge.length <- rpois(length(yeartree$edge.length), yeartree$edge.length * mu * seqlength ) / seqlength 
+  							* rlnorm(length(yeartree$edge.length), meanlog = parmLN[1], sdlog = parmLN[2]) # uncorrelated relaxed lognormal
   m <- cophenetic.phylo(yeartree)
   ##- stats on all dist
-  stats <- summary( m[lower.tri(m, diag = FALSE)] )
+  values <- m[lower.tri(m, diag = FALSE)]
+  stats <- summary( values )
+  h <- hist(values, plot = FALSE) # histogram object, plot(h, main =..., xlab =...)
   ##- list of unique pairs (unordered) n(n-1)/2
   xy <- t(combn(colnames(m), 2))
   ##- 3 columns df
@@ -33,5 +36,5 @@ tree2CophDist2 <- function(yeartree, mu = .0015, seqlength = 1e3, dlim = NULL){
   if(!is.null(dlim)){
 	  el <- el[el$distance < dlim,]
   }
-  return(list(stats = stats, dlim = dlim, D = el ))
+  return(list(stats = stats, h = h, dlim = dlim, D = el ))
 }

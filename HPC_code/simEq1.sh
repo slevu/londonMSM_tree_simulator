@@ -8,5 +8,5 @@ module load gcc/5.4.0 R/3.3.2
 module unload gcc/4.9.1 # ?
 unset R_HOME
 
-Rscript code/model1-simBaseline0.R $PWD
+Rscript code/model1-simEqualStage0.R $PWD
 
