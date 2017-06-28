@@ -3,7 +3,7 @@ require(phydynR)
 source('code/model1.R')
 
 MH <- 20 # max height in year for SA
-MU <- 1.8e-3 # mutation rate
+MU <- 1.9e-3 # mutation rate
 SL <- 1e3 # seq length
 DL <- 0.05 # limit of distance to record
 LN <- c(0.01, 0.5) # parms log-normal relaxed clock

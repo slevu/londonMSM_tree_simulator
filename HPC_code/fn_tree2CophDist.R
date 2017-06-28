@@ -21,8 +21,7 @@ tree2CophDist2 <- function(yeartree, mu = .0018, seqlength = 1e3, dlim = NULL, p
   require(ape)
   set.seed(123)
   # (year * susbt/site/year * n site) = number of substitutions 
-  yeartree$edge.length <- rpois(length(yeartree$edge.length), yeartree$edge.length * mu * seqlength ) / seqlength 
-  							* rlnorm(length(yeartree$edge.length), meanlog = parmLN[1], sdlog = parmLN[2]) # uncorrelated relaxed lognormal
+  yeartree$edge.length <- rpois(length(yeartree$edge.length), yeartree$edge.length * mu * seqlength ) / seqlength * rlnorm(length(yeartree$edge.length), meanlog = parmLN[1], sdlog = parmLN[2]) # uncorrelated relaxed lognormal
   m <- cophenetic.phylo(yeartree)
   ##- stats on all dist
   values <- m[lower.tri(m, diag = FALSE)]

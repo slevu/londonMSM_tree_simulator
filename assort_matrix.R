@@ -19,11 +19,11 @@ require(lattice)
 if(FALSE){
   ##---- load data ----
   if( any(grep("MacBook", Sys.info())) ){
-    path.results <- '../Box Sync/HPC/simulations/model1-sim_ucsd'
+    path.results <- '../Box Sync/HPC/simulations'
   } else {
-    path.results <- '../Box/HPC/simulations/model1-sim_ucsd' # imac
+    path.results <- '../Box/HPC/simulations' # imac
   }
-  cw_Baseline0 <- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
+  cw_Baseline0 <- readRDS(file = paste(path.results, 'model1-sim_ucsd/list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
 # names(cw_Baseline0) ; head(cw_Baseline0[[1]][[1]])
   ##- cluster and nbhsize lists only
   c_Base <- cw_Baseline0[-1]
@@ -60,13 +60,13 @@ system.time(
   }
 ) # 720s !
   
-  saveRDS(list_agmat_cl, file =  paste(path.results, 'list.agmat.clus.rds', sep = '/'))
+  saveRDS(list_agmat_cl, file =  paste(path.results, 'model1-sim_ucsd/list.agmat.clus.rds', sep = '/'))
   
   ##- rm functions and large file
   rm(list = lsf.str(), cw_Baseline0)
   
 } else {
-  list_agmat_cl <- readRDS("data/sim_ucsd_results2/list.agmat.clus.rds")
+  list_agmat_cl <- readRDS(paste(path.results, 'model1-sim_ucsd/list.agmat.clus.rds', sep = '/'))
 }
 # options(scipen = -100)
 names(list_agmat_cl) <- as.character( as.numeric(names(list_agmat_cl) ) )
@@ -75,7 +75,7 @@ names(list_agmat_cl) <- as.character( as.numeric(names(list_agmat_cl) ) )
 
 #######-------- laaaa 27/6/17 -------------------------
 ##--- Analyze age matrices computed on HPC 
-fn.mat <- list.files('RData', full.names = TRUE, path = "data/simulations2/age")
+fn.mat <- list.files('RData', full.names = TRUE, path = paste(path.results, 'model1_age', sep = '/'))
 
 ##---- aggregate ----
 ##- aggregate matrix cluster in a list by threshold
@@ -159,14 +159,14 @@ plots_grid <- function(mat, coef){
   return(p)
 }
 
-p_nb <- plots_grid(assor_mat_nb[3:6], coef_mat_nb[3:6])
+p_nb <- plots_grid(assor_mat_nb[1:4], coef_mat_nb[1:4])
 # print("Assortativity of neighborhood size by age")
 ##- plot
 # do.call(grid.arrange, c(p_nb, ncol = ceiling(length(p_nb)/2)) )
 
 ##---- heatmap 3 ----
 ##- ucsd
-p_cl <- plots_grid(assor_mat_cl[3:6], coef_mat_cl[3:6])
+p_cl <- plots_grid(assor_mat_cl[1:4], coef_mat_cl[1:4])
 # print("Assortativity of cluster size by age")
 # do.call(grid.arrange, c(p_cl, ncol = ceiling(length(p_cl)/2)) )
 
@@ -206,7 +206,7 @@ deme2stage <- function(deme){as.numeric( substr(regmatches( deme , regexpr( 'sta
 ##- run model
 if(FALSE){
   require(phydynR)
-source('model0.R')
+source('HPC_code/model1.R')
 o <- ode(y=y0, times=times_day, func=dydt, parms=list()  , method = 'adams')
 tfgy <- .tfgy( o )
 FF <- tfgy[[2]][[length(times_day)]]
@@ -214,9 +214,9 @@ fmat <- matrix(0, nrow = 4, ncol = 4)
 for (k in 1:120) for (l in 1:120){
   fmat[ deme2age( DEMES[k] ), deme2age(DEMES[l]) ] <- fmat[ deme2age( DEMES[k] ), deme2age(DEMES[l]) ] + FF[k,l]
 }
+saveRDS(fmat, file = paste(path.results, 'model1-sim_ucsd/model1.true_agemat.rds', sep = '/'))
 } else {
-  # saveRDS(fmat, file = "data/sim_ucsd_results2/model0.agemat.rds")
-  fmat <- readRDS(file = "data/sim_ucsd_results2/model0.agemat.rds")
+  fmat <- readRDS(file = paste(path.results, 'model1-sim_ucsd/model1.true_agemat.rds', sep = '/'))
 }
 ##- True assortativity in baseline simulation
 BASELINE_ASSRTCOEF <- mat2assortCoef( fmat )
