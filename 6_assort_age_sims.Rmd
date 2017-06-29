@@ -28,7 +28,7 @@ opts_chunk$set(dev = c('png','postscript') )
 * UCSD cluster size, neighborhood size, outdegrees, indegrees in `cw_Baseline0.rds` file
 * Age matrices computed on HPC in `data/simulations2/age/`
 
-```{r libs, include = detail_knitr}
+```{r libs, message=FALSE, warning=FALSE, include=detail_knitr}
 ```
 
 ```{r load data, echo = FALSE}
@@ -58,7 +58,7 @@ opts_chunk$set(dev = c('png','postscript') )
 ```{r heatmap 3, echo = detail_knitr, fig.path = './figure/'}
 ```
 
-* Caption: (a) SA; (b to e) ucsd cluster at 0.001, 0.005, 0.015, 0.05; (f to i) neighborhood at 0.001, 0.005, 0.015, 0.05
+* Caption: (a) SA; (b to e) ucsd cluster at `r paste(names(list_agmat_cl), sep = ',')`; (f to i) neighborhood at `r paste(names(list_agmat_cl), sep = ',')`
 * Assortativity mostly detected at younger age
 * And at lower threshold
 
@@ -72,7 +72,7 @@ opts_chunk$set(dev = c('png','postscript') )
 ```
 
 ##### Distribution of estimated assortativity coefficient by method
-```{r boxplot 1, echo = detail_knitr, fig.path = './figure/'}
+```{r boxplot 1, echo=detail_knitr, fig.path='./figure/', message=FALSE, warning=FALSE}
 ```
 
 ##### Distribution of estimated assortativity coefficient (log) by method

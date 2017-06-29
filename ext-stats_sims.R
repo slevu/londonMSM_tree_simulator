@@ -7,8 +7,8 @@ library(cowplot)
 library(reshape2)
 
 ##---- load data ----
-cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
-cw <- cw_Baseline0[c('SA', '0.001', '0.005', '0.015', '0.05')]
+source('load_sim_results.R')
+cw <- cw_Baseline0 #[c('SA', '0.001', '0.005', '0.015', '0.05')]
 # names(cw)
 
 ##- same order of id
@@ -83,15 +83,16 @@ logit.risk <- function(df){
   return(c(p = p, OR = or))
 }
 ##- save p values and OR + CI (takes time !)
-if(!file.exists("data/sim_ucsd_results2/logit_cs.rds")){
+LOGIT <- paste(path.results, 'model1-sim_ucsd/logit_cs.rds', sep = '/')
+if(!file.exists(LOGIT)){
   system.time(
   logit_cs <- lapply(cw[-1], function (x)  {
     sapply(x, function(df) logit.risk(df) )
   } )
   ) # 34s
-  saveRDS(logit_cs, file = "data/sim_ucsd_results2/logit_cs.rds")
+  saveRDS(logit_cs, file = LOGIT)
 } else {
-  logit_cs <- readRDS(file = "data/sim_ucsd_results2/logit_cs.rds")
+  logit_cs <- readRDS(file = LOGIT)
 }
 # str(logit_cs[[1]])
 ##- table of proportion p-values < 0.05 and mean OR
@@ -168,8 +169,8 @@ super_boxplot_base(p_mult)
 ##----  long ----
 ##- calculate individual mean size and outdegree over sims
 ## change structure in long table (first few for speed and 4 higher thr)
-.n <- 10 
-.m <- sample(1:100, .n)
+#.n <- 10 
+.m <- 1:10 #.m <- sample(1:100, .n)
 z <- lapply(cw, function(x) do.call(rbind, x[.m]))
 # str(a)
 

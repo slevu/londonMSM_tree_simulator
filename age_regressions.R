@@ -7,20 +7,20 @@ library(scales)
 
 ##---- associations ----
 ## age vs sizes, degrees at different thr
-cw_Baseline0 <- readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
-names(cw_Baseline0)
-cw_Baseline0 <- cw_Baseline0[c('SA', '0.001', '0.005', '0.015', '0.05')]
+##-- load data --
+source('load_sim_results.R')
+#cw_Baseline0 <- cw_Baseline0[c('SA', '0.001', '0.005', '0.015', '0.05')]
 
 ## change structure in long table (!!!! first few for speed)
-.n <- 10 
-.m <- sample(1:100, .n)
+#.n <- 10 
+.m <- 1:3#.m <- sample(1:100, .n)
 c <- lapply(cw_Baseline0, 
             function(x) do.call(rbind, x[.m]))
 
-options(scipen = -100)
-names(c)[-1] <- as.character( as.numeric(names(c)[-1]) )
-options(scipen = 0) 
-# rm(cw_Baseline0)
+# options(scipen = -100)
+# names(c)[-1] <- as.character( as.numeric(names(c)[-1]) )
+# options(scipen = 0) 
+# # rm(cw_Baseline0)
 
 # head(c[[2]])
 # names(c)
@@ -92,7 +92,7 @@ p %+% tot_win[tot_win$L1 %in% c('NA','1.5e-02'),] + facet_wrap(~ variable, nrow 
 ##- summarize regression on bootstrap
  
 source('functions.R')
-compare.reg.bs2
+#compare.reg.bs2
 
 model1 <- "y ~ factor(age)"
 model2 <- "y ~ factor(age) + factor(stage) + factor(age)*factor(stage)"

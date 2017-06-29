@@ -6,13 +6,8 @@ library(reshape2)
 library(cowplot)
 
 ##---- load data ----
-if( any(grep("MacBook", Sys.info())) ){
-  path.results <- '../Box Sync/HPC/simulations/model1-sim_ucsd'
-} else {
-  path.results <- '../Box/HPC/simulations/model1-sim_ucsd' # imac
-}
-cw_Baseline0 <- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
-# readRDS(file = "data/sim_ucsd_results2/list.sim.clus-outdeg.Baseline0.rds" )
+source('load_sim_results.R')
+
 cw <- cw_Baseline0 #[c('SA', '0.001', '0.005', '0.015', '0.05')]
 # names(cw)
 
@@ -134,7 +129,7 @@ p <- bp_base(ls = cw_bind[c('SA', '0.05')], var = 'risk', lbl = 'Risk level')
 p <- bp_base(ls = cw_bind[c('SA', '0.05')], var = 'age', lbl = 'Age category')
 p <- bp_base(ls = cw_bind[c('SA', '0.05')], var = 'stage', lbl = 'Infection stage')
 
-tapply(cw_bind[['0.015']]$size, cw_bind[['0.015']]$stage, summary )
-tapply(cw[['0.015']][[1]]$size, cw[['0.015']][[1]]$stage, summary )
-summary(cw[['0.015']][[1]]$size)
-cw[['0.015']][[1]][cw[['0.015']][[1]]$size == 20, ]
+# tapply(cw_bind[['0.015']]$size, cw_bind[['0.015']]$stage, summary )
+# tapply(cw[['0.015']][[1]]$size, cw[['0.015']][[1]]$stage, summary )
+# summary(cw[['0.015']][[1]]$size)
+# cw[['0.015']][[1]][cw[['0.015']][[1]]$size == 20, ]

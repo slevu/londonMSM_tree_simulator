@@ -16,14 +16,8 @@ require(lattice)
 
 ##--- compute age matrix for UCSD cluster size  ---
 ##---- load data ----
-if(FALSE){
-  ##---- load data ----
-  if( any(grep("MacBook", Sys.info())) ){
-    path.results <- '../Box Sync/HPC/simulations'
-  } else {
-    path.results <- '../Box/HPC/simulations' # imac
-  }
-  cw_Baseline0 <- readRDS(file = paste(path.results, 'model1-sim_ucsd/list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
+source('load_sim_results.R')
+
 # names(cw_Baseline0) ; head(cw_Baseline0[[1]][[1]])
   ##- cluster and nbhsize lists only
   c_Base <- cw_Baseline0[-1]
@@ -73,7 +67,6 @@ names(list_agmat_cl) <- as.character( as.numeric(names(list_agmat_cl) ) )
 # options(scipen = 0)
 # names(list_agmat_cl); head(names(list_agmat_cl[[1]])); lapply(list_agmat_cl, function(x) x[1])
 
-#######-------- laaaa 27/6/17 -------------------------
 ##--- Analyze age matrices computed on HPC 
 fn.mat <- list.files('RData', full.names = TRUE, path = paste(path.results, 'model1_age', sep = '/'))
 
