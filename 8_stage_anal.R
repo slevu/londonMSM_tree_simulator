@@ -8,19 +8,20 @@ library(cowplot)
 library(scales)
 
 ##---- source ----
-source('model0.R') # contains parameter values for sims
+source('model1.R') # contains parameter values for sims
 source('Erik_code/stage_rate_estimator1.R')
 
 ##---- cohort effect control ----
 THRESHOLD_YRS <- 2
 
 ##---- od by stage helper ----
+## fn <- list.sims[['Baseline0']][1]
 fns2od.by.stage <- function( fns )
 {
   o <- list()
   for (fn in fns){
     load(fn) # daytree, bdt, W, cd4s, sampleDemes, plwhiv, newinf, MH
-    samplesInCohort <- names(daytree$sampleTimes[daytree$sampleTimes > (max(daytree$sampleTimes)-THRESHOLD_YRS*365) ] )
+    samplesInCohort <- names(bdt$sampleTimes[bdt$sampleTimes > (max(bdt$sampleTimes)-THRESHOLD_YRS*365) ] )
     samplesInCohort_donors <- intersect( samplesInCohort, W$donor)
     
     i <- which( (W$donor %in% samplesInCohort) & (W$recip %in% samplesInCohort ) )
@@ -34,18 +35,19 @@ fns2od.by.stage <- function( fns )
       })
     })
     
-    rownames(daytree$sampleStates) <- daytree$tip.label
-    stages <- setNames( sapply( 1:nrow(daytree$sampleStates), function(k){
-      deme <- DEMES[ which.max(daytree$sampleStates[k,] )  ]
+    rownames(bdt$sampleStates) <- bdt$tip.label
+    stages <- setNames( sapply( 1:nrow(bdt$sampleStates), function(k){
+      deme <- DEMES[ which.max(bdt$sampleStates[k,] )  ]
       stage <- strsplit( deme, '.' , fixed=T)[[1]][1]
       as.numeric( tail( strsplit(stage, '')[[1]], 1 ) )
-    }), daytree$tip.label)
+    }), bdt$tip.label)
     
     stages <- stages[ names(stages) %in% samplesInCohort ]
     
     od_by_stage <- lapply( 1:5, function(stage){
       od[ names(stages)[which(stages==stage)] ]
     })
+    names(od_by_stage) <- 1:5
 
     o[[fn]] <- od_by_stage
     # print(date())
@@ -54,9 +56,13 @@ fns2od.by.stage <- function( fns )
 }
 
 ##---- paths ----
-##- used for several rounds of simulations
-path.sims <- 'data/simulations2/model0-simulate'
-path.results <- 'data/sim_ucsd_results2'
+if( any(grep("MacBook", Sys.info())) ){
+  path.sims <- '../Box Sync/HPC/simulations/model1-sim' #'data/simulations2/model0-simulate'
+  path.results <- '../Box Sync/HPC/simulations/model1-sim_ucsd'
+} else {
+  path.sims <- '../Box/HPC/simulations/model1-sim'
+  path.results <- '../Box/HPC/simulations/model1-sim_ucsd' # imac
+}
 
 ##- scenario
 scenario <- c("Baseline0", "EqualStage0")
@@ -71,6 +77,7 @@ list.sims <- lapply(scenario, function(x){
 
 ##---- od by stage ----
 ## list of od vectors by stage, named by tips
+ODSTAGE <- paste(path.results, 'od.by.stage.RData', sep = '/')
 if(FALSE){
 system.time(
 obs_bl <- fns2od.by.stage( list.sims[["Baseline0"]] )
@@ -79,9 +86,9 @@ system.time(
 obs_er <- fns2od.by.stage( list.sims[["EqualStage0"]] )
 ) # 94
 
-# save(obs_bl, obs_er, file = 'data/simulations2/od.by.stage.RData' )
+save(obs_bl, obs_er, file = ODSTAGE )
 } else {
-  load('data/simulations2/od.by.stage.RData')
+  load(ODSTAGE)
 }
 
 # str(obs_er[1])
@@ -163,6 +170,14 @@ axis(1, at = c(1,1:10*10))
 title(ylab = 'Rate difference: EHI - non EHI', xlab = 'Simulation replicate', cex.lab = 1.2)
 abline( h = 0, col = 'red' )
 
+##---- apply rate ratio ----
+rate_ratio_ehi
+str(obs_bl) # nsim lists of 5 lists of od by stage 
+od_by_stage <- obs_bl[[1]]
+rrs <- rate_ratio_ehi(obs_bl[[1]] , nreps=1e3 )
+## get rr = 0.5 and rd = -.35 ### problem, debug the functions
+####-------------------------------------------------- lllllllaaaaaaa 29/6/17 -----!!!!!!
+
 ###################--- CLUSTERS ---###
 ##---- clusters ----
 ## questions:
@@ -197,8 +212,8 @@ prune.clus <- function(a, t , st){
 
 ##---- pruning ---
 ##- sampling times (same across all sims)
-load(list.sims[["Baseline0"]][[1]]) # for daytree
-st_yrs <- days2years(daytree$sampleTimes)
+load(list.sims[["Baseline0"]][[1]]) # for bdt
+st_yrs <- days2years(bdt$sampleTimes)
 
 system.time(
 l_Baseline0.pruned <- lapply(l_Baseline0, function(x){
