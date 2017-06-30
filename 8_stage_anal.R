@@ -14,6 +14,27 @@ source('Erik_code/stage_rate_estimator1.R')
 ##---- cohort effect control ----
 THRESHOLD_YRS <- 2
 
+##---- paths ----
+if( any(grep("MacBook", Sys.info())) ){
+  path.sims <- '../Box Sync/HPC/simulations/model1-sim' #'data/simulations2/model0-simulate'
+  path.results <- '../Box Sync/HPC/simulations/model1-sim_ucsd'
+} else {
+  path.sims <- '../Box/HPC/simulations/model1-sim'
+  path.results <- '../Box/HPC/simulations/model1-sim_ucsd' # imac
+}
+
+##- scenario
+scenario <- c("Baseline0", "EqualStage0")
+scenario <- setNames(scenario, scenario) # useful to name list in lapply
+
+##- list of sims files and distances files
+list.sims <- lapply(scenario, function(x){
+  list.files('RData', full.names = TRUE, 
+             path = paste(path.sims, x, sep = '') )
+})
+# str(list.sims)
+
+
 ##---- od by stage helper ----
 ## fn <- list.sims[['Baseline0']][1]
 fns2od.by.stage <- function( fns )
@@ -21,7 +42,7 @@ fns2od.by.stage <- function( fns )
   o <- list()
   for (fn in fns){
     load(fn) # daytree, bdt, W, cd4s, sampleDemes, plwhiv, newinf, MH
-    samplesInCohort <- names(bdt$sampleTimes[bdt$sampleTimes > (max(bdt$sampleTimes)-THRESHOLD_YRS*365) ] )
+    samplesInCohort <- names(bdt$sampleTimes[bdt$sampleTimes > (max(bdt$sampleTimes)-THRESHOLD_YRS) ] )
     samplesInCohort_donors <- intersect( samplesInCohort, W$donor)
     
     i <- which( (W$donor %in% samplesInCohort) & (W$recip %in% samplesInCohort ) )
@@ -48,32 +69,12 @@ fns2od.by.stage <- function( fns )
       od[ names(stages)[which(stages==stage)] ]
     })
     names(od_by_stage) <- 1:5
-
+    
     o[[fn]] <- od_by_stage
     # print(date())
   }
   o
 }
-
-##---- paths ----
-if( any(grep("MacBook", Sys.info())) ){
-  path.sims <- '../Box Sync/HPC/simulations/model1-sim' #'data/simulations2/model0-simulate'
-  path.results <- '../Box Sync/HPC/simulations/model1-sim_ucsd'
-} else {
-  path.sims <- '../Box/HPC/simulations/model1-sim'
-  path.results <- '../Box/HPC/simulations/model1-sim_ucsd' # imac
-}
-
-##- scenario
-scenario <- c("Baseline0", "EqualStage0")
-scenario <- setNames(scenario, scenario) # useful to name list in lapply
-
-##- list of sims files and distances files
-list.sims <- lapply(scenario, function(x){
-  list.files('RData', full.names = TRUE, 
-             path = paste(path.sims, x, sep = '') )
-})
-# str(list.sims)
 
 ##---- od by stage ----
 ## list of od vectors by stage, named by tips
@@ -106,17 +107,19 @@ od_stage <- rbind(
                   )
 head(od_stage)
 
-od_stage_boxplot <- function(df){
-  p <- ggplot(df, aes(factor(L2), value, colour = scenario), outlier.colour = alpha(colours(), 0.001) ) + geom_boxplot() + # facet_wrap(~ scenario) + 
-    theme(legend.position="top") + 
-    background_grid() +
-    theme(strip.background = element_blank()) + 
-    xlab("Infection stage") + ylab("Out-degrees")
-  p
+if(FALSE){
+  od_stage_boxplot <- function(df){
+    p <- ggplot(df, aes(factor(L2), value, colour = scenario), outlier.colour = alpha(colours(), 0.001) ) + geom_boxplot() + # facet_wrap(~ scenario) + 
+      theme(legend.position="top") + 
+      background_grid() +
+      theme(strip.background = element_blank()) + 
+      xlab("Infection stage") + ylab("Out-degrees")
+    p
+  }
+  
+  bp <- od_stage_boxplot(od_stage)
+  bp
 }
-
-bp <- od_stage_boxplot(od_stage)
-bp
 
 ##- better and simpler without outliers ?
 boxplot(value ~ L2*scenario, data = od_stage, outline = FALSE)
@@ -171,11 +174,84 @@ title(ylab = 'Rate difference: EHI - non EHI', xlab = 'Simulation replicate', ce
 abline( h = 0, col = 'red' )
 
 ##---- apply rate ratio ----
-rate_ratio_ehi
+## od_by_stage = obs_bl; iobs = 1
+est.rr.batch <- function( od_by_stage, N = 1e3){
+  # od_by_stage list of out degree by stage for multiple experiments
+  # : list of lists with 5 components for each stage
+  o <- list()
+  for (iobs in 1:length(od_by_stage ))
+  {
+    obs <- od_by_stage[[iobs]] 
+    rrs <- rate_ratio_ehi(obs , nreps = N )
+    o[[iobs]] <- rrs 
+    #print( summary( rrs )); print(quantile( rrs, prob = c(.025, .5, .975))); cat('\n\n')
+  }
+  ix <- order ( sapply( o, median))
+  o[ix] # sort in order of increasing median rates
+}
+
 str(obs_bl) # nsim lists of 5 lists of od by stage 
-od_by_stage <- obs_bl[[1]]
-rrs <- rate_ratio_ehi(obs_bl[[1]] , nreps=1e3 )
-## get rr = 0.5 and rd = -.35 ### problem, debug the functions
+rr_er <- est.rr.batch( obs_er, N = 100 )
+rr_bl <- est.rr.batch( obs_bl, N = 100 )
+
+##- under normal assumption of rate ratio, how many simulations give:
+## 97.5% of rate ratio significantly larger than 1 in baseline scenario (TP)
+## 97.5% of rate ratio significantly smaller than 1 in baseline scenario (TN)
+## or one-tail test at 95%
+df <- melt(rr_bl)
+plot(value ~ jitter(L1, 1), col = alpha('black', 0.4), data = df)
+
+boxplot(value ~ L1, data = df, ylab = 'rate ratio')
+stripchart(value ~ L1, vertical = TRUE, data = df, 
+           method = "jitter", jitter  = .2, pch = 1, add = TRUE, col = alpha('blue', 0.4))
+?stripchart
+
+str(rr_er)
+sapply(rr_er, function(x) quantile(x, prob = c(.05, .5, .95)))
+sapply(rr_bl, function(x) quantile(x, prob = c(.05, .5, .95)))
+
+bp_rate <- function(lsim, ylabel = 'Rate difference: EHI - non EHI',
+                    xlabel = 'Simulation replicate', refy = 0) {
+  boxplot( unname( lsim ), main = '', xaxt="n")
+  axis(1, at = c(1,1:10*10))
+  title(ylab = ylabel, xlab = xlabel, cex.lab = 1.2)
+  abline( h = refy, col = 'red' )
+}
+bp_rate(rr_er, ylabel = "Rate ratio: EHI vs non EHI", refy = 1)
+bp_rate(rr_bl, ylabel = "Rate ratio: EHI vs non EHI", refy = 1)
+
+myboxplot.stats <-  function (x, coef = NULL, do.conf = TRUE, do.out = 
+                                TRUE) 
+{ 
+  nna <- !is.na(x) 
+  n <- sum(nna) 
+  stats <- quantile(x, c(.05,.25,.5,.75,.95), na.rm = TRUE) 
+  iqr <- diff(stats[c(2, 4)]) 
+  out <- x < stats[1] | x > stats[5] 
+  conf <- if (do.conf) 
+    stats[3] + c(-1.58, 1.58) * diff(stats[c(2, 4)])/sqrt(n) 
+  list(stats = stats, n = n, conf = conf, out = x[out & nna]) 
+} 
+bxp(myboxplot.stats(rr_er))
+z <- boxplot(value ~ L1, data = df, plot =FALSE)
+z$stats <- sapply(rr_er, function(x) quantile(x, prob = c(.05, .25, .5, .75, .95)))
+bxp(z)
+sappply
+
+##- use 95% quantile instead of at 1.5 * IQR
+bp_rate_qt <- function(lsim, ylabel = 'Rate difference: EHI - non EHI',
+                    xlabel = 'Simulation replicate', refy = 0) {
+  z <- boxplot( unname( lsim ), main = '', xaxt="n", plot = FALSE)
+  z$stats <- sapply(lsim, function(x) quantile(x, prob = c(.05, .25, .5, .75, .95)))
+  bxp(z)
+  #axis(1, at = c(1,1:10*10))
+  title(ylab = ylabel, xlab = xlabel, cex.lab = 1.2)
+  abline( h = refy, col = 'red' )
+}
+
+bp_rate_qt(rr_er, ylabel = "Rate ratio: EHI vs non EHI", refy = 1)
+bp_rate(rr_bl, ylabel = "Rate ratio: EHI vs non EHI", refy = 1)
+## get rr = 0.5 and rd = -.35 ### problem, debug the functions (ok: use year sampletimes)
 ####-------------------------------------------------- lllllllaaaaaaa 29/6/17 -----!!!!!!
 
 ###################--- CLUSTERS ---###
