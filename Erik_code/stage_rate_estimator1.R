@@ -1,15 +1,25 @@
 # derive proportion of time spend in stage | not diagnosed:
 {
-	progparms<- c(	gamma0 = 1/(6/12) # EHI
-	  , gamma1 = 0.157 
-	  , gamma2 = 0.350
-	  , gamma3 = 0.282
-	  , gamma4 = .434 #aids 
-	  , pstartstage1 = 0.58
-	  , pstartstage2 = 0.23  #reg4 combine these 
-	  , pstartstage3 = 0.16
-	  , pstartstage4 = 0.03
-	)
+	# progparms_cascade <- c(	gamma0 = 1/(6/12) # EHI
+	#   , gamma1 = 0.157 
+	#   , gamma2 = 0.350
+	#   , gamma3 = 0.282
+	#   , gamma4 = .434 #aids 
+	#   , pstartstage1 = 0.58
+	#   , pstartstage2 = 0.23  #reg4 combine these 
+	#   , pstartstage3 = 0.16
+	#   , pstartstage4 = 0.03
+	# )
+	progparms <- c(	gamma0 = 1/.5 # EHI
+  , gamma1 = 1/3.32 
+  , gamma2 = 1/2.7
+  , gamma3 = 1/5.5
+  , gamma4 = 1/5.06 #aids 
+  , pstartstage1 = 0.76
+  , pstartstage2 = 0.19  #reg4 combine these 
+  , pstartstage3 = 0.05
+  , pstartstage4 = 0
+  )
 	pstartstage <- progparms[ c('pstartstage1','pstartstage2', 'pstartstage3', 'pstartstage4') ]
 	DEMENAMES <- paste(sep='', 'stage', 0:4)
 	
