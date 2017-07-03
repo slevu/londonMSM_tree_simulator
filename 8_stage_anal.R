@@ -105,7 +105,7 @@ od_stage <- rbind(
   cbind(od_stage_bl[,-3], scenario = 'BA'),
   cbind(od_stage_er[,-3], scenario = 'ER')
                   )
-head(od_stage)
+#head(od_stage)
 
 if(FALSE){
   od_stage_boxplot <- function(df){
@@ -129,8 +129,8 @@ boxplot(value ~ L2*scenario, data = od_stage, outline = FALSE)
 wtest_er <- lapply( obs_er, function(obs) {
   wilcox.test( obs[[1]] / pstage[1], 
   # NOTE pstage[1] is propto average duration of EHI
-  obs[[5]] / (1-pstage[1] ), 
-  # c(obs[[2]],obs[[3]],obs[[4]], obs[[5]]) / (1-pstage[1] ),  
+  obs[[5]] / (1 - pstage[1] ), 
+  #c(obs[[2]],obs[[3]],obs[[4]], obs[[5]]) / (1-pstage[1] ),  
   # NOTE 1-pstage[1] is propto average duration of the rest of the infectious period
   alternative = 'greater' 
   # NOTE this is a one-tailed test. H1: EHI rate > !EHI rate
@@ -139,26 +139,24 @@ wtest_er <- lapply( obs_er, function(obs) {
 
 ## U test for the baseline simulations: 
 wtest_bl <- lapply( obs_bl, function(obs) {
-  wilcox.test( obs[[1]] / pstage[1] 
-               , obs[[5]] / (1-pstage[1] ) 
-               , alternative = 'greater'
+  wilcox.test( obs[[1]] / pstage[1], 
+               obs[[5]] / (1-pstage[1] ),
+               #c(obs[[2]],obs[[3]],obs[[4]], obs[[5]]) / (1-pstage[1] ),
+               alternative = 'greater'
   )
 })
 
 type1error <- mean( sapply( wtest_er, function(wt) wt$p.value) < .05 ) 
 type2error <- mean( sapply(wtest_bl, function(wt) wt$p.value) > .05 ) 
 
-type1error
-type2error
-# est.rd.batch
-# rate.difference.ehi
-# pstage
+type1error # falsely detecting a difference
+type2error # not detecting the difference 
 
 ##---- apply rate difference ----
 #- echo = FALSE
 rd_er <- est.rd.batch( obs_er )
-rd_br <- est.rd.batch( obs_bl )
-# str(rd_br)
+rd_bl <- est.rd.batch( obs_bl )
+# str(rd_bl)
 
 ##---- plot errors SA ----
 ##- EHI/Late rate difference (Equal transmission rates)
@@ -168,7 +166,7 @@ title(ylab = 'Rate difference: EHI - non EHI', xlab = 'Simulation replicate', ce
 abline( h = 0, col = 'red' )
 
 ##- EHI/Late rate difference (Baseline)
-boxplot( unname( rd_br ), main = '', xaxt="n")
+boxplot( unname( rd_bl ), main = '', xaxt="n")
 axis(1, at = c(1,1:10*10))
 title(ylab = 'Rate difference: EHI - non EHI', xlab = 'Simulation replicate', cex.lab = 1.2)
 abline( h = 0, col = 'red' )
@@ -182,7 +180,7 @@ est.rr.batch <- function( od_by_stage, N = 1e3){
   for (iobs in 1:length(od_by_stage ))
   {
     obs <- od_by_stage[[iobs]] 
-    rrs <- rate_ratio_ehi(obs , nreps = N )
+    rrs <- rate_ratio_ehi(obs , nreps = N ) # rate_ratio.2(obs , nreps = N )[['rr']]
     o[[iobs]] <- rrs 
     #print( summary( rrs )); print(quantile( rrs, prob = c(.025, .5, .975))); cat('\n\n')
   }
@@ -190,53 +188,98 @@ est.rr.batch <- function( od_by_stage, N = 1e3){
   o[ix] # sort in order of increasing median rates
 }
 
-str(obs_bl) # nsim lists of 5 lists of od by stage 
-rr_er <- est.rr.batch( obs_er, N = 100 )
-rr_bl <- est.rr.batch( obs_bl, N = 100 )
+#str(obs_bl) # nsim lists of 5 lists of od by stage 
+rr_er <- est.rr.batch( obs_er, N = 1000 )
+rr_bl <- est.rr.batch( obs_bl, N = 1000 )
 
-##- under normal assumption of rate ratio, how many simulations give:
-## 97.5% of rate ratio significantly larger than 1 in baseline scenario (TP)
-## 97.5% of rate ratio significantly smaller than 1 in baseline scenario (TN)
-## or one-tail test at 95%
-df <- melt(rr_bl)
-plot(value ~ jitter(L1, 1), col = alpha('black', 0.4), data = df)
+if(FALSE){ # test
+  ##- under normal assumption of rate ratio, how many simulations give:
+  ## 97.5% of rate ratio significantly larger than 1 in baseline scenario (TP)
+  ## 97.5% of rate ratio significantly smaller than 1 in baseline scenario (TN)
+  ## or one-tail test at 95%
+  # df <- melt(rr_bl)
+  # plot(value ~ jitter(L1, 1), col = alpha('black', 0.4), data = df)
+  # 
+  # boxplot(value ~ L1, data = df, ylab = 'rate ratio')
+  # stripchart(value ~ L1, vertical = TRUE, data = df, 
+  #            method = "jitter", jitter  = .2, pch = 1, add = TRUE, col = alpha('blue', 0.4))
+  # ?stripchart
+  
+  ## 5% and 95% quantiles to draw confidence band
+  band_rd_er <- sapply(rd_er, function(x) quantile(x, prob = c(.05, .5, .95)))
+  band_rd_bl <- sapply(rd_bl, function(x) quantile(x, prob = c(.05, .5, .95)))
+  
+  band_rr_er <- sapply(rr_er, function(x) quantile(x, prob = c(.05, .5, .95)))
+  band_rr_bl <- sapply(rr_bl, function(x) quantile(x, prob = c(.05, .5, .95)))
+  
+  ## table: count CI out of target. RMSE ? need true value
+  ##-----lllllaaa
+  tw_bl <- c(1, 0.1, 0.1 , 0.1, 0.3) # transmission weights
+  tw_er <- rep(1, 5) # transmission weights
+  
+  true_rates <- function(tw){
+    trans_rate_ehi <- tw[1]
+    #trans_rate_non_ehi <- sum(tw[2:5] * pstage[2:5]) / sum(pstage[2:5]) # or 
+    trans_rate_non_ehi <- tw[5]
+    true_rr <- trans_rate_ehi / trans_rate_non_ehi
+    true_rd <- trans_rate_ehi - trans_rate_non_ehi
+    list(true_rr = true_rr, true_rd = true_rd)
+  }
+  true_rates(tw_bl) # true_rates(tw_er)
+  
+  sum( apply(band_rr_bl, 2, function(x) x[1] > 1) ) # 81
+  sum( apply(band_rr_er, 2, function(x) x[1] < 1 & x[3] > 1) ) # 80
+  sum( apply(band_rd_bl, 2, function(x) x[1] > 0) ) # 82
+  sum( apply(band_rd_er, 2, function(x) x[1] < 0 & x[3] > 0) ) # 81
+  
+  ## plot only 5-95 band of asymptotic distribution
+  ## x = band_rr_er, refy = 1
+  ## 1. with band
+  if(FALSE){
+    plot_band <- function(x, refy = 1){
+      nx <- ncol(x)
+      plot(1:nx, x[2,], xlab = "Simulation replicate", ylab = "95%CI transmission rate ratio", type = "n")
+      polygon(c(1:nx, rev(1:nx)), c(x[1,], rev(x[3,])), col = "grey75", border = FALSE)
+      #lines(1:nx, x[2,]) # median
+      abline( h = refy, col = 'red' )
+    }
+    
+    plot_band(band_rd_er, refy = 0)
+    plot_band(band_rd_bl, refy = 0)
+    
+    plot_band(band_rr_er)
+    plot_band(band_rr_bl)
+  }
+  
+  
+  ##2. with lines
+  plot_lines <- function(x, refy =1){
+    nx <- ncol(x)
+    plot(1:nx, x[2,], xlab = "Simulation replicate", ylab = "95%CI transmission rate ratio", type = "n")
+    for (i in 1:nx){
+      lines(x = c(i,i), y = c(x[1, i], x[3, i]))
+    }
+    abline( h = refy, col = 'red' )
+  }
+  
+  plot_lines(band_rd_er, refy = 0)
+  plot_lines(band_rd_bl, refy = 0)
+  
+  plot_lines(band_rr_er)
+  plot_lines(band_rr_bl)
+  
+  bp_rate <- function(lsim, ylabel = 'Rate difference: EHI - non EHI',
+                      xlabel = 'Simulation replicate', refy = 0) {
+    boxplot( unname( lsim ), main = '', xaxt="n")
+    axis(1, at = c(1,1:10*10))
+    title(ylab = ylabel, xlab = xlabel, cex.lab = 1.2)
+    abline( h = refy, col = 'red' )
+  }
+  bp_rate(rr_er, ylabel = "Rate ratio: EHI vs non EHI", refy = 1)
+  bp_rate(rr_bl, ylabel = "Rate ratio: EHI vs non EHI", refy = 1)
+ 
+} # test
 
-boxplot(value ~ L1, data = df, ylab = 'rate ratio')
-stripchart(value ~ L1, vertical = TRUE, data = df, 
-           method = "jitter", jitter  = .2, pch = 1, add = TRUE, col = alpha('blue', 0.4))
-?stripchart
-
-str(rr_er)
-sapply(rr_er, function(x) quantile(x, prob = c(.05, .5, .95)))
-sapply(rr_bl, function(x) quantile(x, prob = c(.05, .5, .95)))
-
-bp_rate <- function(lsim, ylabel = 'Rate difference: EHI - non EHI',
-                    xlabel = 'Simulation replicate', refy = 0) {
-  boxplot( unname( lsim ), main = '', xaxt="n")
-  axis(1, at = c(1,1:10*10))
-  title(ylab = ylabel, xlab = xlabel, cex.lab = 1.2)
-  abline( h = refy, col = 'red' )
-}
-bp_rate(rr_er, ylabel = "Rate ratio: EHI vs non EHI", refy = 1)
-bp_rate(rr_bl, ylabel = "Rate ratio: EHI vs non EHI", refy = 1)
-
-myboxplot.stats <-  function (x, coef = NULL, do.conf = TRUE, do.out = 
-                                TRUE) 
-{ 
-  nna <- !is.na(x) 
-  n <- sum(nna) 
-  stats <- quantile(x, c(.05,.25,.5,.75,.95), na.rm = TRUE) 
-  iqr <- diff(stats[c(2, 4)]) 
-  out <- x < stats[1] | x > stats[5] 
-  conf <- if (do.conf) 
-    stats[3] + c(-1.58, 1.58) * diff(stats[c(2, 4)])/sqrt(n) 
-  list(stats = stats, n = n, conf = conf, out = x[out & nna]) 
-} 
-bxp(myboxplot.stats(rr_er))
-z <- boxplot(value ~ L1, data = df, plot =FALSE)
-z$stats <- sapply(rr_er, function(x) quantile(x, prob = c(.05, .25, .5, .75, .95)))
-bxp(z)
-sappply
 
 ##- use 95% quantile instead of at 1.5 * IQR
 bp_rate_qt <- function(lsim, ylabel = 'Rate difference: EHI - non EHI',
@@ -250,7 +293,7 @@ bp_rate_qt <- function(lsim, ylabel = 'Rate difference: EHI - non EHI',
 }
 
 bp_rate_qt(rr_er, ylabel = "Rate ratio: EHI vs non EHI", refy = 1)
-bp_rate(rr_bl, ylabel = "Rate ratio: EHI vs non EHI", refy = 1)
+bp_rate_qt(rr_bl, ylabel = "Rate ratio: EHI vs non EHI", refy = 1)
 ## get rr = 0.5 and rd = -.35 ### problem, debug the functions (ok: use year sampletimes)
 ####-------------------------------------------------- lllllllaaaaaaa 29/6/17 -----!!!!!!
 

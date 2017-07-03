@@ -45,7 +45,7 @@ rate_ratio_ehi <- function(od_by_stage , nreps=1e3 )
 	# rate ratio: 
 	rr <- as.vector(sapply( 1:nreps, function(irep){
 		mod_ehi <- mod_resamples[[1]][irep] # mean out degree ehi
-		mod_non_ehi <- mod_resamples[[5]][irep] # mean out degree non ehi 
+		mod_non_ehi <- mod_resamples[[5]][irep] # mean out degree non ehi
 		rate_non_ehi <-  max(0,(mod_non_ehi - mod_ehi)) / (1 - pstage[1] ) 
 		rate_ehi <- ( mod_ehi / pstage[1] )
 		rate_ehi / rate_non_ehi
@@ -88,4 +88,27 @@ est.rd.batch <- function( od_by_stage ){
 	}
 	ix <- order ( sapply( o, median))
 	o[ix] # sort in order of increasing median rates
+}
+
+##- test: account for all non primary stages
+rate_ratio.2 <- function(od_by_stage , nreps=1e3 )
+{
+  #~ 	ir_stage <- isoreg( stages[names(od)] , od )
+  mod_resamples <- lapply( 1:5, function(stage){
+    n <- length(od_by_stage[[stage]])
+    rnorm( nreps, mean(od_by_stage[[stage]]) , sd = sd(od_by_stage[[stage]]) / sqrt(n-1))
+  })
+  
+  # rate ratio: 
+  rates <- lapply( 1:nreps, function(irep){
+    mod_ehi <- mod_resamples[[1]][irep] # mean out degree ehi
+    mod_non_ehi <- sapply(mod_resamples[2:5], '[[', irep) # mean out degree non ehi
+    rate_non_ehi <- max(0, (sum(mod_non_ehi * pstage[2:5]) - mod_ehi) / sum(pstage[2:5]))
+    #rate_non_ehi <-  max(0,(mod_non_ehi - mod_ehi)) / (1 - pstage[1] ) 
+    rate_ehi <- unname( mod_ehi / pstage[1] )
+    list(ehi = rate_ehi, non_ehi = rate_non_ehi)
+  })
+  rd <- sapply(rates, function(x) x[['ehi']] - x[['non_ehi']])
+  rr <- sapply(rates, function(x) x[['ehi']] / x[['non_ehi']])
+  list(rd = rd, rr = rr)
 }
