@@ -11,7 +11,7 @@ startover <- FALSE #TRUE
 thr <- c("0.005", "0.015", "0.02", "0.05") # c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
 
 ####---- path sims ----
-if( any(grep("MacBook", Sys.info())) ){
+if( any(grep("stephane", Sys.info())) ){
   path.sims <- '../Box Sync/HPC/simulations/model1-sim' #'data/simulations2/model0-simulate'
   path.results <- '../Box Sync/HPC/simulations/model1-sim_ucsd'
 } else {
