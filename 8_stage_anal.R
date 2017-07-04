@@ -192,6 +192,37 @@ est.rr.batch <- function( od_by_stage, N = 1e3){
 rr_er <- est.rr.batch( obs_er, N = 1000 )
 rr_bl <- est.rr.batch( obs_bl, N = 1000 )
 
+## 5% and 95% quantiles to draw confidence band
+get_qt_band <- function(l){
+  sapply(l, function(x) quantile(x, prob = c(.05, .5, .95)))
+}
+bands <- lapply(list(rd_er = rd_er, rd_bl = rd_bl, rr_er = rr_er, rr_bl = rr_bl), get_qt_band)
+
+##- count CI out of target
+TP_rr <- sum( apply(bands[['rr_bl']], 2, function(x) x[1] > 1) ) / ncol(bands[['rr_bl']]) # 81
+TN_rr <- sum( apply(bands[['rr_er']], 2, function(x) x[1] < 1 & x[3] > 1) ) / ncol(bands[['rr_er']]) # 80
+TP_rd <- sum( apply(bands[['rd_bl']], 2, function(x) x[1] > 0) ) / ncol(bands[['rd_bl']]) # 82
+TN_rd <- sum( apply(bands[['rd_er']], 2, function(x) x[1] < 0 & x[3] > 0) ) / ncol(bands[['rd_er']]) # 81
+matrix(c(TP_rr, TN_rr, TP_rd, TN_rd), nrow = 2, byrow = TRUE,
+       dimnames = list(c("true pos", "true neg"), c("rate ratio", "rate diff")))
+
+## plot only 5-95 band of asymptotic distribution
+plot_lines <- function(x, refy =1, ylabel = "95%CI transmission rate ratio"){
+  nx <- ncol(x)
+  plot(1:nx, x[2,], xlab = "Simulation replicate", ylab = ylabel, type = "n")
+  for (i in 1:nx){
+    lines(x = c(i,i), y = c(x[1, i], x[3, i]))
+  }
+  abline( h = refy, col = 'red' )
+}
+## rate diff
+plot_lines(bands[['rd_er']], refy = 0, ylabel = "95%CI transmission rate difference")
+plot_lines(bands[['rd_bl']], refy = 0, ylabel = "95%CI transmission rate difference")
+## rate ratio
+plot_lines(bands[['rr_er']])
+plot_lines(bands[['rr_bl']])
+
+##---- stop ----
 if(FALSE){ # test
   ##- under normal assumption of rate ratio, how many simulations give:
   ## 97.5% of rate ratio significantly larger than 1 in baseline scenario (TP)
@@ -205,12 +236,7 @@ if(FALSE){ # test
   #            method = "jitter", jitter  = .2, pch = 1, add = TRUE, col = alpha('blue', 0.4))
   # ?stripchart
   
-  ## 5% and 95% quantiles to draw confidence band
-  band_rd_er <- sapply(rd_er, function(x) quantile(x, prob = c(.05, .5, .95)))
-  band_rd_bl <- sapply(rd_bl, function(x) quantile(x, prob = c(.05, .5, .95)))
   
-  band_rr_er <- sapply(rr_er, function(x) quantile(x, prob = c(.05, .5, .95)))
-  band_rr_bl <- sapply(rr_bl, function(x) quantile(x, prob = c(.05, .5, .95)))
   
   ## table: count CI out of target. RMSE ? need true value
   ##-----lllllaaa
@@ -281,21 +307,7 @@ if(FALSE){ # test
 } # test
 
 
-##- use 95% quantile instead of at 1.5 * IQR
-bp_rate_qt <- function(lsim, ylabel = 'Rate difference: EHI - non EHI',
-                    xlabel = 'Simulation replicate', refy = 0) {
-  z <- boxplot( unname( lsim ), main = '', xaxt="n", plot = FALSE)
-  z$stats <- sapply(lsim, function(x) quantile(x, prob = c(.05, .25, .5, .75, .95)))
-  bxp(z)
-  #axis(1, at = c(1,1:10*10))
-  title(ylab = ylabel, xlab = xlabel, cex.lab = 1.2)
-  abline( h = refy, col = 'red' )
-}
 
-bp_rate_qt(rr_er, ylabel = "Rate ratio: EHI vs non EHI", refy = 1)
-bp_rate_qt(rr_bl, ylabel = "Rate ratio: EHI vs non EHI", refy = 1)
-## get rr = 0.5 and rd = -.35 ### problem, debug the functions (ok: use year sampletimes)
-####-------------------------------------------------- lllllllaaaaaaa 29/6/17 -----!!!!!!
 
 ###################--- CLUSTERS ---###
 ##---- clusters ----
@@ -332,7 +344,7 @@ prune.clus <- function(a, t , st){
 ##---- pruning ---
 ##- sampling times (same across all sims)
 load(list.sims[["Baseline0"]][[1]]) # for bdt
-st_yrs <- days2years(bdt$sampleTimes)
+st_yrs <- bdt$sampleTimes
 
 system.time(
 l_Baseline0.pruned <- lapply(l_Baseline0, function(x){

@@ -1,7 +1,7 @@
 ---
 title: "8_stage_sims"
 author: "Stephane"
-date: "8 July 2016"
+date: "4 July 2017"
 output: html_document
 ---
 
@@ -41,6 +41,10 @@ opts_chunk$set(dev = c('png','postscript') )
 ```{r plot errors SA, fig.path = './figure/'}
 ```
 
+
+```{r apply rate ratio, fig.path = './figure/'}
+
+```
 
 
 
