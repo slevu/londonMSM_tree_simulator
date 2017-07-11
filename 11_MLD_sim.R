@@ -13,10 +13,11 @@ library(lmtest)
 library(Hmisc)
 
 ##- sim files
-PATHW_ba <- "./data/simulations2/model0-simulateBaseline0"
-PATHW_er <- "./data/simulations2/model0-simulateEqualStage0"
-l_ba <- list.files(PATHW_ba, full.names = TRUE)
-l_er <- list.files(PATHW_er, full.names = TRUE)
+#PATHW_ba <- "./data/simulations2/model0-simulateBaseline0"
+#PATHW_er <- "./data/simulations2/model0-simulateEqualStage0"
+source("load_sims_files.R")
+l_ba <- list.sims[['Baseline0']] #list.files(PATHW_ba, full.names = TRUE)
+l_er <- list.sims[['EqualStage0']]#list.files(PATHW_er, full.names = TRUE)
 names(l_ba) <- sapply(l_ba, function(x) sub(".RData", "", basename(x)))
 names(l_er) <- sapply(l_er, function(x) sub(".RData", "", basename(x)))
 
@@ -40,7 +41,7 @@ get.mc.mld.counts <- function(x, Nsim = 100){
 
   ## get ALL tips names and demes
   tip.states <- data.frame(
-    "id" = daytree$tip.label,
+    "id" = bdt$tip.label,
     "stage" = sapply( sampleDemes, deme2stage ),
     "age" = sapply( sampleDemes, deme2age ),
     "risk" = sapply( sampleDemes, deme2risk ),
@@ -86,8 +87,8 @@ get.mc.mld.counts <- function(x, Nsim = 100){
 }
 
 ##---- run MC ----
-MC.COUNT_ba = "./data/mc.mld.baseline.rds"
-MC.COUNT_er = "./data/mc.mld.equalrates.rds"
+MC.COUNT_ba = paste(path.results, 'mc.mld.baseline.rds', sep = '/') #"./data/mc.mld.baseline.rds"
+MC.COUNT_er =  paste(path.results, 'mc.mld.equalrates.rds', sep = '/') #"./data/mc.mld.equalrates.rds"
 mc <- function(LST, FN){
   if(!file.exists(FN)){
     s <- system.time(
