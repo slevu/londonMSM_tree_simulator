@@ -2,7 +2,7 @@
 ####---- include ----
 # detail_knitr <- TRUE
 source("functions.R")
-startover <- FALSE #TRUE
+startover <- TRUE #FALSE
 
 ####---- lib ----
 #library(ape)
@@ -10,25 +10,9 @@ startover <- FALSE #TRUE
 ##--- thrs
 thr <- c("0.005", "0.015", "0.02", "0.05") # c("1e-05", "1e-04", "0.001", "0.005", "0.015", "0.05") 
 
-####---- path sims ----
-if( any(grep("stephane", Sys.info())) ){
-  path.sims <- '../Box Sync/HPC/simulations/model1-sim' #'data/simulations2/model0-simulate'
-  path.results <- '../Box Sync/HPC/simulations/model1-sim_ucsd'
-} else {
-  path.sims <- '../Box/HPC/simulations/model1-sim'
-  path.results <- '../Box/HPC/simulations/model1-sim_ucsd' # imac
-}
-# system(command = paste('ls', shQuote(path.results)))
+##---- load sim files ----
+source("load_sims_files.R")
 
-####---- scenario ----
-scenario <- c("Baseline0", "EqualStage0")
-scenario <- setNames(scenario, scenario) # useful to name list in lapply
-
-####--- list of sims files including distances ---
-list.sims <- lapply(scenario, function(x){
-  list.files('RData', full.names = TRUE, 
-             path = paste(path.sims, x, sep = '') )
-})
 
 
 ##---- check
@@ -86,7 +70,7 @@ list.hivclust <- function(csvs){
   ## loop
     for (m in 1:length(thresholds) ){ # index of thr
      ## vector of csv at different tree for one thr
-      filenames <- csvs[grep(thr[m], csvs)]
+      filenames <- csvs[grep(paste0('_',thr[m], '.csv'), csvs)]
       ## empty list of different dist
       t <- vector("list", length(filenames))
       for (n in 1:length(filenames) ){ # index of dist
@@ -164,7 +148,8 @@ return(cl2)
     ##- load list.hivclust
     nbh_Baseline0 <- readRDS( file = paste(path.results, 'list.nbhsize.sim.Baseline0.rds', sep = '/') )
     nbh_EqualStage0 <- readRDS( file = paste(path.results, 'list.nbhsize.sim.EqualStage0.rds', sep = '/') )
-  }
+}
+
   ##- check
   #   head(nbh_Baseline0[[4]][[1]])
   #   a <- lapply(nbh_Baseline0, function(x) do.call(rbind, x))
