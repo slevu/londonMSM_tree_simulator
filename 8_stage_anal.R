@@ -245,8 +245,8 @@ if(FALSE){ # test
   
   true_rates <- function(tw){
     trans_rate_ehi <- tw[1]
-    #trans_rate_non_ehi <- sum(tw[2:5] * pstage[2:5]) / sum(pstage[2:5]) # or 
-    trans_rate_non_ehi <- tw[5]
+    trans_rate_non_ehi <- sum(tw[2:5] * pstage[2:5]) / sum(pstage[2:5]) # or 
+    #trans_rate_non_ehi <- tw[5]
     true_rr <- trans_rate_ehi / trans_rate_non_ehi
     true_rd <- trans_rate_ehi - trans_rate_non_ehi
     list(true_rr = true_rr, true_rd = true_rd)

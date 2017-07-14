@@ -46,6 +46,10 @@ opts_chunk$set(dev = c('png','postscript') )
 ```{r apply assort coef globally, echo = detail_knitr}
 ```
 
+```{r normalize, fig.path = './figure/'}
+
+```
+
 ##### Assortativity of infector probs by age
 ```{r heatmap 1, echo = detail_knitr}
 ```

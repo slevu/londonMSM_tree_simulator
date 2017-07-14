@@ -24,6 +24,7 @@ source('load_sim_results.R')
   ##- load EdgeList
   source("functions.R")
 
+if(F){
 ##- For ucsd clustering
   ##- empty list of 4 matrices
   ##list(matrix(0,4,4))
@@ -129,14 +130,32 @@ coef_mat_sa <- mat2assortCoef(ag_amat_sa)
 coef_mat_nb <- lapply(ag_amat_nb, mat2assortCoef)
 coef_mat_cl <- lapply(ag_amat_cl, mat2assortCoef)
 
+##---- normalize ----
+normalit <- function(m){
+  M <- (m - min(m))#/(max(m)-min(m))
+  dimnames(M) <- list(1:nrow(m), 1:ncol(m))
+  return(M)
+}
+norm_assor_mat <- lapply(c(sa = list(assor_mat_sa), cl = assor_mat_cl, nb = assor_mat_nb), normalit)
+coefs <- c(sa = coef_mat_sa, cl = unlist(coef_mat_cl), nb = unlist(coef_mat_nb))
+mx <-  max(sapply(norm_assor_mat, function(m) max(m))) # max of all matrices
+bkpoints <- seq(0, mx, length.out=20) # same breakpoints for all levelplots
+TOTO <- do.call(rbind, lapply(1:length(norm_assor_mat), function(x){
+  df <- as.data.frame(as.table(norm_assor_mat[[x]]))
+  df$group <- paste0(letters[x], ' (r =', round(coefs[x],2), ')')
+  return(df)
+} ))
+levelplot(Freq ~ Var1 * Var2 | group, data = TOTO, col.regions = heat.colors,
+          par.settings = list(strip.background=list(col="white")),
+          xlab = '', ylab = '', as.table = TRUE ) # order with as.table or index.cond=list()
 
 ##---- heatmap 1 ----
 ##- SA
 # print("Assortativity of infector probs by age")
-p_sa <- levelplot( assor_mat_sa, col.regions = heat.colors,
+p_sa <- levelplot( norm_assor_mat[['sa']], col.regions = heat.colors,
            main = 'SA', 
            sub = paste('r = ', round(coef_mat_sa,2)), 
-           xlab = '', ylab = '')
+           xlab = '', ylab = '', at = bkpoints )
 
 # p_sa
 
@@ -147,19 +166,19 @@ plots_grid <- function(mat, coef){
   p <-  vector("list", length(mat)) 
   # par(mfrow = c(length(a)/2, 2), bty = 'n') # useless for lattice
   for (i in 1:length(mat)){
-    p[[i]] <- levelplot( mat[[i]], col.regions = heat.colors, main = names(mat)[i], sub = paste('r = ', round(coef[[i]],2)), xlab = '', ylab = '')
+    p[[i]] <- levelplot( mat[[i]], col.regions = heat.colors, main = names(mat)[i], sub = paste('r = ', round(coef[[i]],2)), xlab = '', ylab = '', at = bkpoints )
   }
   return(p)
 }
 
-p_nb <- plots_grid(assor_mat_nb[1:4], coef_mat_nb[1:4])
+p_nb <- plots_grid(norm_assor_mat[grep('nb', names(norm_assor_mat))], coef_mat_nb[1:4])
 # print("Assortativity of neighborhood size by age")
 ##- plot
 # do.call(grid.arrange, c(p_nb, ncol = ceiling(length(p_nb)/2)) )
 
 ##---- heatmap 3 ----
 ##- ucsd
-p_cl <- plots_grid(assor_mat_cl[1:4], coef_mat_cl[1:4])
+p_cl <- plots_grid(norm_assor_mat[grep('cl', names(norm_assor_mat))], coef_mat_cl[1:4])
 # print("Assortativity of cluster size by age")
 # do.call(grid.arrange, c(p_cl, ncol = ceiling(length(p_cl)/2)) )
 
