@@ -101,33 +101,37 @@ str(cw_bind)
 
 bp_base <- function(ls , var , lbl, tran = identity){
   
-  par(mfrow=c(1,3))    
+  par(mfrow=c(1,2),
+      oma = c(2.5, .5, .5, .5), # b,r,t,l
+      mar = c(2, 4, 1, 1))
   
   lapply(ls, function(x){
     if ( any(grepl('outdegree', names(x))) ) {
       
       boxplot(x[, 'outdegree'] ~ x[, var], outline = FALSE )
-      title(main = 'Out-degree',  font.main = 1)
+      title(main='', ylab = 'Out-degree', xlab = '')
       
       } else {
         
       boxplot(x[, 'size'] ~ x[, var], outline = FALSE)
-        title(main = 'Cluster size', xlab = lbl, cex.lab = 1.2,  font.main = 1)
+        title(main='', ylab = 'Cluster size', xlab = '')
         
-      boxplot(x[, 'nbhsize'] ~ x[, var], outline = FALSE)
-      title(main = 'Neighborhood size',  font.main = 1)
+      #boxplot(x[, 'nbhsize'] ~ x[, var], outline = FALSE)
+      #title(main = 'Neighborhood size',  font.main = 1)
+        mtext(lbl, side = 1, outer = TRUE, line = 1)
     }
   })
 }
   
-##---- bp base ----
+##---- stop ----
 p <- bp_base(ls = cw_bind[c('SA', '0.015')], var = 'risk', lbl = 'Risk level')
 p <- bp_base(ls = cw_bind[c('SA', '0.015')], var = 'age', lbl = 'Age category')
 p <- bp_base(ls = cw_bind[c('SA', '0.015')], var = 'stage', lbl = 'Infection stage')
 
+##---- bp base ----
 p <- bp_base(ls = cw_bind[c('SA', '0.05')], var = 'risk', lbl = 'Risk level')
 p <- bp_base(ls = cw_bind[c('SA', '0.05')], var = 'age', lbl = 'Age category')
-p <- bp_base(ls = cw_bind[c('SA', '0.05')], var = 'stage', lbl = 'Infection stage')
+p <- bp_base(ls = cw_bind[c('SA', '0.05')], var = 'stage', lbl = 'Stage of infection')
 
 # tapply(cw_bind[['0.015']]$size, cw_bind[['0.015']]$stage, summary )
 # tapply(cw[['0.015']][[1]]$size, cw[['0.015']][[1]]$stage, summary )
