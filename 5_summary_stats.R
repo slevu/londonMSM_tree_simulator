@@ -99,11 +99,13 @@ str(cw_bind)
 ##- boxplot with base R
 ##- strip of 3 plots without outliers
 
-bp_base <- function(ls , var , lbl, tran = identity){
+bp_base <- function(ls , var , lbl, tran = identity, cx = 1.2){
   
   par(mfrow=c(1,2),
       oma = c(2.5, .5, .5, .5), # b,r,t,l
-      mar = c(2, 4, 1, 1))
+      mar = c(2, 4, 1, 1),
+      cex.axis = cx, # x
+      cex.lab = cx) # y
   
   lapply(ls, function(x){
     if ( any(grepl('outdegree', names(x))) ) {
@@ -118,7 +120,7 @@ bp_base <- function(ls , var , lbl, tran = identity){
         
       #boxplot(x[, 'nbhsize'] ~ x[, var], outline = FALSE)
       #title(main = 'Neighborhood size',  font.main = 1)
-        mtext(lbl, side = 1, outer = TRUE, line = 1)
+        mtext(lbl, side = 1, outer = TRUE, line = 1, cex = cx)
     }
   })
 }
@@ -128,7 +130,7 @@ p <- bp_base(ls = cw_bind[c('SA', '0.015')], var = 'risk', lbl = 'Risk level')
 p <- bp_base(ls = cw_bind[c('SA', '0.015')], var = 'age', lbl = 'Age category')
 p <- bp_base(ls = cw_bind[c('SA', '0.015')], var = 'stage', lbl = 'Infection stage')
 
-##---- bp base ----
+##---- bp_base ----
 p <- bp_base(ls = cw_bind[c('SA', '0.05')], var = 'risk', lbl = 'Risk level')
 p <- bp_base(ls = cw_bind[c('SA', '0.05')], var = 'age', lbl = 'Age category')
 p <- bp_base(ls = cw_bind[c('SA', '0.05')], var = 'stage', lbl = 'Stage of infection')

@@ -8,7 +8,7 @@ output: html_document
 ```{r}
 library(knitr)
 read_chunk('5_summary_stats.R')
-opts_chunk$set(dev = c('png','postscript') )
+opts_chunk$set(dev = c('pdf', 'png', 'postscript') )
 ```
 
 ```{r libs, message = FALSE, warning = FALSE}
@@ -42,5 +42,5 @@ opts_chunk$set(dev = c('png','postscript') )
 ```
 
 **Only 0.015 threshold**
-```{r bp base, fig.path = './figure/'}
+```{r bp_base, fig.path = './figure/'}
 ```
