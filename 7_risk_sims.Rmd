@@ -7,8 +7,8 @@ output: html_document
 
 ```{r}
 library(knitr)
-read_chunk('ext-stats_sims.R')
-opts_chunk$set(dev = c('png','postscript') )
+read_chunk('7_risk_sims.R')
+opts_chunk$set(dev = c('pdf', 'png', 'postscript') )
 ```
 
 ```{r, libs, warning = FALSE}
@@ -41,7 +41,7 @@ knitr::kable(tab)
 
 
 #### p-values univariate
-```{r, boxplot risk 1, fig.path = './figure/', warning = FALSE}
+```{r, boxplot risk 1, fig.path = './figure/', warning = FALSE, include = FALSE}
 ```
 
 ```{r, boxplot base risk 1, fig.path = './figure/', warning = FALSE}
@@ -51,7 +51,7 @@ knitr::kable(tab)
 * neighborhood size and uscd cluster require low threshold to start seeing the difference
 
 #### p-values multivariate
-```{r, boxplot risk 2, warning = FALSE}
+```{r, boxplot risk 2, warning = FALSE, include = FALSE}
 ```
 
 ```{r, boxplot base risk 2, warning = FALSE}
@@ -64,7 +64,7 @@ knitr::kable(tab)
 ```
 
 #### Outdegree/sizes vs risk level
-```{r, boxplot 3}
+```{r, boxplot 3, include = FALSE}
 ```
 
 * note: only use 10 bootstraps and outlier values are censored at 5%
