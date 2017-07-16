@@ -8,7 +8,7 @@ output: html_document
 ```{r}
 library(knitr)
 read_chunk('8_stage_anal.R')
-opts_chunk$set(dev = c('png','postscript') )
+opts_chunk$set(dev = c('pdf','png','postscript') )
 ```
 
 ```{r libs, warning=FALSE, message=FALSE}
@@ -41,10 +41,17 @@ opts_chunk$set(dev = c('png','postscript') )
 ```{r plot errors SA, fig.path = './figure/'}
 ```
 
-
-```{r apply rate ratio, fig.path = './figure/'}
+```{r apply rate ratio, }
 
 ```
+
+95CI Plots
+```{r plot_rate_diff, fig.path = './figure/' }
+```
+
+```{r plot_rate_ratio, fig.path = './figure/' }
+```
+
 
 
 

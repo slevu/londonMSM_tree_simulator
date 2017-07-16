@@ -15,25 +15,7 @@ source('Erik_code/stage_rate_estimator1.R')
 THRESHOLD_YRS <- 2
 
 ##---- paths ----
-if( any(grep("MacBook", Sys.info())) ){
-  path.sims <- '../Box Sync/HPC/simulations/model1-sim' #'data/simulations2/model0-simulate'
-  path.results <- '../Box Sync/HPC/simulations/model1-sim_ucsd'
-} else {
-  path.sims <- '../Box/HPC/simulations/model1-sim'
-  path.results <- '../Box/HPC/simulations/model1-sim_ucsd' # imac
-}
-
-##- scenario
-scenario <- c("Baseline0", "EqualStage0")
-scenario <- setNames(scenario, scenario) # useful to name list in lapply
-
-##- list of sims files and distances files
-list.sims <- lapply(scenario, function(x){
-  list.files('RData', full.names = TRUE, 
-             path = paste(path.sims, x, sep = '') )
-})
-# str(list.sims)
-
+source("load_sims_files.R")
 
 ##---- od by stage helper ----
 ## fn <- list.sims[['Baseline0']][1]
@@ -206,22 +188,48 @@ TN_rd <- sum( apply(bands[['rd_er']], 2, function(x) x[1] < 0 & x[3] > 0) ) / nc
 matrix(c(TP_rr, TN_rr, TP_rd, TN_rd), nrow = 2, byrow = TRUE,
        dimnames = list(c("true pos", "true neg"), c("rate ratio", "rate diff")))
 
+
+## table: count CI out of target. RMSE ? need true value
+tw_bl <- c(1, 0.1, 0.1 , 0.1, 0.3) # transmission weights
+tw_er <- rep(1, 5) # transmission weights
+
+true_rates <- function(tw){
+  trans_rate_ehi <- tw[1]
+  #trans_rate_non_ehi <- sum(tw[2:5] * pstage[2:5]) / sum(pstage[2:5]) # or 
+  trans_rate_non_ehi <- tw[5]
+  true_rr <- trans_rate_ehi / trans_rate_non_ehi
+  true_rd <- trans_rate_ehi - trans_rate_non_ehi
+  list(true_rr = true_rr, true_rd = true_rd)
+}
+tr <- true_rates(tw_bl) # true_rates(tw_er)
+
+##---- plot_rate_diff ----
 ## plot only 5-95 band of asymptotic distribution
-plot_lines <- function(x, refy =1, ylabel = "95%CI transmission rate ratio"){
+plot_lines <- function(x, refy =1, cx = 1.5,
+                       true_value = tr[['true_rr']],
+                       ylabel = "95%CI transmission rate ratio"){
+  par(cex.axis = cx, cex.lab = cx)
   nx <- ncol(x)
   plot(1:nx, x[2,], xlab = "Simulation replicate", ylab = ylabel, type = "n")
   for (i in 1:nx){
     lines(x = c(i,i), y = c(x[1, i], x[3, i]))
   }
-  abline( h = refy, col = 'red' )
+  abline( h = c(refy, true_value),
+          col = c('red', 'black'),
+          lty = c(1, 3))
+ # abline( h = true_value, lty = 3 )
 }
 ## rate diff
-plot_lines(bands[['rd_er']], refy = 0, ylabel = "95%CI transmission rate difference")
-plot_lines(bands[['rd_bl']], refy = 0, ylabel = "95%CI transmission rate difference")
-## rate ratio
+plot_lines(bands[['rd_er']], refy = 0, true_value = tr[['true_rd']],
+           ylabel = "95%CI transmission rate difference")
+plot_lines(bands[['rd_bl']], refy = 0, true_value = tr[['true_rd']],
+           ylabel = "95%CI transmission rate difference")
+
+##---- plot_rate_ratio ----
 plot_lines(bands[['rr_er']])
 plot_lines(bands[['rr_bl']])
 
+###########---- end ----
 ##---- stop ----
 if(FALSE){ # test
   ##- under normal assumption of rate ratio, how many simulations give:
@@ -238,25 +246,6 @@ if(FALSE){ # test
   
   
   
-  ## table: count CI out of target. RMSE ? need true value
-  ##-----lllllaaa
-  tw_bl <- c(1, 0.1, 0.1 , 0.1, 0.3) # transmission weights
-  tw_er <- rep(1, 5) # transmission weights
-  
-  true_rates <- function(tw){
-    trans_rate_ehi <- tw[1]
-    trans_rate_non_ehi <- sum(tw[2:5] * pstage[2:5]) / sum(pstage[2:5]) # or 
-    #trans_rate_non_ehi <- tw[5]
-    true_rr <- trans_rate_ehi / trans_rate_non_ehi
-    true_rd <- trans_rate_ehi - trans_rate_non_ehi
-    list(true_rr = true_rr, true_rd = true_rd)
-  }
-  true_rates(tw_bl) # true_rates(tw_er)
-  
-  sum( apply(band_rr_bl, 2, function(x) x[1] > 1) ) # 81
-  sum( apply(band_rr_er, 2, function(x) x[1] < 1 & x[3] > 1) ) # 80
-  sum( apply(band_rd_bl, 2, function(x) x[1] > 0) ) # 82
-  sum( apply(band_rd_er, 2, function(x) x[1] < 0 & x[3] > 0) ) # 81
   
   ## plot only 5-95 band of asymptotic distribution
   ## x = band_rr_er, refy = 1

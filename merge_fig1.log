@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.12.4)  15 JUL 2017 15:58
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.12.4)  16 JUL 2017 23:01
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -426,25 +426,54 @@ File: ./figure/bp_base-2.pdf Graphic file (type pdf)
 Package pdftex.def Info: ./figure/bp_base-2.pdf used on input line 26.
 (pdftex.def)             Requested size: 155.24895pt x 110.89253pt.
 
+<./figure/plot_rate_diff-1.pdf, id=4, 505.89pt x 361.35pt>
+File: ./figure/plot_rate_diff-1.pdf Graphic file (type pdf)
+
+<use ./figure/plot_rate_diff-1.pdf>
+Package pdftex.def Info: ./figure/plot_rate_diff-1.pdf used on input line 40.
+(pdftex.def)             Requested size: 155.24895pt x 110.89253pt.
+
+<./figure/plot_rate_diff-2.pdf, id=5, 505.89pt x 361.35pt>
+File: ./figure/plot_rate_diff-2.pdf Graphic file (type pdf)
+
+<use ./figure/plot_rate_diff-2.pdf>
+Package pdftex.def Info: ./figure/plot_rate_diff-2.pdf used on input line 46.
+(pdftex.def)             Requested size: 155.24895pt x 110.89253pt.
+
+<./figure/plot_rate_ratio-1.pdf, id=6, 505.89pt x 361.35pt>
+File: ./figure/plot_rate_ratio-1.pdf Graphic file (type pdf)
+
+<use ./figure/plot_rate_ratio-1.pdf>
+Package pdftex.def Info: ./figure/plot_rate_ratio-1.pdf used on input line 52.
+(pdftex.def)             Requested size: 155.24895pt x 110.89253pt.
+
+<./figure/plot_rate_ratio-2.pdf, id=7, 505.89pt x 361.35pt>
+File: ./figure/plot_rate_ratio-2.pdf Graphic file (type pdf)
+
+<use ./figure/plot_rate_ratio-2.pdf>
+Package pdftex.def Info: ./figure/plot_rate_ratio-2.pdf used on input line 58.
+(pdftex.def)             Requested size: 155.24895pt x 110.89253pt.
+
 Preview: Tightpage 0 0 0 0
 [1{/usr/local/texlive/2015/texmf-var/fonts/map/pdftex/updmap/pdftex.map} <./fig
-ure/bp_base-1.pdf> <./figure/bp_base-3.pdf> <./figure/bp_base-2.pdf>]
-(./merge_fig1.aux) ) 
+ure/bp_base-1.pdf> <./figure/bp_base-3.pdf> <./figure/bp_base-2.pdf> <./figure/
+plot_rate_diff-1.pdf> <./figure/plot_rate_diff-2.pdf> <./figure/plot_rate_ratio
+-1.pdf> <./figure/plot_rate_ratio-2.pdf>] (./merge_fig1.aux) ) 
 Here is how much of TeX's memory you used:
- 3326 strings out of 493089
- 52500 string characters out of 6134842
- 112660 words of memory out of 5000000
- 6778 multiletter control sequences out of 15000+600000
+ 3355 strings out of 493089
+ 53208 string characters out of 6134842
+ 115736 words of memory out of 5000000
+ 6803 multiletter control sequences out of 15000+600000
  3939 words of font info for 15 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 59i,7n,94p,645b,475s stack positions out of 5000i,500n,10000p,200000b,80000s
-</usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsf
-onts/cm/cmr10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfon
-ts/cm/cmr9.pfb>
-Output written on merge_fig1.pdf (1 page, 40478 bytes).
+ 59i,7n,94p,764b,475s stack positions out of 5000i,500n,10000p,200000b,80000s
+</usr/local/texli
+ve/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive
+/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb>
+Output written on merge_fig1.pdf (1 page, 62277 bytes).
 PDF statistics:
- 34 PDF objects out of 1000 (max. 8388607)
- 22 compressed objects within 1 object stream
+ 58 PDF objects out of 1000 (max. 8388607)
+ 38 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 16 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 36 words of extra memory for PDF output out of 10000 (max. 10000000)
 
