@@ -99,11 +99,11 @@ str(cw_bind)
 ##- boxplot with base R
 ##- strip of 3 plots without outliers
 
-bp_base <- function(ls , var , lbl, tran = identity, cx = 1.2){
+bp_base <- function(ls , var , lbl, tran = identity, cx = 1.5){
   
   par(mfrow=c(1,2),
-      oma = c(2.5, .5, .5, .5), # b,r,t,l
-      mar = c(2, 4, 1, 1),
+      oma = c(2.5, .5, .5, 1), # b,r,t,l
+      mar = c(2, 4.5, 1, 1),
       cex.axis = cx, # x
       cex.lab = cx) # y
   
