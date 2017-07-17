@@ -287,8 +287,8 @@ a$method <- substr(a$variable, 1, 2)
 a$thr <- c(rep('NA', length(a[a$method == 'SA', 'method'])), regmatches(a$variable, regexpr("\\d\\..*|\\d*e[-+]?.*",  a$variable)) )
 # table(a$thr); table(a$method)
 # str(a)
-##- keep only 4 thersholds
-a <-a[!(a$thr %in% c('1e-05','1e-04')),]
+##- keep only 3 thresholds
+a <- a[!(a$thr %in% c('1e-05','1e-04', '0.02')),]
 ##- force scientific notation
 fancy_scientific <- function(l) {
   if( is.na(as.numeric(l)) ) parse(text = l) else {
