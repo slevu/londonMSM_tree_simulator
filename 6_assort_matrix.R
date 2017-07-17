@@ -138,11 +138,17 @@ normalit <- function(m){
 }
 norm_assor_mat <- lapply(c(sa = list(assor_mat_sa), cl = assor_mat_cl, nb = assor_mat_nb), normalit)
 coefs <- c(sa = coef_mat_sa, cl = unlist(coef_mat_cl), nb = unlist(coef_mat_nb))
-mx <-  max(sapply(norm_assor_mat, function(m) max(m))) # max of all matrices
+
+#- subset: no neighborhood, only 3 thresholds
+norm_assor_mat_s <- norm_assor_mat[c("sa", "cl.0.005", "cl.0.015", "cl.0.05")]
+coefs_s <- coefs[c("sa", "cl.0.005", "cl.0.015", "cl.0.05")]
+
+mx <-  max(sapply(norm_assor_mat_s, function(m) max(m))) # max of all matrices
 bkpoints <- seq(0, mx, length.out=20) # same breakpoints for all levelplots
-TOTO <- do.call(rbind, lapply(1:length(norm_assor_mat), function(x){
-  df <- as.data.frame(as.table(norm_assor_mat[[x]]))
-  df$group <- paste0(letters[x], ' (r =', round(coefs[x],2), ')')
+#- make long table
+TOTO <- do.call(rbind, lapply(1:length(norm_assor_mat_s), function(x){
+  df <- as.data.frame(as.table(norm_assor_mat_s[[x]]))
+  df$group <- paste0(letters[x], ' (r = ', round(coefs_s[x],2), ')')
   return(df)
 } ))
 levelplot(Freq ~ Var1 * Var2 | group, data = TOTO, col.regions = heat.colors,
@@ -328,9 +334,10 @@ bp3 %+% a[a$value >= 0,] + coord_trans(y = "log")
 ##- to keep same range
 lim <- range(a$value, 1.1*BASELINE_ASSRTCOEF)
 
-# par(mfrow=c(1,3) ) #, bty = 'n')   
-layout(matrix(c(1,2,3), 1, 3, byrow = TRUE), 
-       widths=c(1,1.5,1.5), heights=c(1,1,1))
+# layout(matrix(c(1,2,3), 1, 3, byrow = TRUE), 
+#        widths=c(1,1.5,1.5), heights=c(1,1,1))
+layout(matrix(c(1,2), 1, 2, byrow = TRUE), 
+widths=c(1,1.5), heights=c(1,1))
 
 boxplot(a[a$method == 'SA',]$value ~ a[a$method == 'SA',]$thr, ylim = lim)
 title(main = 'SA', font.main = 1, ylab = 'Assortativity coefficient', cex.lab = 1.2)
@@ -340,9 +347,9 @@ boxplot(a[a$method == 'CL',]$value ~ a[a$method == 'CL',]$thr, ylim = lim, yaxt=
 title(main = 'Cluster', xlab = 'Distance threshold', cex.lab = 1.2,  font.main = 1)
 abline(h = BASELINE_ASSRTCOEF, lty = 3)
 
-boxplot(a[a$method == 'NB',]$value ~ a[a$method == 'NB',]$thr, ylim = lim, yaxt="n")
-title(main = 'Neighborhood', xlab = 'Distance threshold', cex.lab = 1.2,  font.main = 1)
-abline(h = BASELINE_ASSRTCOEF, lty = 3)
+# boxplot(a[a$method == 'NB',]$value ~ a[a$method == 'NB',]$thr, ylim = lim, yaxt="n")
+# title(main = 'Neighborhood', xlab = 'Distance threshold', cex.lab = 1.2,  font.main = 1)
+# abline(h = BASELINE_ASSRTCOEF, lty = 3)
 
 # dev.off()
 # ?abline; ?layout; ?boxplot

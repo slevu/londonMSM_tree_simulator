@@ -10,9 +10,9 @@ output:
 
 ```{r}
 library(knitr)
-read_chunk('assort_matrix.R')
-read_chunk('age_regressions.R')
-opts_chunk$set(dev = c('png','postscript') )
+read_chunk('6_assort_matrix.R')
+read_chunk('6_age_regressions.R')
+opts_chunk$set(dev = c('pdf','png','postscript') )
 ```
 
 ```{r include}
