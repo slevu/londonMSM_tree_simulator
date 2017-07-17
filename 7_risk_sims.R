@@ -8,7 +8,7 @@ library(reshape2)
 
 ##---- load data ----
 source('load_sim_results.R')
-cw <- cw_Baseline0 #[c('SA', '0.001', '0.005', '0.015', '0.05')]
+cw <- cw_Baseline0[c('SA', '0.005', '0.015', '0.05')] # 3 thr only
 # names(cw)
 
 ##- same order of id
