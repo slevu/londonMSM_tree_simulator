@@ -1,0 +1,28 @@
+---
+title: "11_MLD_sim"
+author: "Stephane"
+date: "7/18/2017"
+output: html_document
+---
+
+```{r}
+library(knitr)
+read_chunk('11_MLD_sim.R')
+opts_chunk$set(dev = c('pdf','png','postscript') )
+```
+
+```{r libs, warning=FALSE, message=FALSE}
+```
+
+```{r helper functions, include=FALSE}
+```
+
+```{r compute mld counts}
+
+```
+
+```{r run MC}
+
+```
+
+

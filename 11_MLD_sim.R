@@ -13,8 +13,6 @@ library(lmtest)
 library(Hmisc)
 
 ##- sim files
-#PATHW_ba <- "./data/simulations2/model0-simulateBaseline0"
-#PATHW_er <- "./data/simulations2/model0-simulateEqualStage0"
 source("load_sims_files.R")
 l_ba <- list.sims[['Baseline0']] #list.files(PATHW_ba, full.names = TRUE)
 l_er <- list.sims[['EqualStage0']]#list.files(PATHW_er, full.names = TRUE)
@@ -107,17 +105,26 @@ list.counts.mld_er <- mc(l_er, MC.COUNT_er)
 
 ###################------
 
-if (FALSE){ # stats
+stats <- function(list.counts.mld){ # stats
   PropOfNonZero <- lapply(list.counts.mld, function(x) round(apply(x$counts, 2, function(z) sum(z>0)) / dim(x$counts)[1] * 100, 2))
   s <- sapply(PropOfNonZero, summary) # 4% on non-zero
   m <- sapply(list.counts.mld, function(x) max(x$counts))
-  table(m)
+  
+  ZZ <- lapply(list.counts.mld, function(x) apply(x$counts, 2, function(z) setNames(as.vector(table(z)), names(table(z)))))
+  ZZZ <- lapply(ZZ, function(x) tapply(do.call(c,x), names(do.call(c,x)), sum))
+  
+  mm <- do.call(rbind, lapply(list.counts.mld, function(x) x['counts']))
+  mmt <- lapply(mm[1:10], function(x) as.vector(prop.table(table(x))))
+  list(prop_non_zero = summary(s['Mean',]), stats_max = summary(m))
 } ## stats counts
+stats(list.counts.mld = list.counts.mld_ba)
+stats(list.counts.mld = list.counts.mld_er)
 
 if(FALSE){
   ##---- 10 reps ----
-  ##- test: bind 10 first MC replicates
-  ks <- sample(1:100, 10)
+  ##- test: bind 10 random MC replicates
+  ## debug: counts.mld <- list.counts.mld_ba[[1]][['counts']]; tip.states <- list.counts.mld_ba[[1]][['states']]
+  ks <- 1:100 #sample(1:100, 10)
   tab.mld.10 <- data.frame('id' = rep(rownames(counts.mld), length(ks)), 'mld' = as.vector(counts.mld[, ks]))
   table(tab.mld.10$mld)
   tab <- merge(x = tip.states, 
@@ -133,14 +140,19 @@ if(FALSE){
   boxplot(risk ~ mld, data=tab, horizontal = T, xlab = 'risk level')
 } # plot on 10 reps
 
+##- question: do zero-inflated poisson or neg binomial models provide better fit than logistic ?
+##- answer: no
 if(FALSE){
   ##---- first replicate ----
   ##- keep one df, merge copy MLD count
-  k <- 3
+  ## counts.mld <- list.counts.mld_ba[[1]][['counts']]; tip.states <- list.counts.mld_ba[[1]][['states']]
+  k <- 1
   tab.mld <- data.frame('id' = rownames(counts.mld), 'mld' = counts.mld[, k])
   tab <- merge(x = tip.states,
                y = tab.mld, by = 'id', all.x = T) # all.y = T)
   tab$mld[is.na(tab$mld)] <- 0L # all donors (if all.x = T)
+  tab$binmld <- ifelse(tab$mld == 0, 0, 1)
+  #with( tab, table(mld, age, stage) ) # 'in the general realm of very rare events'
   
   ##---- models ----
   X4 <- c('factor(age)', 'factor(stage)', 'risk')
@@ -150,13 +162,14 @@ if(FALSE){
   mod1bi <- as.formula(paste('binmld', '~', paste(X4, collapse = ' + ')))
   
   ##---- fit ----
+  logit1 <- glm(mod1bi, family="binomial", data = tab)
   poisson1 <- glm(mod1 , family="poisson", data = tab) # poisson GLM
   nb1 <- glm.nb(mod1, data = tab) # negative binomial
   zi_poisson1 <- zeroinfl(mod1, data = tab, dist= 'poisson') # zero-inflated poisson
   zi_nb1 <- zeroinfl(mod1, data = tab, dist= 'negbin') # zero-inflated neg bin
   
   ## coefs
-  fm <- list("PO" = poisson1, "NB" = nb1, "ZIPO" = zi_poisson1, "ZINB" = zi_nb1)
+  fm <- list("LOGIT" = logit1, "PO" = poisson1, "NB" = nb1, "ZIPO" = zi_poisson1) #, "ZINB" = zi_nb1)
   k <- which.max( sapply(fm, function(x) length(coef(x))) )
   full.names <- names(coef(fm[[k]])) 
   coefs <- sapply(fm, function(x) coef(x)[1:length(full.names)])
@@ -232,8 +245,8 @@ get.mld.logit <- function(k, counts = counts.mld, df = tip.states, X =  c('facto
 # fits.logit <- lapply(1:dim(counts.mld)[2], function(z) get.mld.logit(k = z))
 
 ##---- run logistic ----
-FITLOGIT_ba <- './data/fit.logit.mld.baseline.rds'
-FITLOGIT_er <- './data/fit.logit.mld.equalrates.rds'
+FITLOGIT_ba <- paste(path.results, 'fit.logit.mld.baseline.rds', sep = '/') # './data/fit.logit.mld.baseline.rds'
+FITLOGIT_er <- paste(path.results, 'fit.logit.mld.equalrates.rds', sep = '/') # './data/fit.logit.mld.equalrates.rds'
 fit.glm <- function(LST, FN){
   if(!file.exists(FN)){
     st <- system.time(
@@ -306,7 +319,7 @@ test <- function(x){
   
   head(oddf)
   tip.states <- data.frame(
-    "id" = daytree$tip.label,
+    "id" = bdt$tip.label,
     "stage" = sapply( sampleDemes, deme2stage ),
     "age" = sapply( sampleDemes, deme2age ),
     "risk" = sapply( sampleDemes, deme2risk ),
