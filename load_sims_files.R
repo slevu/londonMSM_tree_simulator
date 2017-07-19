@@ -11,9 +11,11 @@ if( any(grep("stephane", Sys.info())) ){
 scenario <- c("Baseline0", "EqualStage0")
 scenario <- setNames(scenario, scenario) # useful to name list in lapply
 
-##- list of sims files and distances files
+##- list of sims files and distances files and name the vector by sim
 list.sims <- lapply(scenario, function(x){
-  list.files('RData', full.names = TRUE, 
+  v <- list.files('RData', full.names = TRUE, 
              path = paste(path.sims, x, sep = '') )
+  names(v) <- sapply(v, function(i) sub(".RData", "", basename(i)))
+  return(v)
 })
-# str(list.sims)
+
