@@ -1,5 +1,5 @@
 ---
-title: "11_MLD_sim"
+title: "MLD analysis on simulations"
 author: "Stephane"
 date: "7/18/2017"
 output: html_document
@@ -11,18 +11,69 @@ read_chunk('11_MLD_sim.R')
 opts_chunk$set(dev = c('pdf','png','postscript') )
 ```
 
+Packages for regressions
 ```{r libs, warning=FALSE, message=FALSE}
+```
+
+Load simulation results
+```{r sim files}
 ```
 
 ```{r helper functions, include=FALSE}
 ```
 
-```{r compute mld counts}
-
+Look at in-degrees on first baseline sim
+```{r check id, echo = FALSE}
 ```
+
+Function to calculate MLD counts
+```{r compute mld counts}
+```
+
+In `single.mc.mld`, 
+
+1. from matrix of $W_{ij}$
+2. split sets of $1:k_j$ donors per unique recipient $j$
+3. initialize to 0 MLD count $m_1:m_i$ for all unique donors + $m_{i+1}$ for 'outside source' 
+4. **for** each $j$,
+5. **do** sample one of {$k_j$ donors, 'outside source'}
+    + with probabilities {$W_{ij}$, $(1 - \sum_j{W_{ij}})$}
+    + $m_k = m_k + 1$
+6. **end**
 
 ```{r run MC}
+```
+
+```{r stats, echo = FALSE}
+```
+
+In baseline scenario, an average `r sb[[1]]['Mean']` % of non-zero values
+
+Test if zero-inflated model provide better fit than logistic regression (MLD 0 vs >0)
+
+* On first MC replicate of first basline simulation,
+* model `Y ~ young + ehi + risk`, with 
+    + Y either MLD count or binary (0 vs >0), 
+    + and young = age 1, ehi = stage 1
+* "LOGIT" = logistic, "PO" = poisson, "NB" = neg binomial, "ZIPO" = zi_poisson, "ZINB" = zi_neg binomial
+
+```{r compare reg, results='asis', echo = FALSE}
 
 ```
 
+* Apparently, LOGIT model is the best (AIC and non-significant zero-inflation parameters)
+* age non significant
+* **not** being in EHI is associated with being a MLD
+* risk 2 is also associated with being a MLD
+
+So, I apply a logistic model to all 100 simulations * 100 MC replicates, and count the number of p < 0.05 associations
+
+```{r logit}
+```
+
+```{r run logistic}
+```
+
+```{r stats p-values}
+```
 

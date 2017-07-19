@@ -1,36 +1,26 @@
 %latex.default(round(tt, 2), title = "", n.rgroup = c(nr, nr,     3), cellTexCmds = cell.fmt, booktabs = TRUE, numeric.dollar = FALSE,     rowname = latexTranslate(rownames(tt)))%
 \begin{table}[!tbp]
 \begin{center}
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrrrr}
 \toprule
-\multicolumn{1}{l}{}&\multicolumn{1}{c}{LOGIT}&\multicolumn{1}{c}{PO}&\multicolumn{1}{c}{NB}&\multicolumn{1}{c}{ZIPO}\tabularnewline
+\multicolumn{1}{l}{}&\multicolumn{1}{c}{LOGIT}&\multicolumn{1}{c}{PO}&\multicolumn{1}{c}{NB}&\multicolumn{1}{c}{ZIPO}&\multicolumn{1}{c}{ZINB}\tabularnewline
 \midrule
-&&&&\tabularnewline
-   count\_(Intercept)&\bfseries      -5.04&\bfseries      -5.05&\bfseries      -5.06&\bfseries      -4.04\tabularnewline
-   count\_factor(age)2&      -0.08&      -0.10&      -0.10&       0.51\tabularnewline
-   count\_factor(age)3&      -0.41&      -0.41&      -0.41&      -0.05\tabularnewline
-   count\_factor(age)4&      -0.18&      -0.20&      -0.20&      -0.13\tabularnewline
-   count\_factor(stage)2&\bfseries       1.11&\bfseries       1.10&\bfseries       1.10&       0.21\tabularnewline
-   count\_factor(stage)3&\bfseries       1.40&\bfseries       1.40&\bfseries       1.40&       0.45\tabularnewline
-   count\_factor(stage)4&\bfseries       1.54&\bfseries       1.56&\bfseries       1.56&       0.65\tabularnewline
-   count\_factor(stage)5&\bfseries       1.64&\bfseries       1.67&\bfseries       1.67&       0.92\tabularnewline
-   count\_risk&\bfseries       0.30&\bfseries       0.31&\bfseries       0.31&       0.08\tabularnewline
+&&&&&\tabularnewline
+   count\_(Intercept)&\bfseries      -3.98&\bfseries      -3.96&\bfseries      -3.96&\bfseries      -3.92&\bfseries      -3.92\tabularnewline
+   count\_young&      -0.06&      -0.08&      -0.08&       0.09&       0.09\tabularnewline
+   count\_ehi&\bfseries      -1.83&\bfseries      -1.82&\bfseries      -1.82&      -1.09&\bfseries      -1.13\tabularnewline
+   count\_risk&\bfseries       0.41&\bfseries       0.39&\bfseries       0.39&\bfseries       0.35&\bfseries       0.35\tabularnewline
 \midrule
-&&&&\tabularnewline
-   zero\_(Intercept)&   &   &   &       6.57\tabularnewline
-   zero\_factor(age)2&   &   &   &       3.33\tabularnewline
-   zero\_factor(age)3&   &   &   &       0.65\tabularnewline
-   zero\_factor(age)4&   &   &   &      -3.00\tabularnewline
-   zero\_factor(stage)2&   &   &   &      -5.30\tabularnewline
-   zero\_factor(stage)3&   &   &   &\bfseries      -4.89\tabularnewline
-   zero\_factor(stage)4&   &   &   &      -7.23\tabularnewline
-   zero\_factor(stage)5&   &   &   &      -3.59\tabularnewline
-   zero\_risk&   &   &   &      -4.94\tabularnewline
+&&&&&\tabularnewline
+   zero\_(Intercept)&   &   &   &      -6.11&      -9.46\tabularnewline
+   zero\_young&   &   &   &       8.25&      14.60\tabularnewline
+   zero\_ehi&   &   &   &      10.45&      16.76\tabularnewline
+   zero\_risk&   &   &   &      -3.74&      -6.76\tabularnewline
 \midrule
-&&&&\tabularnewline
-   log-likelihood&   -1493.94&   -1543.09&   -1541.05&   -1557.97\tabularnewline
-   df&       9.00&       9.00&      10.00&      18.00\tabularnewline
-   AIC&    3005.88&    3104.18&    3102.11&    3151.95\tabularnewline
+&&&&&\tabularnewline
+   log-likelihood&   -1468.80&   -1499.05&   -1498.98&   -1497.54&   -1497.54\tabularnewline
+   df&       4.00&       4.00&       5.00&       8.00&       9.00\tabularnewline
+   AIC&    2945.59&    3006.11&    3007.95&    3011.08&    3013.07\tabularnewline
 \bottomrule
 \end{tabular}\end{center}
 
