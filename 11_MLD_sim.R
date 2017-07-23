@@ -320,6 +320,120 @@ apply(p.sum.per.sim_er, 1, summary)
 # 3rd Qu.       20.25        100.00 100.00
 # Max.          81.00        100.00 100.00
 
+##---- cluster ----
+cw_Baseline0 <- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
+##- first elements of second list level
+struc <- lapply(cw_Baseline0, `[`, 1) # or lapply(cw_Baseline0, function(x) x[1])
+str(struc[1:2], give.attr=T, give.length = F, give.head=T, vec.len = 1, indent.str="|", comp.str="----")
+
+#- load D
+#- format edgelist
+#- for each incident patient,
+#- select pair with minimum distance 
+#- and consider other node as donor (see ugly loop)
+#- OR
+#- for each incident, draw one donor in same cluster and add MLD count
+
+
+fit.logit.mld.clust <- function(sim, method = 1) { ## get incident id's, appli ugly loop ...
+  load(sim) # load( list.sims[['Baseline0']][1]) )
+  ## get ALL tips names and demes
+  tip.states <- data.frame(
+    "id" = bdt$tip.label,
+    "stage" = sapply( sampleDemes, deme2stage ),
+    "age" = sapply( sampleDemes, deme2age ),
+    "risk" = sapply( sampleDemes, deme2risk ),
+    stringsAsFactors = FALSE)
+  rownames(tip.states) <- NULL
+  
+  ##- select ID of stage 1
+  index_incident <- tip.states[which(tip.states$stage == 1), 'id']
+  D <- data.frame( lapply(distance$D, as.character), stringsAsFactors = FALSE)
+  D_inc <- D[D$ID1  %in% index_incident | D$ID2  %in% index_incident, ]
+  id_inc_in_clust <- index_incident[index_incident %in% c(D_inc$ID1, D_inc$ID2)]
+  
+  ##- Find ID of MLD
+  if( method == 1){
+    ##- donor with min distance for each incident recip
+    ##- ugly but works: find ID of most likely donor
+    find.mld.clust <- function(edgelist = d_incident, # in form: ID1, ID2, distance
+                               ids = id_inc_in_clust){
+      mld <- vector(mode = 'character', length = length(ids))
+      for(i in 1:length(ids)){
+        sub <- edgelist[edgelist[,1] == ids[i] | edgelist[,2] == ids[i], ] # only rows involving i
+        subsub <- sub[which.min(sub[, 3]),  ] # pair w min distance
+        mld[i] <- unlist(unname(subsub[c(subsub[,c(1,2)] != ids[i], FALSE)])) # select ID != i as donor
+      }
+      return(mld)
+    }
+    
+    mld <- find.mld.clust(edgelist = D_inc, ids = id_inc_in_clust)
+    # count duplicate in mld
+    mld.count.clust <- as.data.frame( table(mld), stringsAsFactors = FALSE )
+    #tail(mld.count.clust[order(mld.count.clust$Freq),])
+  } else {
+    ##- alternative
+    # draw 1 MLD in neighborhood
+    find.mld.clust.2 <- function(edgelist = d_incident, # in form: ID1, ID2, distance
+                                 ids = id_inc_in_clust){
+      mld <- vector(mode = 'character', length = length(ids))
+      for(i in 1:length(ids)){
+        sub <- edgelist[edgelist[,1] == ids[i] | edgelist[,2] == ids[i], ] # only rows involving i
+        nbh <- unique(c(sub[sub[,'ID1']!=ids[i],'ID1'], sub[sub[,'ID2']!=ids[i],'ID2'])) # neighborhood
+        mld[i] <- sample(nbh, 1) # select on nbh as donor
+      }
+      return(mld)
+    }
+    
+    mld <- find.mld.clust.2(edgelist = D_inc, ids = id_inc_in_clust)
+    # count duplicate in mld
+    mld.count.clust <- as.data.frame( table(mld), stringsAsFactors = FALSE )
+  }
+      
+    ##-- merge
+    ##- add zero count
+    tab.mld <- data.frame(id = mld.count.clust[,1], mld = mld.count.clust[,2])
+    tab <- merge(x = tip.states,
+                 y = tab.mld, by = 'id', all.x = T) # all.y = T)
+    tab$mld[is.na(tab$mld)] <- 0L # all donors (if all.x = T)
+    tab$binmld <- ifelse(tab$mld == 0, 0, 1)
+    tab$ehi <- ifelse(tab$stage == 1, 1, 0)
+    tab$young <- ifelse(tab$age == 1, 1, 0)
+    #with( tab, table(mld, age, stage) ) # 'in the general realm of very rare events'
+    #with( tab, table(mld, ehi, young) ) # 'in the general realm of very rare events'
+    
+    ##---- models ----
+    # X4 <- c('factor(age)', 'factor(stage)', 'risk')
+    X4 <- c('young', 'ehi', 'risk')
+    Y = 'mld'
+    Z = 1
+    #mod1 <- as.formula(paste(Y, '~', paste(X4, collapse = ' + ')))
+    mod1bi <- as.formula(paste('binmld', '~', paste(X4, collapse = ' + ')))
+    
+    ##---- fit ----
+    logit1 <- glm(mod1bi, family="binomial", data = tab)
+    return(summary(logit1))
+} 
+ltest <- lapply(list.sims[['Baseline0']], fit.logit.mld.clust)
+
+pp <- sapply(ltest, get.p.values )
+apply(pp, 1, sum)
+# young   ehi  risk 
+# 33   100    54 
+
+ltest2 <- lapply(list.sims[['Baseline0']], 
+                 function(x) fit.logit.mld.clust(x, method = 2))
+
+pp2 <- sapply(ltest2, get.p.values )
+apply(pp2, 1, sum)
+# young   ehi  risk 
+# 33   100    54 
+### WATCHOUT direction of EHI relation !!
+
+###------- lllllaaaaaa
+###
+
+
 ##---- check outdegree by stage ----
 x = l_ba[[1]]
 x = l_er[[1]]
