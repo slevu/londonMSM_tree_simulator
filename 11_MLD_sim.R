@@ -336,7 +336,7 @@ str(struc[1:2], give.attr=T, give.length = F, give.head=T, vec.len = 1, indent.s
 
 
 fit.logit.mld.clust <- function(sim, method = 1) { ## get incident id's, appli ugly loop ...
-  load(sim) # load( list.sims[['Baseline0']][1]) )
+  load(sim) # load( list.sims[['Baseline0']][1] )
   ## get ALL tips names and demes
   tip.states <- data.frame(
     "id" = bdt$tip.label,
@@ -412,23 +412,53 @@ fit.logit.mld.clust <- function(sim, method = 1) { ## get incident id's, appli u
     
     ##---- fit ----
     logit1 <- glm(mod1bi, family="binomial", data = tab)
-    return(summary(logit1))
-} 
-ltest <- lapply(list.sims[['Baseline0']], fit.logit.mld.clust)
+    x <- summary(logit1)
+    x <- x[!names(x) %in% c("family", "deviance.resid")] ## save space
+    return(x)
+}
 
-pp <- sapply(ltest, get.p.values )
-apply(pp, 1, sum)
+##- apply: 
+FITLOGITCLUS_ba <- paste(path.results, 'fit.logit.mld.clust.baseline.rds', sep = '/')
+FITLOGITCLUS_ba2 <- paste(path.results, 'fit.logit.mld.clust.baseline2.rds', sep = '/')
+FITLOGITCLUS_er <- paste(path.results, 'fit.logit.mld.clust.equal.rds', sep = '/')
+FITLOGITCLUS_er2 <- paste(path.results, 'fit.logit.mld.clust.equal2.rds', sep = '/')
+
+apply.mld.logit.cluster <- function(lst, fn, m = 1){
+  if(!file.exists(fn)){
+    ltest <- lapply(lst, function(x) fit.logit.mld.clust(x, method = m))
+    saveRDS(ltest, fn)
+  } else {
+    ltest <- readRDS(fn)
+  }
+  pp <- sapply(ltest, get.p.values )
+  return(apply(pp, 1, sum))
+}
+
+apply.mld.logit.cluster(lst = list.sims[['Baseline0']],
+                        fn = FITLOGITCLUS_ba,
+                        m = 1)
 # young   ehi  risk 
 # 33   100    54 
 
-ltest2 <- lapply(list.sims[['Baseline0']], 
-                 function(x) fit.logit.mld.clust(x, method = 2))
-
-pp2 <- sapply(ltest2, get.p.values )
-apply(pp2, 1, sum)
+apply.mld.logit.cluster(lst = list.sims[['Baseline0']],
+                        fn = FITLOGITCLUS_ba2,
+                        m = 2)
 # young   ehi  risk 
-# 33   100    54 
+# 10    77     8
 ### WATCHOUT direction of EHI relation !!
+
+apply.mld.logit.cluster(lst = list.sims[['EqualStage0']],
+                        fn = FITLOGITCLUS_er,
+                        m = 1)
+# young   ehi  risk 
+# 35    98    97 
+
+apply.mld.logit.cluster(lst = list.sims[['EqualStage0']],
+                        fn = FITLOGITCLUS_er2,
+                        m = 2)
+# young   ehi  risk 
+# 20    45    18 
+
 
 ###------- lllllaaaaaa
 ###
