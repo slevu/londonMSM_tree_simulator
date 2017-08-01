@@ -1,9 +1,13 @@
-##- MLD regression on simulations
+##---- MLD regression on simulations ----
 ##- find estimates of W_ij
 ##- define incident infection
-##- find MLDs
-##- correlates of being MLS vs not
+##- find MLDs: sample with infector probabilities
+##- correlates of being MLD vs not (after having tested zero-inflated regressions)
 ##- on two simulation scenarios
+##- summarize distribution of coefficients and p-values
+
+##- for cluster:
+##- MLD sampled from neighborhood
 
 # rm(list=ls())
 ##---- libs ----
@@ -16,15 +20,30 @@ library(Hmisc)
 source("load_sims_files.R")
 
 ##---- helper functions ----
-deme2age <- function(deme){ as.numeric(
-  substr(regmatches( deme , regexpr( '\\.age[0-9]', deme ) ), 5, 5) 
-) }
-deme2stage <- function(deme){as.numeric( 
-  substr(regmatches( deme , regexpr( 'stage[0-9]', deme )), 6, 6)
-) }
-deme2risk <- function(deme){as.numeric( 
-  substr(regmatches( deme , regexpr( 'riskLevel[0-9]', deme )), 10, 10)
-) }
+{
+  deme2age <- function(deme){ as.numeric(
+    substr(regmatches( deme , regexpr( '\\.age[0-9]', deme ) ), 5, 5) 
+  ) }
+  deme2stage <- function(deme){as.numeric( 
+    substr(regmatches( deme , regexpr( 'stage[0-9]', deme )), 6, 6)
+  ) }
+  deme2risk <- function(deme){as.numeric( 
+    substr(regmatches( deme , regexpr( 'riskLevel[0-9]', deme )), 10, 10)
+  ) }
+  ##- remove outliers
+  winsorize2 <- function (x, multiple=3)
+  {
+    if(length(multiple) != 1 || multiple <= 0) {
+      stop("bad value for 'multiple'")
+    }
+    med <- median(x)
+    y <- x - med
+    sc <- mad(y, center=0) * multiple
+    y[ y > sc ] <- sc
+    y[ y < -sc ] <- -sc
+    y + med
+  }
+} ## functions
 
 ##---- check id ----
 ## distribution of in-degree for incident
@@ -80,7 +99,7 @@ get.mc.mld.counts <- function(x, Nsim = 100){
     stringsAsFactors = FALSE)
   rownames(tip.states) <- NULL
   
-  ##- select ID of stage 1
+  ##- select ID of stage 1 as recipients and corresponding infector probs
   index_incident <- tip.states[which(tip.states$stage == 1), 'id']
   W <- as.data.frame(W, stringsAsFactors = FALSE)
   names(W)[which(names(W) == 'infectorProbability')] <- 'ip'
@@ -275,9 +294,32 @@ fit.glm <- function(LST, FN){
   }
   return(fits.logit)
 }
-fits.logit_ba <- fit.glm(list.counts.mld_ba, FITLOGIT_ba)
-fits.logit_er <- fit.glm(list.counts.mld_er, FITLOGIT_er)
+fits.logit_ba <- fit.glm(LST = list.counts.mld_ba, FN = FITLOGIT_ba)
+fits.logit_er <- fit.glm(LST = list.counts.mld_er, FN = FITLOGIT_er)
 
+##- get distribution of coefs (direction): 100 tree sims * 100 MC sims
+## fit = fits.logit_ba[[1]]; fit = fits.logit_ba[31:40]
+get.coef <- function(fit){
+  # source('functions.R') # for winsorize2
+  # m <- sapply(fit, function(x) x$coef[2:4,1]) # one sim * 100 MC sims
+  m <-  do.call(cbind, lapply(fit, function(l) sapply(l, function(x) x$coef[2:4,1]) ) )
+  m <- t(apply(m, 1, winsorize2)) ##- get rid of outliers
+  
+  ##- plot
+  mxy <- sapply(apply(m, 1, density), 
+                function(d) c(minx = min(d$x), maxx = max(d$x), 
+                              miny = min(d$y), maxy = max(d$y))) ## find x and y ranges
+  plot (density(m[1,]), xlab = '', main = 'Regression coefficients', col = 'red', 
+        xlim = c(min(mxy['minx',]), max(mxy['maxx',])),
+        ylim = c(min(mxy['miny',]), max(mxy['maxy',])))
+  lines (density(m[2,]), col = 'blue')
+  lines (density(m[3,]), col = 'green')
+  legend("topleft", legend = rownames(m), fill = c('red', 'blue', 'green'))
+}
+
+##- look at distribution of coef estimate with SA method
+get.coef(fits.logit_ba)
+get.coef(fits.logit_er)
 
 ##- count any p-value < 0.05 by X
 ## debug: X = X; fit = fits.logit[[1]][[1]]
@@ -320,11 +362,12 @@ apply(p.sum.per.sim_er, 1, summary)
 # 3rd Qu.       20.25        100.00 100.00
 # Max.          81.00        100.00 100.00
 
+##---***---***---***---***---***---
 ##---- cluster ----
-cw_Baseline0 <- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
-##- first elements of second list level
-struc <- lapply(cw_Baseline0, `[`, 1) # or lapply(cw_Baseline0, function(x) x[1])
-str(struc[1:2], give.attr=T, give.length = F, give.head=T, vec.len = 1, indent.str="|", comp.str="----")
+# cw_Baseline0 <- readRDS(file = paste(path.results, 'list.sim.clus-outdeg.Baseline0.rds', sep = '/') )
+# ##- first elements of second list level
+# struc <- lapply(cw_Baseline0, `[`, 1) # or lapply(cw_Baseline0, function(x) x[1])
+# str(struc[1:2], give.attr=T, give.length = F, give.head=T, vec.len = 1, indent.str="|", comp.str="----")
 
 #- load D
 #- format edgelist
@@ -335,7 +378,7 @@ str(struc[1:2], give.attr=T, give.length = F, give.head=T, vec.len = 1, indent.s
 #- for each incident, draw one donor in same cluster and add MLD count
 
 
-fit.logit.mld.clust <- function(sim, method = 1) { ## get incident id's, appli ugly loop ...
+fit.logit.mld.clust <- function(sim, method = 1) { ## get incident id's, apply ugly loop ...
   load(sim) # load( list.sims[['Baseline0']][1] )
   ## get ALL tips names and demes
   tip.states <- data.frame(
@@ -380,12 +423,14 @@ fit.logit.mld.clust <- function(sim, method = 1) { ## get incident id's, appli u
       for(i in 1:length(ids)){
         sub <- edgelist[edgelist[,1] == ids[i] | edgelist[,2] == ids[i], ] # only rows involving i
         nbh <- unique(c(sub[sub[,'ID1']!=ids[i],'ID1'], sub[sub[,'ID2']!=ids[i],'ID2'])) # neighborhood
-        mld[i] <- sample(nbh, 1) # select on nbh as donor
+        mld[i] <- sample(nbh, 1) # select one nbh as donor
       }
       return(mld)
     }
     
     mld <- find.mld.clust.2(edgelist = D_inc, ids = id_inc_in_clust)
+    mlds <- replicate(2, find.mld.clust.2(edgelist = D_inc, ids = id_inc_in_clust))
+    head(mlds)
     # count duplicate in mld
     mld.count.clust <- as.data.frame( table(mld), stringsAsFactors = FALSE )
   }
@@ -399,21 +444,21 @@ fit.logit.mld.clust <- function(sim, method = 1) { ## get incident id's, appli u
     tab$binmld <- ifelse(tab$mld == 0, 0, 1)
     tab$ehi <- ifelse(tab$stage == 1, 1, 0)
     tab$young <- ifelse(tab$age == 1, 1, 0)
-    #with( tab, table(mld, age, stage) ) # 'in the general realm of very rare events'
     #with( tab, table(mld, ehi, young) ) # 'in the general realm of very rare events'
     
     ##---- models ----
     # X4 <- c('factor(age)', 'factor(stage)', 'risk')
     X4 <- c('young', 'ehi', 'risk')
-    Y = 'mld'
-    Z = 1
+    # Y = 'mld'
+    # Z = 1
     #mod1 <- as.formula(paste(Y, '~', paste(X4, collapse = ' + ')))
     mod1bi <- as.formula(paste('binmld', '~', paste(X4, collapse = ' + ')))
     
     ##---- fit ----
     logit1 <- glm(mod1bi, family="binomial", data = tab)
     x <- summary(logit1)
-    x <- x[!names(x) %in% c("family", "deviance.resid")] ## save space
+    # x <- x[!names(x) %in% c("family", "deviance.resid")] ## save space 
+    x <- x[names(x) %in% c("coefficients")] ## save space 2, only coefs
     return(x)
 }
 
@@ -434,6 +479,7 @@ apply.mld.logit.cluster <- function(lst, fn, m = 1){
   return(apply(pp, 1, sum))
 }
 
+##- tests results
 apply.mld.logit.cluster(lst = list.sims[['Baseline0']],
                         fn = FITLOGITCLUS_ba,
                         m = 1)
