@@ -43,6 +43,13 @@ source("load_sims_files.R")
     y[ y < -sc ] <- -sc
     y + med
   }
+  ##-
+  unfactorDataFrame <- function( x ) {
+    x <- data.frame( lapply(x, as.character), stringsAsFactors = FALSE)
+    x <- data.frame( lapply(x, type.convert, as.is = TRUE),
+                     stringsAsFactors = FALSE)
+    return(x)
+  }
 } ## functions
 
 ##---- check id ----
@@ -105,9 +112,9 @@ get.mc.mld.counts <- function(x, Nsim = 100){
   names(W)[which(names(W) == 'infectorProbability')] <- 'ip'
   Winc <- W[W$recip  %in% index_incident, ]
   
-  source("../phylo-uk/code/single.mc.mld.R")
+  source("single.mc.mld.R")
   ##- apply MLD Nsim times
-  mc.mld <- replicate(Nsim, single.mc.mld(x = Winc))
+  mc.mld <- replicate(Nsim, single.mc.mld.ip(x = Winc))
   
   ##- get rid of row = donor 'out'
   counts.mld <- mc.mld[-which(rownames(mc.mld)=='out'), ]
@@ -378,8 +385,8 @@ apply(p.sum.per.sim_er, 1, summary)
 #- for each incident, draw one donor in same cluster and add MLD count
 
 
-fit.logit.mld.clust <- function(sim, method = 1) { ## get incident id's, apply ugly loop ...
-  load(sim) # load( list.sims[['Baseline0']][1] )
+get.mld.clust <- function(sim, Nsim = 100) {
+  load(sim) # load( list.sims[['Baseline0']][2] )
   ## get ALL tips names and demes
   tip.states <- data.frame(
     "id" = bdt$tip.label,
@@ -391,76 +398,50 @@ fit.logit.mld.clust <- function(sim, method = 1) { ## get incident id's, apply u
   
   ##- select ID of stage 1
   index_incident <- tip.states[which(tip.states$stage == 1), 'id']
-  D <- data.frame( lapply(distance$D, as.character), stringsAsFactors = FALSE)
-  D_inc <- D[D$ID1  %in% index_incident | D$ID2  %in% index_incident, ]
-  id_inc_in_clust <- index_incident[index_incident %in% c(D_inc$ID1, D_inc$ID2)]
+  D <- distance[['D']]
+  D[,1:2] <- apply(D[,1:2], 2, as.character)
+  D_inc <- D[D[,1]  %in% index_incident | D[,1]  %in% index_incident, ]
   
-  ##- Find ID of MLD
-  if( method == 1){
-    ##- donor with min distance for each incident recip
-    ##- ugly but works: find ID of most likely donor
-    find.mld.clust <- function(edgelist = d_incident, # in form: ID1, ID2, distance
-                               ids = id_inc_in_clust){
-      mld <- vector(mode = 'character', length = length(ids))
-      for(i in 1:length(ids)){
-        sub <- edgelist[edgelist[,1] == ids[i] | edgelist[,2] == ids[i], ] # only rows involving i
-        subsub <- sub[which.min(sub[, 3]),  ] # pair w min distance
-        mld[i] <- unlist(unname(subsub[c(subsub[,c(1,2)] != ids[i], FALSE)])) # select ID != i as donor
-      }
-      return(mld)
-    }
-    
-    mld <- find.mld.clust(edgelist = D_inc, ids = id_inc_in_clust)
-    # count duplicate in mld
-    mld.count.clust <- as.data.frame( table(mld), stringsAsFactors = FALSE )
-    #tail(mld.count.clust[order(mld.count.clust$Freq),])
-  } else {
-    ##- alternative
-    # draw 1 MLD in neighborhood
-    find.mld.clust.2 <- function(edgelist = d_incident, # in form: ID1, ID2, distance
-                                 ids = id_inc_in_clust){
-      mld <- vector(mode = 'character', length = length(ids))
-      for(i in 1:length(ids)){
-        sub <- edgelist[edgelist[,1] == ids[i] | edgelist[,2] == ids[i], ] # only rows involving i
-        nbh <- unique(c(sub[sub[,'ID1']!=ids[i],'ID1'], sub[sub[,'ID2']!=ids[i],'ID2'])) # neighborhood
-        mld[i] <- sample(nbh, 1) # select one nbh as donor
-      }
-      return(mld)
-    }
-    
-    mld <- find.mld.clust.2(edgelist = D_inc, ids = id_inc_in_clust)
-    mlds <- replicate(2, find.mld.clust.2(edgelist = D_inc, ids = id_inc_in_clust))
-    head(mlds)
-    # count duplicate in mld
-    mld.count.clust <- as.data.frame( table(mld), stringsAsFactors = FALSE )
-  }
-      
-    ##-- merge
-    ##- add zero count
-    tab.mld <- data.frame(id = mld.count.clust[,1], mld = mld.count.clust[,2])
-    tab <- merge(x = tip.states,
-                 y = tab.mld, by = 'id', all.x = T) # all.y = T)
-    tab$mld[is.na(tab$mld)] <- 0L # all donors (if all.x = T)
-    tab$binmld <- ifelse(tab$mld == 0, 0, 1)
-    tab$ehi <- ifelse(tab$stage == 1, 1, 0)
-    tab$young <- ifelse(tab$age == 1, 1, 0)
-    #with( tab, table(mld, ehi, young) ) # 'in the general realm of very rare events'
-    
-    ##---- models ----
-    # X4 <- c('factor(age)', 'factor(stage)', 'risk')
-    X4 <- c('young', 'ehi', 'risk')
-    # Y = 'mld'
-    # Z = 1
-    #mod1 <- as.formula(paste(Y, '~', paste(X4, collapse = ' + ')))
-    mod1bi <- as.formula(paste('binmld', '~', paste(X4, collapse = ' + ')))
-    
-    ##---- fit ----
-    logit1 <- glm(mod1bi, family="binomial", data = tab)
-    x <- summary(logit1)
-    # x <- x[!names(x) %in% c("family", "deviance.resid")] ## save space 
-    x <- x[names(x) %in% c("coefficients")] ## save space 2, only coefs
-    return(x)
+  source("single.mc.mld.R")
+      # draw 1 MLD in neighborhood
+    # counts.mld <- replicate(Nsim, single.mc.mld.clust(edgelist = D_inc, ids = index_incident, thr = 0.015))
+    counts.mld <- sapply(1:Nsim, function(x) {
+      print(x)
+      single.mc.mld.clust(edgelist = D_inc, ids = index_incident, thr = 0.015)
+    })
+    return(list('states' = tip.states, 'counts' = counts.mld))
 }
+
+##---- run MC ----
+MC.COUNT.CLUS_ba = paste(path.results, 'mc.mld.clus.baseline.rds', sep = '/') 
+MC.COUNT.CLUS_er =  paste(path.results, 'mc.mld.clus.equalrates.rds', sep = '/') 
+mc <- function(LST, FN){
+  if(!file.exists(FN)){
+    s <- system.time(
+      list.counts.mld <- lapply(LST, get.mld.clust)
+    ) # 1979s = 33mn for 100 sims * 100 MC reps
+    print(s)
+    saveRDS(list.counts.mld, FN)
+  } else {
+    list.counts.mld <- readRDS(FN)
+  }
+  return(list.counts.mld)
+}
+list.counts.mld_ba <- mc(LST = list.sims[['Baseline0']], FN = MC.COUNT.CLUS_ba)
+list.counts.mld_er <- mc(LST = list.sims[['EqualStage0']], FN = MC.COUNT.CLUS_er)
+
+#### laaaaaaaa
+LST = list.sims[['Baseline0']]
+list.counts.mld <- lapply(LST[1:2], get.mld.clust)
+table(list.counts.mld$`10222`$counts[,1])
+tail(list.counts.mld$`10222`$counts[,1])
+
+##- test logit 
+LST = list.counts.mld
+fits.logit <- lapply(LST, function(x){
+  lapply(1:dim(x$counts)[2], function(z) get.mld.logit(k = z, counts = x$counts, df = x$states)) 
+})
+
 
 ##- apply: 
 FITLOGITCLUS_ba <- paste(path.results, 'fit.logit.mld.clust.baseline.rds', sep = '/')
