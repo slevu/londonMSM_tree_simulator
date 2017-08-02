@@ -59,16 +59,16 @@ single.mc.mld.clust <- function(edgelist = D, # in form: ID1, ID2, distance
       mld <- sample(nbh, 1) # select one nbh as donor
       ud[mld] <- ud[mld] + 1
     }
-    print(paste(i, '/', length(ids)))
+    # print(paste(i, '/', length(ids)))
   }
   return(ud)
 }
 
 # mld <- single.mc.mld.clust(edgelist = D, ids = index_incident, thr = 0.015)
-mlds <- sapply(1:2, function(x) {
-  print(x)
-  single.mc.mld.clust(edgelist = D, ids = index_incident, thr = 0.015)
-})
+# mlds <- sapply(1:2, function(x) {
+#   print(x)
+#   single.mc.mld.clust(edgelist = D, ids = index_incident, thr = 0.015)
+# })
 # mlds <- replicate(10, single.mc.mld.clust(edgelist = D_inc, ids = index_incident))
 
 
