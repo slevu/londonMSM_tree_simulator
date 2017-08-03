@@ -1,0 +1,133 @@
+---
+title: "MLD analysis on simulations"
+author: "Stephane"
+date: "8/01/2017"
+output: html_document
+---
+
+- For patients in stage 1 that are deemed to be infected in same year as diagnosis (incident)
+- Examine characteristics of their most-likely-donor (MLD)
+- MLD are determined either from
+    + infector probabilities related to (SA method)
+    + or co-clustering with incident recipients (clustering method)
+- Study relation between number of selection as MLD (Poisson-like) or binary MLD status and co-variates (age, stage, risk)
+
+```{r}
+library(knitr)
+read_chunk('11_MLD_sim.R')
+#opts_chunk$set(dev = c('pdf','png','postscript') )
+```
+
+Packages for various zero-inflated regressions
+```{r libs, warning=FALSE, message=FALSE}
+```
+
+Load simulation results
+```{r sim files}
+```
+
+```{r helper functions, include=FALSE}
+```
+
+Look at in-degrees on first baseline sim
+```{r check id, echo = FALSE}
+```
+
+#### Calculate MLD counts
+```{r compute mld counts, echo = FALSE}
+```
+- For 100 tree simulations, 
+- load a dataframe of tip states
+- select incident (stage 1) patients
+- replicate Monte-Carlo sampling of MLD
+- In `single.mc.mld.R`, function `single.mc.mld.ip` does:
+
+1. from matrix of $W_{ij}$
+2. split sets of $1:k_j$ donors per unique recipient $j$
+3. initialize to 0 MLD count $m_1:m_i$ for all unique donors + $m_{i+1}$ for 'outside source' 
+4. **for** each $j$,
+5. **do** sample one of {$k_j$ donors, 'outside source'}
+    + with probabilities {$W_{ij}$, $(1 - \sum_j{W_{ij}})$}
+    + $m_k = m_k + 1$
+6. **end**
+
+```{r run MC, echo = FALSE}
+```
+
+```{r stats, echo = FALSE}
+```
+
+In baseline scenario, an average `r sb[[1]]['Mean']` % of donors have a non-zero values
+
+#### Test if zero-inflated model provide better fit than logistic regression (MLD 0 vs >0)
+
+* On first MC replicate of first baseline simulation,
+* model `Y ~ young + ehi + risk`, with 
+    + Y either MLD count or binary (0 vs >0), 
+    + and young = age 1, ehi = stage 1
+* "LOGIT" = logistic, "PO" = poisson, "NB" = neg binomial, "ZIPO" = zi_poisson, "ZINB" = zi_neg binomial
+
+```{r compare reg, results='asis', echo = FALSE, warning= FALSE}
+```
+
+* Apparently, LOGIT model is the best (AIC and non-significant zero-inflation parameters)
+* age non significant
+* **not** being in EHI is associated with being a MLD
+* risk 2 is also associated with being a MLD
+
+#### Only LOGIT models
+So, I apply a logistic model to all 100 simulations * 100 MC replicates, and count the number of p < 0.05 associations
+
+```{r logit, echo = FALSE}
+```
+
+```{r run logistic, echo = FALSE}
+```
+
+```{r stats p-values, echo = FALSE}
+```
+
+Direction of coefficients estimates and number of p-values < 0.05
+```{r compare MLD sa}
+
+```
+
+- Again, based on infector probabilities, **not** being EHI and risk level 2 increase chance of being MLD
+- But that's also the case in equal rate scenario
+- Being young is generally not significant
+
+#### Same results based on clustering
+And do the same for cluster with MLD drawn from neighborhood:
+
+In `single.mc.mld`, 
+
+1. from list of distances (undirected)
+2. initialize to 0 MLD count $m_1:m_i$ for all unique nodes
+3. **for** each node in stage 1 $j$,
+4. **do** sample one of $n_j$ neighbors within distance threshold
+    + with probabilities $1/n_j$
+    + $m_k = m_k + 1$
+5. **end**
+
+```{r cluster, echo = FALSE}
+
+```
+
+
+```{r run MC CLUS, echo = FALSE}
+
+```
+
+```{r and MLD cluster}
+
+```
+
+- Based on neighborhood within 1.5% distance, being EHI, young age (in ~43% simulations) and **risk level 1** increase chance of being MLD
+- Virtually no difference between scenarios
+
+#### Conclusion
+- zero-inflated models are not better than logistic reg
+- MLD analyses are not able to distinguish the two scenarios regarding transmission by stage of infection
+- Results confirm the bias of clustering towards early infection and young age
+- strange result of risk (bug ?)
+

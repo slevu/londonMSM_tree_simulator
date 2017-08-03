@@ -43,13 +43,6 @@ source("load_sims_files.R")
     y[ y < -sc ] <- -sc
     y + med
   }
-  ##-
-  unfactorDataFrame <- function( x ) {
-    x <- data.frame( lapply(x, as.character), stringsAsFactors = FALSE)
-    x <- data.frame( lapply(x, type.convert, as.is = TRUE),
-                     stringsAsFactors = FALSE)
-    return(x)
-  }
 } ## functions
 
 ##---- check id ----
@@ -122,8 +115,8 @@ get.mc.mld.counts <- function(x, Nsim = 100){
 }
 
 ##---- run MC ----
-MC.COUNT_ba = paste(path.results, 'mc.mld.baseline.rds', sep = '/') #"./data/mc.mld.baseline.rds"
-MC.COUNT_er =  paste(path.results, 'mc.mld.equalrates.rds', sep = '/') #"./data/mc.mld.equalrates.rds"
+MC.COUNT_ba = paste(path.results, 'mc.mld.baseline.rds', sep = '/') 
+MC.COUNT_er =  paste(path.results, 'mc.mld.equalrates.rds', sep = '/') 
 mc <- function(LST, FN){
   if(!file.exists(FN)){
     s <- system.time(
@@ -139,7 +132,7 @@ mc <- function(LST, FN){
 list.counts.mld_ba <- mc(LST = list.sims[['Baseline0']], FN = MC.COUNT_ba)
 list.counts.mld_er <- mc(LST = list.sims[['EqualStage0']], FN = MC.COUNT_er)
 
-##---- stats
+##---- stats ----
 stats <- function(list.counts.mld){ # stats
   PropOfNonZero <- lapply(list.counts.mld, function(x) round(apply(x$counts, 2, function(z) sum(z>0)) / dim(x$counts)[1] * 100, 2))
   s <- sapply(PropOfNonZero, summary) # 4% on non-zero
@@ -159,18 +152,18 @@ se <- stats(list.counts.mld = list.counts.mld_er)
 if(FALSE){
   ##-- 10 reps
   ##- test: bind 10 random MC replicates
-  ## debug: 
+  ## debug:
   counts.mld <- list.counts.mld_ba[[1]][['counts']]; tip.states <- list.counts.mld_ba[[1]][['states']]
   ks <- sample(1:100, 10) # 1:100
   tab.mld.10 <- data.frame('id' = rep(rownames(counts.mld), length(ks)), 'mld' = as.vector(counts.mld[, ks]))
   table(tab.mld.10$mld)
-  tab <- merge(x = tip.states, 
+  tab <- merge(x = tip.states,
                y = tab.mld.10, by = 'id', all.x = T) # all.x = T)
   table(tab$mld, useNA = 'ifany')
   tab$mld[is.na(tab$mld)] <- 0L # all donors (if all.x = T)
   ##- test: bind 10 random MC replicates
-  
-  ##-- plots 
+
+  ##-- plots
   par(mfrow = c(1, 3))
   boxplot(stage ~ mld, data = tab, horizontal =TRUE, ylab = 'MLD count', xlab = 'stage')
   boxplot(age ~ mld, data = tab, horizontal = T, xlab= 'age sampling')
@@ -181,7 +174,7 @@ if(FALSE){
 ##- answer: no
 ##---- compare reg ----
 {
-  ##---- first replicate ----
+  ##---- first replicate
   ##- keep one df, merge copy MLD count
   counts.mld <- list.counts.mld_ba[[1]][['counts']]; tip.states <- list.counts.mld_ba[[1]][['states']]
   k <- 1
@@ -194,32 +187,32 @@ if(FALSE){
   tab$young <- ifelse(tab$age == 1, 1, 0)
   #with( tab, table(mld, age, stage) ) # 'in the general realm of very rare events'
   #with( tab, table(mld, ehi, young) ) # 'in the general realm of very rare events'
-  
-  ##---- models ----
+
+  ##---- models
   # X4 <- c('factor(age)', 'factor(stage)', 'risk')
   X4 <- c('young', 'ehi', 'risk')
   Y = 'mld'
   Z = 1
   mod1 <- as.formula(paste(Y, '~', paste(X4, collapse = ' + ')))
   mod1bi <- as.formula(paste('binmld', '~', paste(X4, collapse = ' + ')))
-  
-  ##---- fit ----
+
+  ##---- fit
   logit1 <- glm(mod1bi, family="binomial", data = tab)
   poisson1 <- glm(mod1 , family="poisson", data = tab) # poisson GLM
   nb1 <- glm.nb(mod1, data = tab) # negative binomial
   zi_poisson1 <- zeroinfl(mod1, data = tab, dist= 'poisson') # zero-inflated poisson
   tryCatch(zi_nb1 <- zeroinfl(mod1, data = tab, dist= 'negbin'), error = function(e) e) # zero-inflated neg bin
-  
+
   ## coefs
   fm <- list("LOGIT" = logit1, "PO" = poisson1, "NB" = nb1, "ZIPO" = zi_poisson1, "ZINB" = zi_nb1)
   k <- which.max( sapply(fm, function(x) length(coef(x))) )
-  full.names <- names(coef(fm[[k]])) 
+  full.names <- names(coef(fm[[k]]))
   coefs <- sapply(fm, function(x) coef(x)[1:length(full.names)])
   rownames(coefs) <- full.names
   ## for latex
   tt <- data.frame(coefs, check.names = FALSE)
-  
-  
+
+
   # pseudo-code for extracting p-values in both configuraiton of coef
   get.glm.pvalues <- function(x) {
     if (any(class(x) == "glm")){
@@ -232,22 +225,22 @@ if(FALSE){
     }
     return(p)
   }
-  
+
   get.all.glms.pvalues <- function(list.of.fit = fm){
     k <- which.max( sapply(list.of.fit, function(x) length(coef(x))) )
-    full.names <- names(coef(fm[[k]])) 
+    full.names <- names(coef(fm[[k]]))
     m <- sapply(list.of.fit, function(x) get.glm.pvalues(x)[1:length(full.names)])
     rownames(m) <- full.names
     return(m)
   }
   ## p-values < 0.05
   p.sign <- get.all.glms.pvalues(fm) < 0.05
-  
+
   ## format for latex table
   cell.fmt <- matrix(rep("", nrow(tt) * ncol(tt)), nrow = nrow(tt))
   cell.fmt[p.sign] <- "bfseries"
   #cell.fmt[p.sign] <- "color{red}"
-  
+
   ## add likelihood
   ## log-L
   gofs <- rbind('log-likelihood' = sapply(fm, function(x) logLik(x)),
@@ -258,7 +251,7 @@ if(FALSE){
   # dim(tt); dim(cell.fmt)
   nr <- dim(coefs)[1]/2 # size of rgoup
   tab.latex <- latex(round(tt,2), title = '', n.rgroup = c(nr, nr, 3), cellTexCmds = cell.fmt, booktabs = TRUE, numeric.dollar = FALSE, rowname = latexTranslate(rownames(tt)))
-  
+
   #tab.latex
   html(tab.latex, rmarkdown = TRUE)
 } ## tests zero-inflated regressions
@@ -271,7 +264,7 @@ get.mld.logit <- function(k, counts = counts.mld, df = tip.states, X =  c('young
   tab <- merge(x = df,
                y = tab.mld, by = 'id', all.x = T) # all.y = T)
   tab$mld[is.na(tab$mld)] <- 0L # all donors (if all.x = T)
-  
+
   ##- 0. logistic regression (0, non 0)
   mod1bi <- as.formula(paste('binmld', '~', paste(X, collapse = ' + ')))
   tab$binmld <- ifelse(tab$mld == 0, 0, 1)
@@ -291,7 +284,7 @@ fit.glm <- function(LST, FN){
   if(!file.exists(FN)){
     st <- system.time(
       fits.logit <- lapply(LST, function(x){
-        lapply(1:dim(x$counts)[2], function(z) get.mld.logit(k = z, counts = x$counts, df = x$states)) 
+        lapply(1:dim(x$counts)[2], function(z) get.mld.logit(k = z, counts = x$counts, df = x$states))
       })
     ) # long
     print(st)
@@ -311,28 +304,26 @@ get.coef <- function(fit){
   # m <- sapply(fit, function(x) x$coef[2:4,1]) # one sim * 100 MC sims
   m <-  do.call(cbind, lapply(fit, function(l) sapply(l, function(x) x$coef[2:4,1]) ) )
   m <- t(apply(m, 1, winsorize2)) ##- get rid of outliers
-  
+
   ##- plot
-  mxy <- sapply(apply(m, 1, density), 
-                function(d) c(minx = min(d$x), maxx = max(d$x), 
+  mxy <- sapply(apply(m, 1, density),
+                function(d) c(minx = min(d$x), maxx = max(d$x),
                               miny = min(d$y), maxy = max(d$y))) ## find x and y ranges
-  plot (density(m[1,]), xlab = '', main = 'Regression coefficients', col = 'red', 
+  plot (density(m[1,]), xlab = '', main = 'Regression coefficients', col = 'red',
         xlim = c(min(mxy['minx',]), max(mxy['maxx',])),
         ylim = c(min(mxy['miny',]), max(mxy['maxy',])))
   lines (density(m[2,]), col = 'blue')
   lines (density(m[3,]), col = 'green')
+  abline(v = 0, lty = 3)
   legend("topleft", legend = rownames(m), fill = c('red', 'blue', 'green'))
 }
 
-##- look at distribution of coef estimate with SA method
-get.coef(fits.logit_ba)
-get.coef(fits.logit_er)
 
 ##- count any p-value < 0.05 by X
 ## debug: X = X; fit = fits.logit[[1]][[1]]
 get.p.values <- function(fit, X =  c('young', 'ehi', 'risk')){ #c('factor(age)', 'factor(stage)', 'risk')){
   #m <- summary(fit)
-  p.values <- fit$coef[,4] 
+  p.values <- fit$coef[,4]
   ##- get rid of parentheses
   unparenthesis <- function(string){
     gsub("\\(|\\)", "", string)
@@ -345,29 +336,14 @@ get.p.values <- function(fit, X =  c('young', 'ehi', 'risk')){ #c('factor(age)',
 }
 
 ##---- stats p-values ----
-## by sim
-p.sum_ba <- lapply(fits.logit_ba, function(x) sapply(x, function(z) get.p.values(fit = z)))
-p.sum_er <- lapply(fits.logit_er, function(x) sapply(x, function(z) get.p.values(fit = z)))
-## by MC replicate
-p.sum.per.sim_ba <- sapply(p.sum_ba, rowSums)
-p.sum.per.sim_er <- sapply(p.sum_er, rowSums)
+summary.p.values <- function(LISTOFFIT) {
+  ## by sim
+  p.sum <- lapply(LISTOFFIT, function(x) sapply(x, function(z) get.p.values(fit = z)))
+  ## by MC replicate
+  p.sum.per.sim <- sapply(p.sum, rowSums)
+  return(apply(p.sum.per.sim, 1, summary))
+}
 
-apply(p.sum.per.sim_ba, 1, summary)
-#         factor(age) factor(stage)   risk
-# Min.           1.00           100  10.00
-# 1st Qu.        7.00           100  79.50
-# Median        16.00           100  94.00
-# Mean          23.86           100  85.57
-# 3rd Qu.       36.00           100  98.00
-# Max.          81.00           100 100.00
-apply(p.sum.per.sim_er, 1, summary)
-#         factor(age) factor(stage)   risk
-# Min.           0.00         99.00  94.00
-# 1st Qu.        5.00        100.00 100.00
-# Median        11.00        100.00 100.00
-# Mean          16.64         99.91  99.84
-# 3rd Qu.       20.25        100.00 100.00
-# Max.          81.00        100.00 100.00
 
 ##---***---***---***---***---***---
 ##---- cluster ----
@@ -379,7 +355,7 @@ apply(p.sum.per.sim_er, 1, summary)
 #- load D
 #- format edgelist
 #- for each incident patient,
-#- select pair with minimum distance 
+#- select pair with minimum distance
 #- and consider other node as donor (see ugly loop)
 #- OR
 #- for each incident, draw one donor in same cluster and add MLD count
@@ -395,13 +371,13 @@ get.mld.clust <- function(sim, Nsim = 100) {
     "risk" = sapply( sampleDemes, deme2risk ),
     stringsAsFactors = FALSE)
   rownames(tip.states) <- NULL
-  
+
   ##- select ID of stage 1
   index_incident <- tip.states[which(tip.states$stage == 1), 'id']
   D <- distance[['D']]
   D[,1:2] <- apply(D[,1:2], 2, as.character)
   D_inc <- D[D[,1]  %in% index_incident | D[,1]  %in% index_incident, ]
-  
+
   source("single.mc.mld.R")
       # draw 1 MLD in neighborhood
     # counts.mld <- replicate(Nsim, single.mc.mld.clust(edgelist = D_inc, ids = index_incident, thr = 0.015))
@@ -412,14 +388,14 @@ get.mld.clust <- function(sim, Nsim = 100) {
     return(list('states' = tip.states, 'counts' = counts.mld))
 }
 
-##---- run MC ----
-MC.COUNT.CLUS_ba = paste(path.results, 'mc.mld.clus.baseline.rds', sep = '/') 
-MC.COUNT.CLUS_er =  paste(path.results, 'mc.mld.clus.equalrates.rds', sep = '/') 
+##---- run MC CLUS ----
+MC.COUNT.CLUS_ba = paste(path.results, 'mc.mld.clus.baseline.rds', sep = '/')
+MC.COUNT.CLUS_er =  paste(path.results, 'mc.mld.clus.equalrates.rds', sep = '/')
 mc <- function(LST, FN){
   if(!file.exists(FN)){
     s <- system.time(
       list.counts.mld <- lapply(LST, get.mld.clust)
-    ) # 1979s = 33mn for 100 sims * 100 MC reps
+    ) # 2910 = 49mn for 100 sims * 100 MC reps
     print(s)
     saveRDS(list.counts.mld, FN)
   } else {
@@ -427,102 +403,37 @@ mc <- function(LST, FN){
   }
   return(list.counts.mld)
 }
-list.counts.mld_ba <- mc(LST = list.sims[['Baseline0']], FN = MC.COUNT.CLUS_ba)
-list.counts.mld_er <- mc(LST = list.sims[['EqualStage0']], FN = MC.COUNT.CLUS_er)
+list.counts.mld.clus_ba <- mc(LST = list.sims[['Baseline0']], FN = MC.COUNT.CLUS_ba)
+list.counts.mld.clus_er <- mc(LST = list.sims[['EqualStage0']], FN = MC.COUNT.CLUS_er)
 
-#### laaaaaaaa
-LST = list.sims[['Baseline0']]
-list.counts.mld <- lapply(LST[1:2], get.mld.clust)
-table(list.counts.mld$`10222`$counts[,1])
-tail(list.counts.mld$`10222`$counts[,1])
+##- fit logistic reg
+FITLOGIT.CLUS_ba <- paste(path.results, 'fit.logit.mld.clus.baseline.rds', sep = '/')
+FITLOGIT.CLUS_er <- paste(path.results, 'fit.logit.mld.clus.equalrates.rds', sep = '/')
 
-##- test logit 
-LST = list.counts.mld
-fits.logit <- lapply(LST, function(x){
-  lapply(1:dim(x$counts)[2], function(z) get.mld.logit(k = z, counts = x$counts, df = x$states)) 
-})
+fits.logit.clus_ba <- fit.glm(LST = list.counts.mld_ba, FN = FITLOGIT.CLUS_ba) ## 1018s
+fits.logit.clus_er <- fit.glm(LST = list.counts.mld_er, FN = FITLOGIT.CLUS_er) ## 1036
 
+##---- compare MLD sa ----
+####- look at distribution of coef estimate with SA method
+get.coef(fits.logit_ba)
+get.coef(fits.logit_er)
 
-##- apply: 
-FITLOGITCLUS_ba <- paste(path.results, 'fit.logit.mld.clust.baseline.rds', sep = '/')
-FITLOGITCLUS_ba2 <- paste(path.results, 'fit.logit.mld.clust.baseline2.rds', sep = '/')
-FITLOGITCLUS_er <- paste(path.results, 'fit.logit.mld.clust.equal.rds', sep = '/')
-FITLOGITCLUS_er2 <- paste(path.results, 'fit.logit.mld.clust.equal2.rds', sep = '/')
+##- p-values for SA method
+summary.p.values(fits.logit_ba)
+summary.p.values(fits.logit_er)
 
-apply.mld.logit.cluster <- function(lst, fn, m = 1){
-  if(!file.exists(fn)){
-    ltest <- lapply(lst, function(x) fit.logit.mld.clust(x, method = m))
-    saveRDS(ltest, fn)
-  } else {
-    ltest <- readRDS(fn)
-  }
-  pp <- sapply(ltest, get.p.values )
-  return(apply(pp, 1, sum))
-}
+##---- and MLD cluster ----
+##- look at distribution of coef estimate with CLUSTER
+get.coef(fits.logit.clus_ba)
+get.coef(fits.logit.clus_er)
 
-##- tests results
-apply.mld.logit.cluster(lst = list.sims[['Baseline0']],
-                        fn = FITLOGITCLUS_ba,
-                        m = 1)
-# young   ehi  risk 
-# 33   100    54 
-
-apply.mld.logit.cluster(lst = list.sims[['Baseline0']],
-                        fn = FITLOGITCLUS_ba2,
-                        m = 2)
-# young   ehi  risk 
-# 10    77     8
-### WATCHOUT direction of EHI relation !!
-
-apply.mld.logit.cluster(lst = list.sims[['EqualStage0']],
-                        fn = FITLOGITCLUS_er,
-                        m = 1)
-# young   ehi  risk 
-# 35    98    97 
-
-apply.mld.logit.cluster(lst = list.sims[['EqualStage0']],
-                        fn = FITLOGITCLUS_er2,
-                        m = 2)
-# young   ehi  risk 
-# 20    45    18 
+##- p-values for CLUS method
+summary.p.values(fits.logit.clus_ba)
+summary.p.values(fits.logit.clus_er)
 
 
-###------- lllllaaaaaa
-###
+##---- surplus ----
 
-
-##---- check outdegree by stage ----
-x = l_ba[[1]]
-x = l_er[[1]]
-test <- function(x){
-  load(x)
-  
-  W <- as.data.frame(W, stringsAsFactors = FALSE)
-  names(W)[which(names(W) == 'infectorProbability')] <- 'ip'
-  od <- tapply(W$ip, W$donor, sum)
-  oddf <- data.frame('id' = names(od), od)
-  
-  head(oddf)
-  tip.states <- data.frame(
-    "id" = bdt$tip.label,
-    "stage" = sapply( sampleDemes, deme2stage ),
-    "age" = sapply( sampleDemes, deme2age ),
-    "risk" = sapply( sampleDemes, deme2risk ),
-    stringsAsFactors = FALSE)
-  rownames(tip.states) <- NULL
-  
-  df <- merge(tip.states, oddf, by = 'id', all.y = TRUE)
-  boxplot(od ~ stage, df)
-  #tapply(df$od, factor(df$stage), mean)
-}
-
-####--- surplus -----
-
-
-
-if(FALSE){
-  single.mc.mld
-  system.time( mld <- single.mc.mld(x = Winc) ) # 0.09s
-  plot(mld[-which(names(mld)=='out')]) # zoom without 'out'
-  head(mld)
-} ##- compute one MC draw and plot counts
+##---- is tipstates the same ? YES
+format(object.size(list.counts.mld_ba[[2]]$counts), units = 'auto')
+head(list.counts.mld.clus_ba[[2]]$states)
