@@ -2,90 +2,85 @@
 ## scatter plot size of clusters for each tip by respective method
 # rm(list=ls())
 options(max.print = 50)
-# ###- tests DatedTrees
+
+##---- libs ----
 library(phydynR)
 library(RColorBrewer)
 library(igraph)
+library(Rcpp)
 #library(phytools)
 
-if (FALSE) {
-  rndDatedTree <- function(n){
+##---- rnd dated tree ----
+rndDatedTree <- function(n){
   set.seed(123)
-  rt <- rtree(n)
+  rt <- rtree(n, br = rexp(n, rate = 1/5))
   st <- setNames(node.depth.edgelength(rt)[1:Ntip(rt)], rt$tip.label)
   drt <- DatedTree(rt, st)
   return(drt)
 }
-N <- 4
+N <- 15
 drt <- rndDatedTree(N)
-} ##- random DatedTree
-
-source("load_sims_files.R")
-sim <- list.sims[[1]][1]
-sim.name <- names(sim)
-load( sim )
-
-##- get subtree at random node
-#set.seed(123)
-set.seed(10)
-tr <- bdt
-random.subtree <- function(tr, min.subtree = NULL, max.subtree = Inf, iter = 10){
-  i <- sample(Ntip(tr) + 1:tr$Nnode, 1)
-  subtr <- extract.clade(tr, node = i, root.edge = 0)
-  print(paste("subtree from node", i, "with", Ntip(subtr), "tips"))
-  if (!is.null(min.subtree)) {
-    n = 0
-    repeat {
-      subtr <- random.subtree(tr)
-      n <- n + 1
-      print(n)
-      if ((Ntip(subtr) >= min.subtree & Ntip(subtr) <= max.subtree ) || n > iter) break
-    }
-  }
-  return(subtr)
-}
-test <- random.subtree(tr, min.subtree = 20)
-
-## ignoring DatedTree attributes
-sub <- test[c("edge","tip.label", "edge.length", "Nnode")]
-class(sub) <- "phylo"
-rm( list = setdiff(ls(), "sub") )
-
-
-
-##- real tree
-drt <- DatedTree(sub, setNames(node.depth.edgelength(sub)[1:Ntip(sub)], sub$tip.label))
-#N <- Ntip(drt)
 
 if(Ntip(drt) < 50){
-  plot(drt, label.offset = .1); axisPhylo(); nodelabels(); tiplabels()
+  plot(drt, label.offset = .6); axisPhylo(); nodelabels(); tiplabels()
   #edgelabels(round(drt$edge.length,2), bg="white",  cex =.8)
 } else {
-  plot.phylo(drt, show.tip.label = FALSE, type = "fan");  axisPhylo()
+  plot.phylo(drt, show.tip.label = FALSE, type = "fan")
 }
 
-###--- calculate clusters
-# tree = drt; threshold = 1; min.size = 0; plots = "all"
-mrca.cluster <- function(tree, threshold = 5, min.size = 2, plots = c("none", "graph", "tree", "all")){
+##---- function ----
+##-- calculate clusters
+mrca.cluster <- function(tree, threshold = 5, min.size = 2, plots = c("none", "graph", "tree", "all"), mrca.mat = NULL){
   ## create links between two tips if they share an ancestor within $k$ years for each
-  require(ape, igraph)
+  require(ape, igraph, Rcpp)
   
+  k <- threshold #5 ## limit of MRCA distance
   ##- matrix of mrca
-  k <- threshold #5 #1.2
-  print("calculating matrix of mrca")
-  st1 <- system.time( m <- mrca(tree) )
-  print(st1[3])
+  if (!is.null(mrca.mat)) {
+    print("loading MRCA matrix")
+    # saveRDS(m, file = MRCA.MAT)
+    # mrca.mat = MRCA.MAT
+    m <- readRDS(mrca.mat)
+  } else {
+    print("calculating matrix of mrca")
+    st1 <- system.time( m <- mrca(tree) )
+    print(st1[3])
+  }
+  
   ##- matrix of links
   print("calculating matrix of links")
-  ml <- m; ml[] <-  0
+  # heights <- max(node.depth.edgelength(tree)) - node.depth.edgelength(tree) # from most recent sample, without DatedTree object
   heights <- tree$heights
+  if (FALSE) {
+    ml <- m; ml[] <-  0
+    st2 <- system.time(
+      for (i in 1:dim(m)[1]) for (j in 1:dim(m)[2]){
+        # m2[i,j] <- heights[m[i,j]] - heights[i] # time to mrca (for each daughter)
+        ml[i,j] <- ifelse( i!=j && (heights[m[i,j]] - heights[i]) < k &&
+                             (heights[m[j,i]] - heights[j]) < k, 1, 0)
+      }
+    )
+    print(st2[3])
+  } # R version
+  ##- C++ loop ~500 times faster
+  # sourceCpp("matrix_manip.cpp")
+  cppFunction('NumericMatrix matrix_manip(NumericVector heights, IntegerMatrix m, double k){
+    NumericMatrix ml(m.nrow(),m.ncol());
+    for(int i = 0; i < m.nrow(); ++i){
+      for(int j = 0; j < m.ncol(); ++j){
+        if(i != j && (heights[m(i,j)-1] - heights[i]) < k && (heights[m(j,i)-1] - heights[j]) < k){
+          ml(i,j) = 1;
+        } else {
+          ml(i,j) = 0;
+        }
+      }
+    }
+    return ml;
+  }')
   st2 <- system.time(
-  for (i in 1:dim(m)[1]) for (j in 1:dim(m)[2]){
-    # m2[i,j] <- tree$heights[m[i,j]] - tree$heights[i] # time to mrca (for each daughter)
-    ml[i,j] <- ifelse( i!=j && (heights[m[i,j]] - heights[i]) < k &&
-                         (heights[m[j,i]] - heights[j]) < k, 1, 0)
-  }
+    ml <- matrix_manip(heights, m, k)
   )
+  rownames(ml) <- colnames(ml) <- rownames(m)
   print(st2[3])
   ##- create graph
   print("create graph")
@@ -140,20 +135,58 @@ mrca.cluster <- function(tree, threshold = 5, min.size = 2, plots = c("none", "g
   return(clusters)
 }
 
+##---- on rnd tree ----
+mclust0 <- mrca.cluster(tree = drt, threshold = 5, min.size = 2, plots = "all")
 
-mclust <- mrca.cluster(tree = drt, threshold = 1, min.size = 0, plots = "all")
+##---- load sim ----
+source("load_sims_files.R")
+sim <- list.sims[[1]][1]
+sim.name <- names(sim)
+load( sim )
+MRCA.MAT <- paste0(path.results, '/', 'mrca.matrix.', sim.name, '.rds')
 
-##- big
+####---- subtree (if needed)
+if (FALSE){
+  ##- get subtree at random node
+  #set.seed(123)
+  set.seed(10)
+  tr <- bdt
+  random.subtree <- function(tr, min.subtree = NULL, max.subtree = Inf, iter = 10){
+    i <- sample(Ntip(tr) + 1:tr$Nnode, 1)
+    subtr <- extract.clade(tr, node = i, root.edge = 0)
+    print(paste("subtree from node", i, "with", Ntip(subtr), "tips"))
+    if (!is.null(min.subtree)) {
+      n = 0
+      repeat {
+        subtr <- random.subtree(tr)
+        n <- n + 1
+        print(n)
+        if ((Ntip(subtr) >= min.subtree & Ntip(subtr) <= max.subtree ) || n > iter) break
+      }
+    }
+    return(subtr)
+  }
+  test <- random.subtree(tr, min.subtree = 20)
+  
+  ## ignoring DatedTree attributes
+  sub <- test[c("edge","tip.label", "edge.length", "Nnode")]
+  class(sub) <- "phylo"
+  rm( list = setdiff(ls(), "sub") )
+  
+  drt <- DatedTree(sub, setNames(node.depth.edgelength(sub)[1:Ntip(sub)], sub$tip.label))
+  #N <- Ntip(drt)
+} ##- real subtree
+
+##---- big ----
 system.time(
-  mclust <- lapply(c(5), function(k) mrca.cluster(bdt, threshold = k, min.size = 0, plots = "none"))
+  mclust <- lapply( list('1'=1,'2'=2,'5'=5,'10'=10), function(k) mrca.cluster(bdt, threshold = k, min.size = 0, plots = "none", mrca.mat = MRCA.MAT))
   )
-saveRDS(mclust, file = paste0(path.results, '/', 'mrca.cluster.5years.', sim.name, '.rds'))
+# saveRDS(mclust, file = paste0(path.results, '/', 'mrca.cluster.5years.', sim.name, '.rds'))
 
-##- in a dataframe
-mclust1 <- data.frame(SequenceID = as.integer(do.call(c, mclust)), ClusterID = as.integer(rep(names(mclust), sapply(mclust, length))) )
-
-
-##- helper: add size to seq / cluster data.frame
+##---- helpers
+##- list of cluster in dataframes
+list.clus.in.df <- function(lst) data.frame(SequenceID = as.integer(do.call(c, lst)), ClusterID = as.integer(rep(names(lst), sapply(lst, length))) )
+##- add size to seq / cluster data.frame
 get.cluster.size <- function(df){
   freqClust <- as.data.frame(table(df$ClusterID), stringsAsFactors = FALSE)
   newdf <- merge(x = df, y = freqClust, 
@@ -162,19 +195,14 @@ get.cluster.size <- function(df){
   return(newdf[order(newdf$SequenceID),])
 }
 
-mrca.clusters <- get.cluster.size(mclust1)
+mrca.clusters <- lapply(mclust, function(x) get.cluster.size(list.clus.in.df(x)))
 
-##- compare with hivclustering
+##---- load hivclustering ----
 x <- readRDS(paste0(path.results, "/", "list.hivclust.sim.Baseline0.rds"))
 hivclust1 <- lapply(x, function(a) a[[sim.name]])
-hivclustering.clusters <- lapply(hivclust1, get.cluster.size)
-
-head(hivclustering.clusters[[1]][ order(hivclustering.clusters[[1]]$SequenceID), ])
-sum(hivclustering.clusters[[1]]$SequenceID %in% bdt$tip.label)
-
-d <- hivclustering.clusters[[1]]
+h1 <- lapply(hivclust1, get.cluster.size)
 ##- add singletons
-l <- lapply(hivclustering.clusters, function(d) {
+hivclustering.clusters <- lapply(h1, function(d) {
   add <- data.frame(ClusterID = (nrow(d)+1):Ntip(bdt), 
              SequenceID = setdiff(as.integer(bdt$tip.label), d$SequenceID),
              Freq = 1L)
@@ -182,8 +210,41 @@ l <- lapply(hivclustering.clusters, function(d) {
   return(newdf[order(newdf$SequenceID),])
   })
 
-setdiff(1:5, 4:8)
-                 
+##---- distribution cluster size ----
+sapply(mrca.clusters, function(x) summary(x$Freq))
+sapply(hivclustering.clusters, function(x) summary(x$Freq))
+
+thr_mrca <-  "5" # "10" #
+thr_ucsd <- "0.015" # "0.05"  # 
+
+# par(mfrow=c(1,2))
+# hist(mrca.clusters[[thr_mrca]]$Freq)
+# hist(hivclustering.clusters[[thr_ucsd]]$Freq)
+# dev.off()
+# without singletons
+par(mfrow=c(1,2))
+hist(mrca.clusters[[thr_mrca]]$Freq[mrca.clusters[[thr_mrca]]$Freq > 1], xlab = "size", main = "mrca method, size > 1")
+hist(hivclustering.clusters[[thr_ucsd]]$Freq[hivclustering.clusters[[thr_ucsd]]$Freq > 1], xlab = "size", main = "ucsd method, size > 1")
+#dev.off()
+
+##---- scatter ----
+df <- merge(x = hivclustering.clusters[[thr_ucsd]][, c("SequenceID", "Freq")],
+            y = mrca.clusters[[thr_mrca]][, c("SequenceID", "Freq")], by = "SequenceID" )
+df_no_single <- df[df$Freq.x > 1 & df$Freq.y > 1, ]
+
+x <- as.data.frame(table(df_no_single[, 2:3]), stringsAsFactors = FALSE)
+par(mfrow=c(1,1))
+radius <- sqrt(x$Freq/pi)
+symbols(x$Freq.x, x$Freq.y, circles = radius, inches = 0.25, fg = "white",
+        bg = "red",
+        xlab = paste("hivclustering cluster size -", thr_ucsd),
+        ylab = paste("mrca cluster size -", thr_mrca),
+        main = "Sized by Freq")
+
+corcoef <- cor.test(df_no_single$Freq.x, df_no_single$Freq.y)$estimate
+
+##---- stop ----
+
 ###- SURPLUS -###
 ##- way to get heights from non DatedTree
 heights <- max(node.depth.edgelength(drt)) - node.depth.edgelength(drt) # from most recent sample
@@ -201,13 +262,6 @@ if(FALSE){
   microbenchmark(mrca(drt), mrca2(drt))
 } ##- test mrca
 
-
-## an object that you want to recreate
-m2 <- matrix(1:4,2,2)
-## use capture.output to save structure as a string in a varible
-xx <- capture.output(dput(m2))
-
-## recreate the object 
-m2_ <- eval(parse(text=xx))
-image(z=m2_,col=rainbow(4))
-dput(m)
+##- test C++ version
+sourceCpp("matrix_manip.cpp")
+system.time(ml <- matrix_manip(heights, m, k)) # 8s
