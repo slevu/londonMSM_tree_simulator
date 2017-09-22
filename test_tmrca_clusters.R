@@ -30,17 +30,17 @@ if(Ntip(drt) < 50){
 
 ##---- function ----
 ##-- calculate clusters
-mrca.cluster <- function(tree, threshold = 5, min.size = 2, plots = c("none", "graph", "tree", "all"), mrca.mat = NULL){
+mrca.cluster <- function(tree, threshold = 5, min.size = 2, plots = c("none", "graph", "tree", "all"), mrca_mat = NULL){
   ## create links between two tips if they share an ancestor within $k$ years for each
   require(ape, igraph, Rcpp)
   
   k <- threshold #5 ## limit of MRCA distance
   ##- matrix of mrca
-  if (!is.null(mrca.mat)) {
+  if (!is.null(mrca_mat)) {
     print("loading MRCA matrix")
     # saveRDS(m, file = MRCA.MAT)
     # mrca.mat = MRCA.MAT
-    m <- readRDS(mrca.mat)
+    m <- readRDS(mrca_mat)
   } else {
     print("calculating matrix of mrca")
     st1 <- system.time( m <- mrca(tree) )
@@ -143,7 +143,7 @@ source("load_sims_files.R")
 sim <- list.sims[[1]][1]
 sim.name <- names(sim)
 load( sim )
-MRCA.MAT <- paste0(path.results, '/', 'mrca.matrix.', sim.name, '.rds')
+MRCA_MAT <- paste0(path.results, '/', 'mrca.matrix.', sim.name, '.rds')
 
 ####---- subtree (if needed)
 if (FALSE){
@@ -178,10 +178,12 @@ if (FALSE){
 } ##- real subtree
 
 ##---- big ----
+M_CLUST_LIST <- paste0(path.results, '/', 'mrca_clusters_list_', sim.name, '.rds')
 system.time(
-  mclust <- lapply( list('1'=1,'2'=2,'5'=5,'10'=10), function(k) mrca.cluster(bdt, threshold = k, min.size = 0, plots = "none", mrca.mat = MRCA.MAT))
-  )
-# saveRDS(mclust, file = paste0(path.results, '/', 'mrca.cluster.5years.', sim.name, '.rds'))
+  mclust <- lapply( list('1'=1,'2'=2,'5'=5,'10'=10), function(k) mrca.cluster(bdt, threshold = k, min.size = 0, plots = "none", mrca_mat = MRCA_MAT))
+  ) # 87s
+# saveRDS(mclust, file = M_CLUST_LIST)
+# mclust <- readRDS(file = M_CLUST_LIST)
 
 ##---- helpers
 ##- list of cluster in dataframes
@@ -195,14 +197,14 @@ get.cluster.size <- function(df){
   return(newdf[order(newdf$SequenceID),])
 }
 
-mrca.clusters <- lapply(mclust, function(x) get.cluster.size(list.clus.in.df(x)))
+mrca_clusters <- lapply(mclust, function(x) get.cluster.size(list.clus.in.df(x)))
 
 ##---- load hivclustering ----
 x <- readRDS(paste0(path.results, "/", "list.hivclust.sim.Baseline0.rds"))
 hivclust1 <- lapply(x, function(a) a[[sim.name]])
 h1 <- lapply(hivclust1, get.cluster.size)
 ##- add singletons
-hivclustering.clusters <- lapply(h1, function(d) {
+hivclustering_clusters <- lapply(h1, function(d) {
   add <- data.frame(ClusterID = (nrow(d)+1):Ntip(bdt), 
              SequenceID = setdiff(as.integer(bdt$tip.label), d$SequenceID),
              Freq = 1L)
@@ -211,8 +213,8 @@ hivclustering.clusters <- lapply(h1, function(d) {
   })
 
 ##---- distribution cluster size ----
-sapply(mrca.clusters, function(x) summary(x$Freq))
-sapply(hivclustering.clusters, function(x) summary(x$Freq))
+sapply(mrca_clusters, function(x) summary(x$Freq))
+sapply(hivclustering_clusters, function(x) summary(x$Freq))
 
 thr_mrca <-  "5" # "10" #
 thr_ucsd <- "0.015" # "0.05"  # 
@@ -223,13 +225,13 @@ thr_ucsd <- "0.015" # "0.05"  #
 # dev.off()
 # without singletons
 par(mfrow=c(1,2))
-hist(mrca.clusters[[thr_mrca]]$Freq[mrca.clusters[[thr_mrca]]$Freq > 1], xlab = "size", main = "mrca method, size > 1")
-hist(hivclustering.clusters[[thr_ucsd]]$Freq[hivclustering.clusters[[thr_ucsd]]$Freq > 1], xlab = "size", main = "ucsd method, size > 1")
+hist(mrca_clusters[[thr_mrca]]$Freq[mrca_clusters[[thr_mrca]]$Freq > 1], xlab = "size", main = "mrca method, size > 1")
+hist(hivclustering_clusters[[thr_ucsd]]$Freq[hivclustering_clusters[[thr_ucsd]]$Freq > 1], xlab = "size", main = "ucsd method, size > 1")
 #dev.off()
 
 ##---- scatter ----
-df <- merge(x = hivclustering.clusters[[thr_ucsd]][, c("SequenceID", "Freq")],
-            y = mrca.clusters[[thr_mrca]][, c("SequenceID", "Freq")], by = "SequenceID" )
+df <- merge(x = hivclustering_clusters[[thr_ucsd]][, c("SequenceID", "Freq")],
+            y = mrca_clusters[[thr_mrca]][, c("SequenceID", "Freq")], by = "SequenceID" )
 df_no_single <- df[df$Freq.x > 1 & df$Freq.y > 1, ]
 
 x <- as.data.frame(table(df_no_single[, 2:3]), stringsAsFactors = FALSE)
@@ -242,6 +244,11 @@ symbols(x$Freq.x, x$Freq.y, circles = radius, inches = 0.25, fg = "white",
         main = "Sized by Freq")
 
 corcoef <- cor.test(df_no_single$Freq.x, df_no_single$Freq.y)$estimate
+
+##---- geom_hex ----
+library(ggplot2)
+d <- ggplot(data= df_no_single, aes(Freq.x, Freq.y))
+d + geom_hex()# stat_bin_hex() #geom_hex()
 
 ##---- stop ----
 
