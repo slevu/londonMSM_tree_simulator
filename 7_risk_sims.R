@@ -147,9 +147,9 @@ super_boxplot_base <- function(ls){
   #       widths=c(1,1.5,1.5), heights=c(1,1,1))
   layout(matrix(c(1,2), 1, 2, byrow = TRUE), 
          widths=c(1,2.5), heights=c(1,1))
-  par(mar = c(4, 0.5, 2, 0.5), oma = c(0, 3, 0, 0)) # c(bottom, left, top, right)
+  par(mar = c(4, 0.5, 3, 0.5), oma = c(0, 3.5, 0, 0)) # c(bottom, left, top, right)
   
-  boxplot(a[a$method == 'SA',]$value ~ a[a$method == 'SA',]$thr, ylim = lim, width = .8)
+  boxplot(a[a$method == 'SA',]$value ~ a[a$method == 'SA',]$thr, ylim = lim, width = 1)
   title(main = 'SA', font.main = 1, ylab = '', cex.lab = 1.2)
   abline(h = alpha, lty = 3)
   
@@ -160,7 +160,7 @@ super_boxplot_base <- function(ls){
   # boxplot(a[a$method == 'NB',]$value ~ a[a$method == 'NB',]$thr, ylim = lim, yaxt="n")
   # title(main = 'Neighborhood', xlab = 'Distance threshold', cex.lab = 1.2,  font.main = 1)
   # abline(h = alpha, lty = 3)
-  mtext(text="p-value", cex = 1.2, side = 2, line = 2, outer=TRUE)
+  mtext(text="p-value", cex = 1.2, side = 2, line = 2.5, outer=TRUE)
 }
 
 super_boxplot_base(ls = p_uni)
