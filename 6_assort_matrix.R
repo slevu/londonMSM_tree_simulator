@@ -357,3 +357,16 @@ mtext(text="Assortativity coefficient", cex = 1.2, side = 2, line = 2.5, outer=T
 # dev.off()
 # ?abline; ?layout; ?boxplot
 
+##---- test variance ----
+var.test(df$SA, df$CL.0.005, alternative = "less")
+# 
+# F test to compare two variances
+# 
+# data:  df$SA and df$CL.0.005
+# F = 0.64318, num df = 99, denom df = 99, p-value = 0.01458
+# alternative hypothesis: true ratio of variances is less than 1
+# 95 percent confidence interval:
+#   0.0000000 0.8966263
+# sample estimates:
+#   ratio of variances 
+# 0.6431757 
