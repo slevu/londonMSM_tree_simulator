@@ -29,7 +29,7 @@ names(cw_Baseline0)
 ##---- function to generate different plots ----
 netplot <- function(r = 2, thr_D1 = 0.05, thr_D2 = 0.015, thr_W = 0.001){
 ##- debug
-##- r = 5; thr_D1 = 0.05; thr_D2 = 0.015; thr_W = 0.001
+##- r = 5; thr_D1 = 0.05; thr_D2 = 0.005; thr_W = 0.001
 
   parms <- paste0(r, '_', thr_W)
   ##- select cluster at high threshold
@@ -249,7 +249,7 @@ plot( subgdf
 )
 plot( gD
   , vertex.size= 7
-  , edge.width = .05
+  , edge.width = 0.5# .05
   , edge.color='Black'
   , vertex.label=NA 
   , edge.curved=.4
