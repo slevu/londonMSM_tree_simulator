@@ -8,7 +8,8 @@ output: html_document
 ```{r}
 library(knitr)
 read_chunk('test_tmrca_clusters.R')
-#opts_chunk$set(dev = c('pdf','png','postscript') )
+read_chunk('get_all_cluster_results.R')
+opts_chunk$set(dev = c('pdf','png') )
 ```
 
 Since we are not using sequence data, our clustering algorithm is based on time dated trees. We added a comparison between the clustering method directly based on patristics distances used in the paper and a network creation method based on time to the most recent common ancestor. 
@@ -54,11 +55,27 @@ Load results from `hivclustering`
 ```
 
 I compare distribution of cluster sizes at different thresholds of evolution rate / time to mrca.
-Great ! Distributions look similar for rate threshold = 0.015 subs/site vs time threshold = 5 years (Sergei Pond did say that somewhere ?)
+Great ! Distributions look similar for rate threshold = 0.015 subs/site vs time threshold = 5 years (Sergei Pond did say that somewhere ?. Need to check the input of mutation rate in branch conversion)
 ```{r distribution cluster size}
 ```
 
 Plot cluster sizes from both methods
-```{r scatter}
+```{r scatter, fig.path = './figure/'}
 ```
 Correlation is `r corcoef`
+
+Now, to plot base boxplot of cluster size vs covariates from tMRCA clustering and neighborhood method, load all previous results
+```{r load hivclust}
+```
+Re-arrange in one dataframe
+```{r arrange}
+```
+Plot
+```{r mrca boxplot for all covariates, fig.path = './figure/'}
+```
+
+And a scatter plot matrix between the 3 clustering methods + SA
+```{r scatter plot matrix, fig.path = './figure/'}
+```
+
+

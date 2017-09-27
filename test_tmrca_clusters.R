@@ -179,11 +179,15 @@ if (FALSE){
 
 ##---- big ----
 M_CLUST_LIST <- paste0(path.results, '/', 'mrca_clusters_list_', sim.name, '.rds')
-system.time(
-  mclust <- lapply( list('1'=1,'2'=2,'5'=5,'10'=10), function(k) mrca.cluster(bdt, threshold = k, min.size = 0, plots = "none", mrca_mat = MRCA_MAT))
+if (FALSE){
+  system.time(
+    mclust <- lapply( list('1'=1,'2'=2,'5'=5,'10'=10), function(k) mrca.cluster(bdt, threshold = k, min.size = 0, plots = "none", mrca_mat = MRCA_MAT))
   ) # 87s
-# saveRDS(mclust, file = M_CLUST_LIST)
-# mclust <- readRDS(file = M_CLUST_LIST)
+  # saveRDS(mclust, file = M_CLUST_LIST)
+} else {
+  mclust <- readRDS(file = M_CLUST_LIST)
+}
+
 
 ##---- helpers
 ##- list of cluster in dataframes
@@ -239,9 +243,9 @@ par(mfrow=c(1,1))
 radius <- sqrt(x$Freq/pi)
 symbols(x$Freq.x, x$Freq.y, circles = radius, inches = 0.25, fg = "white",
         bg = "red",
-        xlab = paste("hivclustering cluster size -", thr_ucsd),
-        ylab = paste("mrca cluster size -", thr_mrca),
-        main = "Sized by Freq")
+        xlab = "Size (hivclustering)", # paste("hivclustering cluster size -", thr_ucsd),
+        ylab = "Size (tMRCA)", # paste("tMRCA cluster size -", thr_mrca),
+        main = "") # Sized by Freq
 
 corcoef <- cor.test(df_no_single$Freq.x, df_no_single$Freq.y)$estimate
 
