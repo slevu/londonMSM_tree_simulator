@@ -30,8 +30,8 @@ names(cw_Baseline0)
 netplot <- function(r = 2, thr_D1 = 0.05, thr_D2 = 0.015, thr_W = 0.001){
 ##- debug
 ##- r = 5; thr_D1 = 0.05; thr_D2 = 0.005; thr_W = 0.001
-
-  parms <- paste0(r, '_', thr_W)
+  set.seed(12)
+  parms <- paste0(r, '_', thr_D1, '_', thr_D2, '_', thr_W)
   ##- select cluster at high threshold
   cl <- cw_Baseline0[[as.character(thr_D1)]][[r]] # at thr = 0.05, r th replicate
   # str(cl)
@@ -41,7 +41,7 @@ netplot <- function(r = 2, thr_D1 = 0.05, thr_D2 = 0.015, thr_W = 0.001){
   largest_clusterID <- size[order(size$Freq, decreasing = T),]$Var1[1]
   ##- get names from largest cluster
   list_id <- cl[cl$ClusterID == largest_clusterID, 'id'] 
-
+  print(paste('n =', length(list_id)))
   ##- load corresponding sim and distances
   load(list.sims[['Baseline0']][r])
   load(list.dist[['Baseline0']][r])
@@ -106,7 +106,7 @@ netplot <- function(r = 2, thr_D1 = 0.05, thr_D2 = 0.015, thr_W = 0.001){
             add=TRUE, inches=FALSE)
   }
   # clips as a circle
-  add_shape("triangle", clip=shapes("circle")$clip,
+  add_shape("triangle", clip=shape_noclip,#shapes("circle")$clip,
             plot=mytriangle)
   
   ##- make edges
@@ -229,7 +229,7 @@ netplot <- function(r = 2, thr_D1 = 0.05, thr_D2 = 0.015, thr_W = 0.001){
 
 
   ## plot them together
-  pdf(paste('./figure/net0_sims_slv.', parms,'.pdf',sep = ''), 6, 3.8 )
+  pdf(paste('./figure/new_net0_sims_slv.', parms,'.pdf',sep = ''), 6, 3.8 )
   
   par(mfrow = c(1,2)
   , mar = rep(0, 4)
@@ -249,7 +249,7 @@ plot( subgdf
 )
 plot( gD
   , vertex.size= 7
-  , edge.width = 0.5# .05
+  , edge.width = 0.2# .05
   , edge.color='Black'
   , vertex.label=NA 
   , edge.curved=.4
@@ -262,7 +262,7 @@ dev.off()
 
 
 # save plots of each individually
-pdf(paste('./figure/net0_sims_slv.w.', parms,'.pdf',sep = ''), 4, 3.8 )
+pdf(paste('./figure/new_net0_sims_slv.w.', parms,'.pdf',sep = ''), 4, 3.8 )
 par(mar = rep(0, 4)
 )
 plot( subgdf
@@ -280,7 +280,7 @@ plot( subgdf
 dev.off()
 
 
-pdf(paste('./figure/net0_sims_slv.cl.', parms,'.pdf',sep = ''), 4, 3.8 )
+pdf(paste('./figure/new_net0_sims_slv.cl.', parms,'.pdf',sep = ''), 4, 3.8 )
 par(mar = rep(0, 4)
 )
 plot( gD
@@ -298,8 +298,14 @@ dev.off()
 
 }
 
-netplot(r = 2)
-netplot(r = 3)
-netplot(r = 4)
-netplot(r = 5)
-netplot(r = 5, thr_W = 0.0005)
+# netplot(r = 2)
+# netplot(r = 3)
+# netplot(r = 4)
+# netplot(r = 5)
+# netplot(r = 5, thr_W = 0.0005)
+
+netplot(r = 5, thr_D1 = 0.05, thr_D2 = 0.005, thr_W = 0.001)
+netplot(r = 5, thr_D1 = 0.05, thr_D2 = 0.015, thr_W = 0.001)
+netplot(r = 11, thr_D1 = 0.05, thr_D2 = 0.005, thr_W = 0.001)
+netplot(r = 11, thr_D1 = 0.05, thr_D2 = 0.015, thr_W = 0.001)
+#r = 5; thr_D1 = 0.05; thr_D2 = 0.005; thr_W = 0.001
