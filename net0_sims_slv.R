@@ -304,8 +304,8 @@ dev.off()
 # netplot(r = 5)
 # netplot(r = 5, thr_W = 0.0005)
 
-netplot(r = 5, thr_D1 = 0.05, thr_D2 = 0.005, thr_W = 0.001)
-netplot(r = 5, thr_D1 = 0.05, thr_D2 = 0.015, thr_W = 0.001)
+# netplot(r = 5, thr_D1 = 0.05, thr_D2 = 0.005, thr_W = 0.001)
+# netplot(r = 5, thr_D1 = 0.05, thr_D2 = 0.015, thr_W = 0.001)
 netplot(r = 11, thr_D1 = 0.05, thr_D2 = 0.005, thr_W = 0.001)
 netplot(r = 11, thr_D1 = 0.05, thr_D2 = 0.015, thr_W = 0.001)
 #r = 5; thr_D1 = 0.05; thr_D2 = 0.005; thr_W = 0.001
