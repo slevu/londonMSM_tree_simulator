@@ -178,3 +178,28 @@ pairs(df_no_single4[, c('size0.015', 'nbhsize0.015', 'size5', 'outdegree')],
       lower.panel = panel.cor,
       upper.panel = upper.panel)
 
+##---- scatter bubble matrix ----
+df_no_single4$outdegree <- round(log10(df_no_single4$outdegree),1) # log for outdegree
+
+test <- df_no_single4[,c('size0.015', 'nbhsize0.015')] # 
+# x = test[,1]; y = test[,2]
+weighted.bubble <- function(x,y, co = 'red', multi = FALSE){
+  tt <- as.data.frame(table(x,y), stringsAsFactors = FALSE)
+  tt <- tt[order(tt$Freq, decreasing = TRUE),] # to plot larger first
+  radius <- sqrt(tt$Freq/pi)
+  symbols(tt$x, tt$y, circles = radius, inches = 0.15, fg = "white",
+          bg = co, add = multi, xlab = '', ylab = '', main = '')
+}
+# weighted.bubble(x = test[,1], y = test[,2])
+# weighted.bubble(x = test[,1], y = test[,2], co = "#FF000090") #'rgb(255, 65, 54)')
+
+# Customize upper panel
+upper.panel.bubble <-function(x, y){
+  par(new = TRUE)
+  weighted.bubble(x,y, multi = TRUE, co = "#FF000050") 
+}
+# Create the plots
+pairs(df_no_single4[, c('size0.015', 'nbhsize0.015', 'size5', 'outdegree')], 
+      labels = c('hivclustering', 'neighborhood', 'tMRCA', 'SA'),
+      lower.panel = panel.cor,
+      upper.panel = upper.panel.bubble)

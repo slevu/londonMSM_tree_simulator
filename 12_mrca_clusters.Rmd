@@ -78,4 +78,7 @@ And a scatter plot matrix between the 3 clustering methods + SA
 ```{r scatter plot matrix, fig.path = './figure/'}
 ```
 
+And a scatter bubble matrix (note out-degrees are in log10) 
+```{r scatter bubble matrix, fig.path = './figure/'}
+```
 
