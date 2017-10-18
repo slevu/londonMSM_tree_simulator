@@ -1,0 +1,51 @@
+---
+title: "mrca clusters"
+author: "Stephane"
+date: "9/21/2017"
+output: html_document
+---
+
+```{r}
+library(knitr)
+read_chunk('test_tmrca_clusters.R')
+read_chunk('get_all_cluster_results.R')
+opts_chunk$set(dev = c('pdf','png') )
+```
+
+Since we are not using sequence data, our clustering algorithm is based on time dated trees. We added a comparison between the clustering method directly based on patristics distances used in the paper and a network creation method based on time to the most recent common ancestor. 
+The approach is similar Leigh-Brown JID 2011 (except they first down-sampled their data selecting sequences under a pairwise genetic distance threshold plus a minimum bootstrap support), in which *"Two nodes are linked by an edge if the highest posterior density time to the most recent common ancestor (MRCA) of the respective viral sequences in the [time dated] tree is less than or equal to some network depth cutoff value."*
+
+The method goes as follows:
+
+- On dated tree, use `mrca` function from `ape` package to obtain $n \times n$ matrix of nodes corresponding to mrca
+- Calculate time to mrca for each pair of tips
+- Create a link (assign 1) between pair if both time intervals < `threshold` in years
+- Use `component` in `igraph` package to assign tips into clusters (single-linkage algorithm)
+- Plot by coloring branches
+
+```{r function}
+```
+
+First, test on random tree
+```{r libs, warning=FALSE, message=FALSE}
+```
+
+```{r make rnd tree}
+rndDatedTree <- function(n){
+  set.seed(10)
+  rt <- rtree(n, br = rexp(n, rate = 1/5))
+  st <- setNames(node.depth.edgelength(rt)[1:Ntip(rt)], rt$tip.label)
+  drt <- DatedTree(rt, st)
+  return(drt)
+}
+N <- 15
+drt <- rndDatedTree(N)
+```
+
+Run
+```{r rndtree plot, fig.path = './figure/'}
+mclust0 <- mrca.cluster(tree = drt, threshold = 5, min.size = 2, plots = "all")
+```
+
+
+
