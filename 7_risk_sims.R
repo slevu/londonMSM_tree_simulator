@@ -97,8 +97,8 @@ if(!file.exists(LOGIT)){
 # str(logit_cs[[1]])
 ##- table of proportion p-values < 0.05 and mean OR
 tab_logit <- data.frame("method" = names(logit_cs),
-                   "p signif" = sapply(logit_cs, function(x) mean( x[1] < 0.05)),
-                   "OR" = sapply(logit_cs, function(x) mean( x[2])) ,
+                   "p signif" = sapply(logit_cs, function(x) mean( x[1,] < 0.05)),
+                   "OR" = sapply(logit_cs, function(x) mean( x[2,])) ,
                    row.names = NULL)
 
 

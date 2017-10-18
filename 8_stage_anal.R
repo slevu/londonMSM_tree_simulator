@@ -207,7 +207,7 @@ tr <- true_rates(tw_bl) # true_rates(tw_er)
 ## plot only 5-95 band of asymptotic distribution
 plot_lines <- function(x, refy =1, cx = 1.5,
                        true_value = tr[['true_rr']],
-                       ylabel = "95%CI transmission rate ratio"){
+                       ylabel = "Transmission rate ratio"){
   par(cex.axis = cx, cex.lab = cx)
   nx <- ncol(x)
   plot(1:nx, x[2,], xlab = "Simulation replicate", ylab = ylabel, type = "n")
@@ -221,9 +221,9 @@ plot_lines <- function(x, refy =1, cx = 1.5,
 }
 ## rate diff
 plot_lines(bands[['rd_er']], refy = 0, true_value = tr[['true_rd']],
-           ylabel = "95%CI transmission rate difference")
+           ylabel = "Transmission rate difference")
 plot_lines(bands[['rd_bl']], refy = 0, true_value = tr[['true_rd']],
-           ylabel = "95%CI transmission rate difference")
+           ylabel = "Transmission rate difference")
 
 ##---- plot_rate_ratio ----
 plot_lines(bands[['rr_er']])
